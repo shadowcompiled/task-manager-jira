@@ -76,14 +76,17 @@ interface AuthStore {
   setUser: (user: User | null, token: string | null) => void;
 }
 
+// Input type for creating/updating tasks (tags are IDs, not full objects)
+type TaskInput = Omit<Partial<Task>, 'tags'> & { tags?: number[] };
+
 interface TaskStore {
   tasks: Task[];
   currentTask: (Task & { checklists: any[]; comments: Comment[]; photos: Photo[]; tags?: Tag[] }) | null;
   loading: boolean;
   fetchTasks: (filters?: { status?: string; assigned_to?: number }) => Promise<void>;
   fetchTask: (id: number) => Promise<void>;
-  createTask: (task: Partial<Task>) => Promise<void>;
-  updateTask: (id: number, task: Partial<Task>) => Promise<void>;
+  createTask: (task: TaskInput) => Promise<void>;
+  updateTask: (id: number, task: TaskInput) => Promise<void>;
   completeTask: (id: number) => Promise<void>;
   verifyTask: (id: number, comment?: string) => Promise<void>;
   deleteTask: (id: number) => Promise<void>;
