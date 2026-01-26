@@ -49,8 +49,10 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   
-  // Verify email configuration
-  verifyEmailConfig();
+  // Verify email configuration (async, non-blocking)
+  verifyEmailConfig().catch(() => {
+    console.log('⚠️  Email verification skipped - emails will be attempted on demand');
+  });
   
   // Start background notification service
   startNotificationService();

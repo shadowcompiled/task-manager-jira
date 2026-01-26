@@ -288,23 +288,37 @@ export async function verifyEmailConfig(): Promise<boolean> {
     return false;
   }
 
-  try {
-    // Reset transporter to pick up any env changes
-    transporter = null;
-    await getTransporter().verify();
-    console.log('✅ Email service configured and ready');
-    console.log(`   Using: ${process.env.EMAIL_USER}`);
-    return true;
-  } catch (error: any) {
-    console.error('❌ Email configuration error:', error.message);
-    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
-      console.error('   💡 Tip: Check if Gmail is blocking connections or try a different network');
-    } else if (error.code === 'EAUTH') {
-      console.error('   💡 Tip: Your App Password may be invalid. Generate a new one at:');
-      console.error('      https://myaccount.google.com/apppasswords');
-    }
-    return false;
-  }
+  // Quick verification with timeout
+  const verifyWithTimeout = async (ms: number): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        console.log('⚠️  Email verification timed out - emails will still be attempted');
+        resolve(false);
+      }, ms);
+
+      transporter = null;
+      getTransporter().verify()
+        .then(() => {
+          clearTimeout(timeout);
+          console.log('✅ Email service configured and ready');
+          console.log(`   Using: ${process.env.EMAIL_USER}`);
+          resolve(true);
+        })
+        .catch((error: any) => {
+          clearTimeout(timeout);
+          console.error('❌ Email configuration error:', error.message);
+          if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
+            console.error('   💡 Tip: Gmail may be blocked. Emails will still be attempted.');
+          } else if (error.code === 'EAUTH') {
+            console.error('   💡 Tip: Invalid App Password. Generate new one at:');
+            console.error('      https://myaccount.google.com/apppasswords');
+          }
+          resolve(false);
+        });
+    });
+  };
+
+  return verifyWithTimeout(5000); // 5 second timeout for startup check
 }
 
 // Send email to admin when new user registers
