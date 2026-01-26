@@ -7,7 +7,7 @@ dotenv.config();
 // Configure your email service here
 // For development, use a service like Mailtrap or Gmail
 function createTransporter() {
-  return nodemailer.createTransport({
+  const config: any = {
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT || '587'),
     secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
@@ -15,7 +15,26 @@ function createTransporter() {
       user: process.env.EMAIL_USER || '',
       pass: process.env.EMAIL_PASSWORD || '',
     },
-  });
+    // Better timeout settings for cloud environments
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+    // Disable connection pooling for serverless
+    pool: false,
+    // Debug logging
+    logger: process.env.NODE_ENV === 'development',
+    debug: process.env.NODE_ENV === 'development',
+  };
+
+  // Try TLS settings for Gmail
+  if (config.host === 'smtp.gmail.com' && config.port === 587) {
+    config.tls = {
+      ciphers: 'SSLv3',
+      rejectUnauthorized: false,
+    };
+  }
+
+  return nodemailer.createTransport(config);
 }
 
 // Lazy initialization
@@ -264,12 +283,26 @@ ${reason ? `הסיבה: ${reason}` : ''}
 }
 
 export async function verifyEmailConfig(): Promise<boolean> {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    console.log('⚠️  Email notifications disabled - credentials not configured');
+    return false;
+  }
+
   try {
+    // Reset transporter to pick up any env changes
+    transporter = null;
     await getTransporter().verify();
     console.log('✅ Email service configured and ready');
+    console.log(`   Using: ${process.env.EMAIL_USER}`);
     return true;
   } catch (error: any) {
-    console.error('Email configuration error:', error.message);
+    console.error('❌ Email configuration error:', error.message);
+    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
+      console.error('   💡 Tip: Check if Gmail is blocking connections or try a different network');
+    } else if (error.code === 'EAUTH') {
+      console.error('   💡 Tip: Your App Password may be invalid. Generate a new one at:');
+      console.error('      https://myaccount.google.com/apppasswords');
+    }
     return false;
   }
 }
