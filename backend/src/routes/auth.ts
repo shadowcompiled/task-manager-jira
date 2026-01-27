@@ -343,4 +343,54 @@ router.put('/deny-user/:userId', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Denial failed: ' + (error.message || 'Unknown error') });
   }
 });
+
+// Delete user - ADMIN only
+router.delete('/user/:userId', (req: Request, res: Response) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const { userId } = req.params;
+
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized - token required' });
+    }
+
+    let currentUser: any;
+    try {
+      currentUser = verifyToken(token);
+    } catch (e) {
+      return res.status(401).json({ error: 'Unauthorized - invalid token' });
+    }
+
+    // Only admins can delete users
+    if (currentUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can delete users' });
+    }
+
+    // Cannot delete yourself
+    if (parseInt(userId) === currentUser.id) {
+      return res.status(400).json({ error: 'לא ניתן למחוק את עצמך' });
+    }
+
+    // Get user to delete
+    const userToDelete = db.prepare('SELECT * FROM users WHERE id = ? AND restaurant_id = ?').get(userId, currentUser.restaurantId) as any;
+
+    if (!userToDelete) {
+      return res.status(404).json({ error: 'User not found or belongs to different restaurant' });
+    }
+
+    // Remove user from task assignments first
+    db.prepare('DELETE FROM task_assignments WHERE user_id = ?').run(userId);
+
+    // Delete the user
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+
+    res.json({ 
+      message: `משתמש ${userToDelete.name} נמחק בהצלחה`
+    });
+  } catch (error: any) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Delete failed: ' + (error.message || 'Unknown error') });
+  }
+});
+
 export default router;

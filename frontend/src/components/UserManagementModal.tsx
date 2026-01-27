@@ -61,6 +61,28 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
     }
   };
 
+  const handleDeleteUser = async (userId: number, userName: string) => {
+    if (!window.confirm(`האם אתה בטוח שברצונך למחוק את ${userName}? פעולה זו לא ניתנת לביטול.`)) return;
+
+    try {
+      setError('');
+      setSuccess('');
+      
+      await axios.delete(
+        `${API_BASE}/auth/user/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setSuccess(`${userName} נמחק בהצלחה`);
+      setTimeout(() => {
+        setSuccess('');
+        fetchUsers();
+      }, 2000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'שגיאה במחיקת משתמש');
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -118,13 +140,23 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
                     </span>
                   </div>
 
-                  {u.id !== user?.id && u.role !== 'admin' && user?.role === 'admin' && (
-                    <button
-                      onClick={() => handlePromoteToAdmin(u.id, u.name)}
-                      className="w-full py-2 bg-teal-600 text-white rounded-lg font-bold text-sm"
-                    >
-                      קדם למנהל ראשי
-                    </button>
+                  {u.id !== user?.id && user?.role === 'admin' && (
+                    <div className="flex gap-2">
+                      {u.role !== 'admin' && (
+                        <button
+                          onClick={() => handlePromoteToAdmin(u.id, u.name)}
+                          className="flex-1 py-2 bg-teal-600 text-white rounded-lg font-bold text-sm"
+                        >
+                          קדם למנהל ראשי
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteUser(u.id, u.name)}
+                        className="py-2 px-4 bg-red-600 text-white rounded-lg font-bold text-sm"
+                      >
+                        🗑️ מחק
+                      </button>
+                    </div>
                   )}
                 </div>
               ))}
