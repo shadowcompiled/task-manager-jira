@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store';
 import LoginPage from './LoginPage';
 import DailyTaskList from './DailyTaskList';
@@ -55,33 +55,6 @@ export default function App() {
   }
 
   const isManager = user.role === 'admin' || user.role === 'maintainer';
-
-  // Views order for swipe navigation (different for manager vs worker)
-  const views: ViewType[] = isManager 
-    ? ['daily', 'kanban', 'kanban-dash', 'dashboard']
-    : ['daily', 'kanban'];
-  
-  const currentViewIndex = views.indexOf(currentView);
-
-  // Handle swipe navigation
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const threshold = 50;
-    const velocity = 500;
-    
-    if (info.offset.x > threshold || info.velocity.x > velocity) {
-      // Swiped right - go to previous view (RTL: next in visual order)
-      const nextIndex = currentViewIndex + 1;
-      if (nextIndex < views.length) {
-        setCurrentView(views[nextIndex]);
-      }
-    } else if (info.offset.x < -threshold || info.velocity.x < -velocity) {
-      // Swiped left - go to next view (RTL: previous in visual order)
-      const prevIndex = currentViewIndex - 1;
-      if (prevIndex >= 0) {
-        setCurrentView(views[prevIndex]);
-      }
-    }
-  };
 
   // Theme classes
   const bgClass = isDarkMode ? 'bg-slate-900' : 'bg-gray-100';
@@ -187,21 +160,16 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Content with Swipe Navigation */}
+      {/* Main Content */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentView}
             className={`h-full ${isDarkMode ? '' : 'bg-gray-100'}`}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.2 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
-            onDragEnd={handleDragEnd}
-            style={{ touchAction: 'pan-y' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
           >
             {currentView === 'daily' && (
               <DailyTaskList onTaskSelect={setSelectedTask} />

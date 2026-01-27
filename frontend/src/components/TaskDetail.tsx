@@ -167,9 +167,9 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
   return (
     <div className="fixed inset-0 bg-black/80 flex items-end justify-center z-50" onClick={onClose}>
       <div 
-        className="bg-slate-800 dark:bg-slate-800 light:bg-white w-full max-h-[92vh] rounded-t-3xl overflow-hidden animate-slideUp flex flex-col"
+        className="bg-slate-800 dark:bg-slate-800 light:bg-white w-full max-h-[85vh] rounded-t-3xl overflow-hidden animate-slideUp flex flex-col"
         onClick={(e) => e.stopPropagation()}
-        style={{ willChange: 'transform' }}
+        style={{ willChange: 'transform', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {/* Header - Always visible with quick actions */}
         <div className="p-4 border-b border-slate-700/50 flex items-center gap-3 sticky top-0 bg-slate-800 z-20 backdrop-blur-lg bg-opacity-95">
@@ -260,13 +260,13 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
         {/* Content - Optimized scrolling */}
         <div 
           ref={contentRef}
-          className="flex-1 overflow-y-auto overscroll-contain"
+          className="flex-1 overflow-y-auto overscroll-contain min-h-0"
           style={{ 
             WebkitOverflowScrolling: 'touch',
             scrollBehavior: 'smooth',
           }}
         >
-          <div className="p-4 space-y-4 pb-6">
+          <div className="p-4 space-y-4 pb-4">
             {/* Status Bar */}
             <div className="flex gap-2">
               <span className="px-4 py-2 bg-slate-700/50 text-teal-400 rounded-xl text-sm font-bold flex-1 text-center border border-slate-600/50">
@@ -551,7 +551,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
         </div>
 
         {/* Action Bar - Always visible at bottom */}
-        <div className="shrink-0 p-4 border-t border-slate-700/50 bg-slate-800 safe-area-inset-bottom">
+        <div className="shrink-0 p-4 border-t border-slate-700/50 bg-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
           {isEditing ? (
             <div className="flex gap-3">
               <button
