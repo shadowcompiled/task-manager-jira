@@ -28,7 +28,7 @@ const priorityColors: Record<string, string> = {
 };
 
 export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
-  const { currentTask, fetchTask, completeTask, verifyTask, updateTask } = useTaskStore();
+  const { currentTask, fetchTask, completeTask, verifyTask, updateTask, deleteTask } = useTaskStore();
   const { user, token } = useAuthStore();
   const { tags, fetchTags } = useTagStore();
   const [comment, setComment] = useState('');
@@ -37,6 +37,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -95,7 +96,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
       description: currentTask.description,
       status: currentTask.status,
       priority: currentTask.priority,
-      assigned_to: currentTask.assigned_to,
+      assignees: currentTask.assignees ? currentTask.assignees.map((a: any) => a.id) : (currentTask.assigned_to ? [currentTask.assigned_to] : []),
       due_date: currentTask.due_date,
       tags: currentTask.tags ? currentTask.tags.map((t: any) => t.id) : [],
     });
@@ -144,8 +145,23 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+      await deleteTask(currentTask.id);
+      onTaskUpdate?.();
+      onClose();
+    } catch (err) {
+      setError('שגיאה במחיקת משימה');
+      setShowDeleteConfirm(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const isManager = user?.role === 'admin' || user?.role === 'maintainer';
-  const canEdit = isManager || user?.id === currentTask.assigned_to;
+  const isAssignedToTask = currentTask.assignees?.some((a: any) => a.id === user?.id) || currentTask.assigned_to === user?.id;
+  const canEdit = isManager || isAssignedToTask;
   const isOverdue = currentTask.due_date && new Date(currentTask.due_date) < new Date() && !['completed', 'verified'].includes(currentTask.status);
 
   return (
@@ -177,17 +193,69 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
             </div>
           </div>
           
-          {/* Quick Edit Button - Always visible in header */}
+          {/* Quick Actions - Edit & Delete */}
           {canEdit && !isEditing && (
-            <button
-              onClick={handleStartEdit}
-              className="px-4 py-2 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-500 transition-colors flex items-center gap-2"
-            >
-              <span>✏️</span>
-              <span>עריכה</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleStartEdit}
+                className="px-4 py-2 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-500 transition-colors flex items-center gap-2"
+              >
+                <span>✏️</span>
+                <span>עריכה</span>
+              </button>
+              {isManager && (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="p-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-colors"
+                  title="מחק משימה"
+                >
+                  🗑️
+                </button>
+              )}
+            </div>
           )}
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-30 p-4">
+            <div className="bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-700">
+              <div className="text-center mb-4">
+                <span className="text-4xl">⚠️</span>
+                <h3 className="text-lg font-bold text-white mt-2">מחיקת משימה</h3>
+                <p className="text-slate-400 mt-2">
+                  האם אתה בטוח שברצונך למחוק את המשימה "{currentTask.title}"?
+                </p>
+                <p className="text-red-400 text-sm mt-1">פעולה זו אינה ניתנת לביטול</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-3 bg-slate-700 text-slate-300 rounded-xl font-bold hover:bg-slate-600 transition-colors"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={loading}
+                  className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>מוחק...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🗑️</span>
+                      <span>מחק</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Content - Optimized scrolling */}
         <div 
@@ -270,17 +338,43 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-teal-400 mb-2">הקצאה</label>
-                  <select
-                    value={editData.assigned_to || ''}
-                    onChange={(e) => setEditData({ ...editData, assigned_to: e.target.value ? parseInt(e.target.value) : null })}
-                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:border-teal-500 focus:outline-none"
-                  >
-                    <option value="">ללא הקצאה</option>
-                    {teamMembers.map((member) => (
-                      <option key={member.id} value={member.id}>{member.name}</option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-bold text-teal-400 mb-2">
+                    הקצאה לעובדים
+                    {(editData.assignees || []).length > 0 && (
+                      <span className="text-slate-400 font-normal mr-2">({(editData.assignees || []).length} נבחרו)</span>
+                    )}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {teamMembers.map((member) => {
+                      const isSelected = (editData.assignees || []).includes(member.id);
+                      return (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => {
+                            const currentAssignees = editData.assignees || [];
+                            const newAssignees = isSelected
+                              ? currentAssignees.filter((id: number) => id !== member.id)
+                              : [...currentAssignees, member.id];
+                            setEditData({ ...editData, assignees: newAssignees });
+                          }}
+                          className={`px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+                            isSelected
+                              ? 'bg-teal-600 text-white ring-2 ring-teal-400'
+                              : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600'
+                          }`}
+                        >
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            isSelected ? 'bg-teal-500' : 'bg-slate-600'
+                          }`}>
+                            {member.name.charAt(0)}
+                          </span>
+                          {member.name}
+                          {isSelected && <span className="text-teal-200">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div>
@@ -334,12 +428,27 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
                   <p className="text-slate-300 leading-relaxed">{currentTask.description || 'אין תיאור'}</p>
                 </div>
 
+                {/* Assignees */}
+                <div className="bg-slate-700/30 rounded-xl p-4">
+                  <p className="text-xs text-slate-500 mb-2">הוקצה ל</p>
+                  {currentTask.assignees && currentTask.assignees.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {currentTask.assignees.map((assignee: any) => (
+                        <div key={assignee.id} className="flex items-center gap-2 bg-slate-600/50 rounded-lg px-3 py-1.5">
+                          <span className="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center text-xs font-bold text-white">
+                            {assignee.name.charAt(0)}
+                          </span>
+                          <span className="text-white text-sm font-medium">{assignee.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-400">{currentTask.assigned_to_name || 'לא הוקצה'}</p>
+                  )}
+                </div>
+
                 {/* Meta Info - Clean grid */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-slate-700/30 rounded-xl p-4">
-                    <p className="text-xs text-slate-500 mb-1">הוקצה ל</p>
-                    <p className="text-white font-bold">{currentTask.assigned_to_name || 'לא הוקצה'}</p>
-                  </div>
                   <div className="bg-slate-700/30 rounded-xl p-4">
                     <p className="text-xs text-slate-500 mb-1">תאריך יעד</p>
                     <p className={`font-bold ${isOverdue ? 'text-red-400' : 'text-white'}`}>
@@ -471,7 +580,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
             </div>
           ) : (
             <div className="flex gap-3">
-              {user?.id === currentTask.assigned_to && ['assigned', 'in_progress'].includes(currentTask.status) && (
+              {isAssignedToTask && ['assigned', 'in_progress'].includes(currentTask.status) && (
                 <button
                   onClick={handleComplete}
                   disabled={loading}

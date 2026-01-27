@@ -110,24 +110,24 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
   };
 
   return (
-    <div className="min-h-full pb-24">
+    <div className="min-h-full pb-24 max-w-2xl mx-auto">
       {/* Header */}
       <div className="p-4 pb-2">
-        <h1 className="text-xl font-bold text-white dark:text-white mb-1">לוח משימות</h1>
-        <p className="text-sm text-slate-400">לחץ על סטטוס להרחבה, גרור משימות לשינוי סטטוס</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">לוח משימות</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">לחץ על סטטוס להרחבה, גרור משימות לשינוי סטטוס</p>
       </div>
 
       {loading && (
-        <div className="p-4 m-4 bg-slate-800 rounded-xl text-center">
+        <div className="p-4 m-4 bg-white dark:bg-slate-800 rounded-2xl text-center border border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="flex items-center justify-center gap-2">
             <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-teal-400">טוען...</span>
+            <span className="text-teal-600 dark:text-teal-400">טוען...</span>
           </div>
         </div>
       )}
 
       {!loading && statuses.length === 0 && (
-        <div className="p-4 m-4 bg-slate-800 rounded-xl text-center text-slate-400">
+        <div className="p-4 m-4 bg-white dark:bg-slate-800 rounded-2xl text-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shadow-sm">
           אין סטטוסים להצגה
         </div>
       )}
@@ -142,23 +142,23 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
             return (
               <div 
                 key={status.name} 
-                className="bg-slate-800/50 dark:bg-slate-800/50 rounded-xl overflow-hidden border border-slate-700/50"
+                className="bg-white dark:bg-slate-800/50 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700/50 shadow-sm"
               >
                 {/* Status Header - Clickable to expand/collapse */}
                 <button 
                   onClick={() => toggleStatus(status.name)}
-                  className="w-full p-4 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
+                  className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
                   style={{ borderRightColor: status.color, borderRightWidth: '4px' }}
                 >
                   <div className="flex items-center gap-3">
                     <span 
-                      className="w-4 h-4 rounded-full flex-shrink-0" 
+                      className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm" 
                       style={{ backgroundColor: status.color }}
                     />
-                    <span className="font-bold text-white">{status.display_name}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{status.display_name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-slate-700 rounded-full text-sm font-bold text-slate-300">
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-sm font-bold text-slate-600 dark:text-slate-300">
                       {taskCount}
                     </span>
                     <span className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
@@ -175,11 +175,11 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
                       {...provided.droppableProps}
                       className={`transition-all duration-300 overflow-hidden ${
                         isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
-                      } ${snapshot.isDraggingOver ? 'bg-teal-900/20' : ''}`}
+                      } ${snapshot.isDraggingOver ? 'bg-teal-50 dark:bg-teal-900/20' : ''}`}
                     >
-                      <div className="p-3 space-y-2 border-t border-slate-700/50">
+                      <div className="p-3 space-y-2 border-t border-slate-100 dark:border-slate-700/50">
                         {taskCount === 0 && !snapshot.isDraggingOver && (
-                          <div className="text-center py-6 text-slate-500 text-sm">
+                          <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-sm">
                             אין משימות בסטטוס זה
                           </div>
                         )}
@@ -192,9 +192,9 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
                                 onClick={() => onTaskSelect(task)}
-                                className={`bg-slate-700/70 dark:bg-slate-700/70 rounded-xl p-4 cursor-pointer 
-                                  hover:bg-slate-600/70 active:scale-[0.98] transition-all ${
-                                  snapshot.isDragging ? 'shadow-2xl ring-2 ring-teal-500 scale-102' : ''
+                                className={`bg-slate-50 dark:bg-slate-700/70 rounded-xl p-4 cursor-pointer border border-slate-200 dark:border-transparent
+                                  hover:bg-white dark:hover:bg-slate-600/70 hover:shadow-sm active:scale-[0.98] transition-all ${
+                                  snapshot.isDragging ? 'shadow-xl ring-2 ring-teal-500 scale-102 bg-white dark:bg-slate-700' : ''
                                 }`}
                                 style={{
                                   ...provided.draggableProps.style,
@@ -203,7 +203,7 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
                               >
                                 <div className="flex items-start gap-3">
                                   {/* Drag Handle Visual */}
-                                  <div className="flex flex-col gap-1 mt-1 opacity-40">
+                                  <div className="flex flex-col gap-1 mt-1 opacity-30">
                                     <div className="flex gap-0.5">
                                       <span className="w-1 h-1 bg-slate-400 rounded-full" />
                                       <span className="w-1 h-1 bg-slate-400 rounded-full" />
@@ -221,7 +221,7 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
                                   {/* Task Content */}
                                   <div className="flex-1 min-w-0">
                                     {/* Task Title */}
-                                    <h4 className="font-bold text-white text-sm mb-2">
+                                    <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-2">
                                       {task.title}
                                     </h4>
 
@@ -234,7 +234,7 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
                                         {priorityLabels[task.priority] || task.priority}
                                       </span>
                                       {task.estimated_time && (
-                                        <span className="text-xs text-slate-400">
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">
                                           ⏱ {task.estimated_time} דק׳
                                         </span>
                                       )}
@@ -257,21 +257,40 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
                                       )}
                                     </div>
 
-                                    {/* Assignee & Due Date */}
-                                    <div className="flex items-center justify-between text-xs text-slate-400">
-                                      {task.assigned_to_name ? (
+                                    {/* Assignees & Due Date */}
+                                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                                      {task.assignees && task.assignees.length > 0 ? (
+                                        <div className="flex items-center gap-1">
+                                          <div className="flex -space-x-1.5 rtl:space-x-reverse">
+                                            {task.assignees.slice(0, 2).map((assignee: any) => (
+                                              <span 
+                                                key={assignee.id}
+                                                className="w-5 h-5 rounded-full bg-teal-600 flex items-center justify-center text-[9px] text-white font-bold border border-white dark:border-slate-700"
+                                                title={assignee.name}
+                                              >
+                                                {assignee.name.charAt(0)}
+                                              </span>
+                                            ))}
+                                            {task.assignees.length > 2 && (
+                                              <span className="w-5 h-5 rounded-full bg-slate-500 flex items-center justify-center text-[9px] text-white font-bold border border-white dark:border-slate-700">
+                                                +{task.assignees.length - 2}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ) : task.assigned_to_name ? (
                                         <span className="flex items-center gap-1">
-                                          <span className="w-5 h-5 rounded-full bg-slate-600 flex items-center justify-center text-[10px] text-white">
+                                          <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-[10px] text-slate-600 dark:text-white font-bold">
                                             {task.assigned_to_name.charAt(0)}
                                           </span>
                                           {task.assigned_to_name}
                                         </span>
                                       ) : (
-                                        <span className="text-slate-500">לא הוקצה</span>
+                                        <span className="text-slate-400 dark:text-slate-500">לא הוקצה</span>
                                       )}
                                       {task.due_date && (
                                         <span className={`flex items-center gap-1 ${
-                                          new Date(task.due_date) < new Date() ? 'text-red-400 font-bold' : ''
+                                          new Date(task.due_date) < new Date() ? 'text-red-500 dark:text-red-400 font-bold' : ''
                                         }`}>
                                           📅 {new Date(task.due_date).toLocaleDateString('he-IL')}
                                         </span>

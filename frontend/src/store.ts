@@ -27,12 +27,19 @@ export interface Tag {
   color2?: string;
 }
 
+export interface Assignee {
+  id: number;
+  name: string;
+  email: string;
+}
+
 export interface Task {
   id: number;
   title: string;
   description?: string;
   assigned_to?: number;
   assigned_to_name?: string;
+  assignees?: Assignee[];
   priority: 'low' | 'medium' | 'high' | 'critical';
   status: string;
   due_date?: string;
@@ -76,12 +83,15 @@ interface AuthStore {
   setUser: (user: User | null, token: string | null) => void;
 }
 
-// Input type for creating/updating tasks (tags are IDs, not full objects)
-type TaskInput = Omit<Partial<Task>, 'tags'> & { tags?: number[] };
+// Input type for creating/updating tasks (tags and assignees are IDs, not full objects)
+type TaskInput = Omit<Partial<Task>, 'tags' | 'assignees'> & { 
+  tags?: number[];
+  assignees?: number[];
+};
 
 interface TaskStore {
   tasks: Task[];
-  currentTask: (Task & { checklists: any[]; comments: Comment[]; photos: Photo[]; tags?: Tag[] }) | null;
+  currentTask: (Task & { checklists: any[]; comments: Comment[]; photos: Photo[]; tags?: Tag[]; assignees?: Assignee[] }) | null;
   loading: boolean;
   fetchTasks: (filters?: { status?: string; assigned_to?: number }) => Promise<void>;
   fetchTask: (id: number) => Promise<void>;

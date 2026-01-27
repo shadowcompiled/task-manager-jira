@@ -184,12 +184,18 @@ input[type="checkbox"] {
   background: linear-gradient(135deg, var(--tag-color-1, #0d9488) 0%, var(--tag-color-2, #0d9488) 100%);
 }
 
-/* Light Mode Overrides */
+/* ========================================
+   LIGHT MODE - Professional Clean Design
+   Inspired by Linear, Notion, Asana
+   ======================================== */
+
 html.light-mode {
-  --color-bg: #f3f4f6;
+  --color-bg: #f8fafc;           /* Very light gray-blue */
   --color-surface: #ffffff;
-  --color-text: #1f2937;
-  --color-text-muted: #6b7280;
+  --color-text: #1e293b;         /* Slate-800 */
+  --color-text-muted: #64748b;   /* Slate-500 */
+  --color-border: #e2e8f0;       /* Slate-200 */
+  --color-border-light: #f1f5f9; /* Slate-100 */
 }
 
 html.light-mode body {
@@ -197,39 +203,199 @@ html.light-mode body {
   color: var(--color-text);
 }
 
+/* Scrollbar for light mode */
+html.light-mode ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+html.light-mode ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+html.light-mode ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Background colors */
 html.light-mode .bg-slate-900 {
-  background-color: #f3f4f6;
+  background-color: #f8fafc;
 }
 
 html.light-mode .bg-slate-800 {
   background-color: #ffffff;
 }
 
-html.light-mode .bg-slate-700 {
-  background-color: #f9fafb;
+html.light-mode .bg-slate-800\/50 {
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
+html.light-mode .bg-slate-700 {
+  background-color: #f8fafc;
+}
+
+html.light-mode .bg-slate-700\/50,
+html.light-mode .bg-slate-700\/30,
+html.light-mode .bg-slate-700\/70 {
+  background-color: #f1f5f9;
+}
+
+/* Text colors */
 html.light-mode .text-white {
-  color: #1f2937;
+  color: #1e293b;
+}
+
+html.light-mode .text-slate-300 {
+  color: #475569;
 }
 
 html.light-mode .text-slate-400 {
-  color: #6b7280;
+  color: #64748b;
 }
 
+html.light-mode .text-slate-500 {
+  color: #94a3b8;
+}
+
+/* Border colors */
 html.light-mode .border-slate-600,
-html.light-mode .border-slate-700 {
-  border-color: #e5e7eb;
+html.light-mode .border-slate-700,
+html.light-mode .border-slate-700\/50,
+html.light-mode .border-slate-600\/50 {
+  border-color: #e2e8f0;
 }
 
+/* Form elements */
 html.light-mode input,
 html.light-mode select,
 html.light-mode textarea {
   background-color: #ffffff;
-  border-color: #d1d5db;
-  color: #1f2937;
+  border-color: #e2e8f0;
+  color: #1e293b;
 }
 
-html.light-mode input::placeholder {
-  color: #9ca3af;
+html.light-mode input:focus,
+html.light-mode select:focus,
+html.light-mode textarea:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+html.light-mode input::placeholder,
+html.light-mode textarea::placeholder {
+  color: #94a3b8;
+}
+
+html.light-mode select option {
+  background-color: #ffffff;
+  color: #1e293b;
+}
+
+/* Cards with subtle shadows */
+html.light-mode .rounded-xl,
+html.light-mode .rounded-2xl {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+/* Header & Navigation */
+html.light-mode header {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+}
+
+html.light-mode nav {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+}
+
+/* Buttons in light mode */
+html.light-mode .bg-slate-700:hover {
+  background-color: #e2e8f0;
+}
+
+html.light-mode button.bg-slate-700 {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+html.light-mode button.bg-slate-700:hover {
+  background-color: #e2e8f0;
+}
+
+/* Task cards hover effect */
+html.light-mode .hover\:bg-slate-600:hover {
+  background-color: #f1f5f9;
+}
+
+html.light-mode .hover\:bg-slate-600\/70:hover {
+  background-color: #e2e8f0;
+}
+
+/* Modal backgrounds */
+html.light-mode .bg-black\/80 {
+  background-color: rgba(15, 23, 42, 0.6);
+}
+
+/* Teal accent adjustments for light mode */
+html.light-mode .text-teal-400 {
+  color: #0d9488;
+}
+
+html.light-mode .text-teal-500 {
+  color: #14b8a6;
+}
+
+html.light-mode .bg-teal-600 {
+  background-color: #0d9488;
+}
+
+html.light-mode .bg-teal-600:hover {
+  background-color: #0f766e;
+}
+
+/* Progress bars */
+html.light-mode .bg-slate-100 {
+  background-color: #e2e8f0;
+}
+
+/* Active/Selected states */
+html.light-mode .ring-teal-400 {
+  --tw-ring-color: #14b8a6;
+}
+
+/* Dropdown menus */
+html.light-mode .shadow-xl {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Status indicators */
+html.light-mode .bg-slate-600 {
+  background-color: #cbd5e1;
+}
+
+/* Icon backgrounds in cards */
+html.light-mode .bg-emerald-100 {
+  background-color: #d1fae5;
+}
+
+html.light-mode .bg-blue-100 {
+  background-color: #dbeafe;
+}
+
+html.light-mode .bg-red-100 {
+  background-color: #fee2e2;
+}
+
+html.light-mode .bg-amber-100 {
+  background-color: #fef3c7;
+}
+
+/* Kanban specific */
+html.light-mode .bg-teal-900\/20,
+html.light-mode .bg-teal-900\/30 {
+  background-color: rgba(13, 148, 136, 0.08);
+}
+
+/* Dragging state */
+html.light-mode .shadow-2xl {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }

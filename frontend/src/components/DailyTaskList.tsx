@@ -46,26 +46,26 @@ export default function DailyTaskList({ onTaskSelect }: { onTaskSelect: (task: a
   };
 
   return (
-    <div className="p-4 pb-24">
+    <div className="p-4 pb-24 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-xl font-bold text-white mb-1">המשימות שלי</h1>
-        <p className="text-sm text-slate-400">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">המשימות שלי</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           {pendingTasks.length} משימות פעילות
         </p>
       </div>
 
       {/* Pending Tasks */}
       <div className="mb-6">
-        <h2 className="text-sm font-bold text-teal-400 mb-3 flex items-center gap-2">
-          <span className="w-2 h-2 bg-teal-400 rounded-full" />
+        <h2 className="text-sm font-bold text-teal-600 dark:text-teal-400 mb-3 flex items-center gap-2">
+          <span className="w-2 h-2 bg-teal-500 rounded-full" />
           משימות פעילות ({pendingTasks.length})
         </h2>
         
         {pendingTasks.length === 0 ? (
-          <div className="p-8 bg-slate-800 rounded-xl text-center">
-            <p className="text-slate-400 text-lg mb-2">אין משימות פעילות</p>
-            <p className="text-slate-500 text-sm">כל הכבוד! סיימת הכל</p>
+          <div className="p-8 bg-white dark:bg-slate-800 rounded-2xl text-center border border-slate-200 dark:border-slate-700 shadow-sm">
+            <p className="text-slate-600 dark:text-slate-400 text-lg mb-2">אין משימות פעילות</p>
+            <p className="text-slate-400 dark:text-slate-500 text-sm">כל הכבוד! סיימת הכל 🎉</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -85,8 +85,8 @@ export default function DailyTaskList({ onTaskSelect }: { onTaskSelect: (task: a
       {/* Completed Tasks */}
       {completedTasks.length > 0 && (
         <div>
-          <h2 className="text-sm font-bold text-slate-500 mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 bg-slate-500 rounded-full" />
+          <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full" />
             משימות שהושלמו ({completedTasks.length})
           </h2>
           <div className="space-y-3 opacity-60">

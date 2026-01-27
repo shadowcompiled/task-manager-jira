@@ -12,7 +12,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assigned_to: '',
+    assignees: [] as number[],
     priority: 'medium',
     due_date: '',
     estimated_time: '',
@@ -54,6 +54,15 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
     }));
   };
 
+  const handleAssigneeToggle = (userId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      assignees: prev.assignees.includes(userId)
+        ? prev.assignees.filter((id) => id !== userId)
+        : [...prev.assignees, userId],
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -61,11 +70,14 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
 
     try {
       await createTask({
-        ...formData,
+        title: formData.title,
+        description: formData.description,
         priority: formData.priority as 'low' | 'medium' | 'high' | 'critical',
         recurrence: formData.recurrence as 'once' | 'daily' | 'weekly' | 'monthly',
-        assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : undefined,
+        assignees: formData.assignees,
+        due_date: formData.due_date || undefined,
         estimated_time: formData.estimated_time ? parseInt(formData.estimated_time) : undefined,
+        tags: formData.tags,
       });
       await fetchTasks();
       onTaskCreated();
@@ -78,9 +90,9 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-end justify-center z-50">
-      <div className="bg-slate-800 w-full max-w-lg rounded-t-2xl max-h-[90vh] overflow-hidden animate-slideUp">
+      <div className="bg-slate-800 dark:bg-slate-800 w-full max-w-lg rounded-t-2xl max-h-[90vh] overflow-hidden animate-slideUp">
         {/* Header */}
-        <div className="p-4 border-b border-slate-700 flex items-center justify-between sticky top-0 bg-slate-800">
+        <div className="p-4 border-b border-slate-700 flex items-center justify-between sticky top-0 bg-slate-800 z-10">
           <h2 className="text-lg font-bold text-white">משימה חדשה</h2>
           <button onClick={onClose} className="text-slate-400 text-2xl p-1">✕</button>
         </div>
@@ -114,22 +126,42 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
             />
           </div>
 
-          {/* Assign To */}
+          {/* Assign To - Multi-select */}
           <div>
-            <label className="block text-sm font-bold text-teal-400 mb-2">הקצה לעובד</label>
-            <select
-              name="assigned_to"
-              value={formData.assigned_to}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:border-teal-500 focus:outline-none"
-            >
-              <option value="">בחר עובד...</option>
-              {teamMembers.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
+            <label className="block text-sm font-bold text-teal-400 mb-2">
+              הקצה לעובדים 
+              {formData.assignees.length > 0 && (
+                <span className="text-slate-400 font-normal mr-2">({formData.assignees.length} נבחרו)</span>
+              )}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {teamMembers.map((member) => {
+                const isSelected = formData.assignees.includes(member.id);
+                return (
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => handleAssigneeToggle(member.id)}
+                    className={`px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+                      isSelected
+                        ? 'bg-teal-600 text-white ring-2 ring-teal-400'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
+                  >
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      isSelected ? 'bg-teal-500' : 'bg-slate-600'
+                    }`}>
+                      {member.name.charAt(0)}
+                    </span>
+                    {member.name}
+                    {isSelected && <span className="text-teal-200">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {teamMembers.length === 0 && (
+              <p className="text-sm text-slate-500">אין עובדים זמינים</p>
+            )}
           </div>
 
           {/* Priority */}
@@ -137,17 +169,17 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
             <label className="block text-sm font-bold text-teal-400 mb-2">עדיפות</label>
             <div className="grid grid-cols-4 gap-2">
               {[
-                { value: 'low', label: 'נמוך', color: 'bg-teal-600' },
-                { value: 'medium', label: 'בינוני', color: 'bg-teal-500' },
-                { value: 'high', label: 'גבוה', color: 'bg-orange-400' },
-                { value: 'critical', label: 'דחוף', color: 'bg-orange-500' },
+                { value: 'low', label: 'נמוך', color: 'bg-emerald-500' },
+                { value: 'medium', label: 'בינוני', color: 'bg-amber-500' },
+                { value: 'high', label: 'גבוה', color: 'bg-orange-500' },
+                { value: 'critical', label: 'דחוף', color: 'bg-red-500' },
               ].map((p) => (
                 <button
                   key={p.value}
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, priority: p.value }))}
-                  className={`py-2 rounded-lg text-sm font-bold text-white transition-all ${
-                    formData.priority === p.value ? p.color : 'bg-slate-700'
+                  className={`py-2 rounded-xl text-sm font-bold text-white transition-all ${
+                    formData.priority === p.value ? `${p.color} ring-2 ring-white/50` : 'bg-slate-700 opacity-60'
                   }`}
                 >
                   {p.label}
@@ -170,7 +202,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
                   key={r.value}
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, recurrence: r.value }))}
-                  className={`py-2 rounded-lg text-sm font-bold transition-all ${
+                  className={`py-2 rounded-xl text-sm font-bold transition-all ${
                     formData.recurrence === r.value ? 'bg-teal-600 text-white' : 'bg-slate-700 text-slate-400'
                   }`}
                 >
@@ -195,7 +227,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
 
           {/* Estimated Time */}
           <div>
-            <label className="block text-sm font-bold text-teal-400 mb-2">זמן מוערך לביצוע</label>
+            <label className="block text-sm font-bold text-teal-400 mb-2">זמן מוערך (בדקות)</label>
             <div className="relative">
               <input
                 type="number"
@@ -209,7 +241,6 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
               />
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">דקות</span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">כמה זמן המשימה אמורה לקחת?</p>
           </div>
 
           {/* Tags */}
@@ -222,10 +253,14 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
                     key={tag.id}
                     type="button"
                     onClick={() => handleTagToggle(tag.id)}
-                    className={`px-3 py-2 rounded-lg text-sm font-bold text-white transition-all ${
-                      formData.tags.includes(tag.id) ? 'ring-2 ring-white' : 'opacity-60'
+                    className={`px-3 py-2 rounded-xl text-sm font-bold text-white transition-all ${
+                      formData.tags.includes(tag.id) ? 'ring-2 ring-white scale-105' : 'opacity-50'
                     }`}
-                    style={{ backgroundColor: tag.color }}
+                    style={{ 
+                      background: tag.color2 
+                        ? `linear-gradient(135deg, ${tag.color} 0%, ${tag.color2} 100%)`
+                        : tag.color 
+                    }}
                   >
                     {tag.name}
                   </button>
@@ -236,7 +271,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
 
           {/* Error */}
           {error && (
-            <div className="p-3 bg-orange-500/20 border border-orange-500 rounded-xl text-orange-400 text-sm">
+            <div className="p-3 bg-red-500/20 border border-red-500 rounded-xl text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -246,16 +281,16 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-slate-700 text-slate-300 rounded-xl font-bold"
+              className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-xl font-bold hover:bg-slate-600 transition-colors"
             >
               ביטול
             </button>
             <button
               type="submit"
               disabled={loading || !formData.title}
-              className="flex-1 py-3 bg-teal-600 text-white rounded-xl font-bold disabled:opacity-50"
+              className="flex-1 py-3.5 bg-teal-600 text-white rounded-xl font-bold disabled:opacity-50 hover:bg-teal-500 transition-colors"
             >
-              {loading ? 'יוצר...' : 'יצירה'}
+              {loading ? 'יוצר...' : 'יצירת משימה'}
             </button>
           </div>
         </form>
