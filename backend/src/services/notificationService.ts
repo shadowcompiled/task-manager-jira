@@ -21,58 +21,66 @@ export async function checkForExpiringTasks() {
           t.title,
           t.due_date,
           t.status,
-          t.assigned_to,
           t.created_at,
-          u.email as assigned_email,
-          u.name as assigned_name,
           r.name as restaurant_name
          FROM tasks t
-         LEFT JOIN users u ON t.assigned_to = u.id
          LEFT JOIN restaurants r ON t.restaurant_id = r.id
          WHERE t.due_date IS NOT NULL 
-         AND t.status NOT IN ('completed', 'verified')
-         AND t.assigned_to IS NOT NULL`
+         AND t.status NOT IN ('completed', 'verified')`
       )
       .all() as any[];
 
     for (const task of tasks) {
-      if (!task.assigned_email) continue;
-
       const createdAt = new Date(task.created_at);
       const dueAt = new Date(task.due_date);
       const totalTime = dueAt.getTime() - createdAt.getTime();
       const elapsedTime = now.getTime() - createdAt.getTime();
-      const progressPercent = (elapsedTime / totalTime) * 100;
+      const progressPercent = totalTime > 0 ? (elapsedTime / totalTime) * 100 : 100;
       const isOverdue = now > dueAt;
 
       // Check if 2/3 of the time has passed OR task is overdue
       if (progressPercent >= 66.67 || isOverdue) {
-        // Check if we already sent notification today
-        const lastSent = lastNotificationSent.get(task.id);
+        // Get all assignees for this task
+        const assignees = db
+          .prepare(
+            `SELECT u.id, u.email, u.name 
+             FROM task_assignments ta
+             JOIN users u ON ta.user_id = u.id
+             WHERE ta.task_id = ?`
+          )
+          .all(task.id) as any[];
+
+        if (assignees.length === 0) continue;
+
+        // Create unique notification key for this task+date combination
+        const notificationKey = task.id;
+        const lastSent = lastNotificationSent.get(notificationKey);
         const shouldSend = !lastSent || (now.getTime() - lastSent.getTime()) >= oneDayMs;
 
         if (shouldSend) {
-          try {
-            await sendExpirationNotification({
-              recipientEmail: task.assigned_email,
-              taskTitle: task.title,
-              taskId: task.id,
-              dueDate: task.due_date,
-              assignedTo: task.assigned_name || 'User',
-              restaurantName: task.restaurant_name || 'Restaurant',
-            });
+          // Send to all assignees
+          for (const assignee of assignees) {
+            try {
+              await sendExpirationNotification({
+                recipientEmail: assignee.email,
+                taskTitle: task.title,
+                taskId: task.id,
+                dueDate: task.due_date,
+                assignedTo: assignee.name || 'User',
+                restaurantName: task.restaurant_name || 'Restaurant',
+              });
 
-            // Track that we sent notification
-            lastNotificationSent.set(task.id, now);
-
-            // Log the notification
-            const urgency = isOverdue ? '🚨 OVERDUE' : '⚠️ EXPIRING';
-            console.log(
-              `📧 ${urgency} - Sent daily reminder for task "${task.title}" (ID: ${task.id}) to ${task.assigned_email}`
-            );
-          } catch (emailError: any) {
-            console.error(`Failed to send email for task ${task.id}:`, emailError.message);
+              const urgency = isOverdue ? '🚨 OVERDUE' : '⚠️ 2/3 TIME PASSED';
+              console.log(
+                `📧 ${urgency} - Sent reminder for task "${task.title}" (ID: ${task.id}) to ${assignee.email}`
+              );
+            } catch (emailError: any) {
+              console.error(`Failed to send email for task ${task.id} to ${assignee.email}:`, emailError.message);
+            }
           }
+
+          // Track that we sent notifications for this task
+          lastNotificationSent.set(notificationKey, now);
         }
       }
     }
