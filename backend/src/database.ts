@@ -1,7 +1,22 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
-const dbPath = process.env.DATABASE_PATH || './restaurant.db';
+// Use persistent volume in production, local file in development
+const getDbPath = () => {
+  if (process.env.DATABASE_PATH) {
+    return process.env.DATABASE_PATH;
+  }
+  // Check if Railway volume exists
+  const volumePath = '/app/backend/data';
+  if (fs.existsSync(volumePath)) {
+    return path.join(volumePath, 'restaurant.db');
+  }
+  return './restaurant.db';
+};
+
+const dbPath = getDbPath();
+console.log(`📁 Database path: ${dbPath}`);
 const db: Database.Database = new Database(dbPath);
 
 // Enable foreign keys
