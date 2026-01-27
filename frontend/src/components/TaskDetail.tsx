@@ -441,8 +441,8 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
           </div>
         </div>
 
-        {/* Sticky Action Bar - Always visible at bottom */}
-        <div className="p-4 border-t border-slate-700/50 bg-slate-800/95 backdrop-blur-lg safe-area-inset-bottom">
+        {/* Action Bar - Always visible at bottom */}
+        <div className="shrink-0 p-4 border-t border-slate-700/50 bg-slate-800 safe-area-inset-bottom">
           {isEditing ? (
             <div className="flex gap-3">
               <button
@@ -464,7 +464,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
                 ) : (
                   <>
                     <span>✓</span>
-                    <span>שמירה</span>
+                    <span>שמור שינויים</span>
                   </>
                 )}
               </button>
@@ -491,14 +491,13 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
                 </button>
               )}
 
-              {!['assigned', 'in_progress'].includes(currentTask.status) && currentTask.status !== 'completed' && (
-                <button
-                  onClick={onClose}
-                  className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-xl font-bold hover:bg-slate-600 transition-colors"
-                >
-                  סגירה
-                </button>
-              )}
+              {/* Always show close button when not in special states */}
+              <button
+                onClick={onClose}
+                className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-xl font-bold hover:bg-slate-600 transition-colors"
+              >
+                סגירה
+              </button>
             </div>
           )}
         </div>
