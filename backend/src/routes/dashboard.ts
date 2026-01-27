@@ -50,24 +50,28 @@ router.get('/stats/overview', authenticateToken, authorize(['maintainer', 'admin
   }
 });
 
-// Get worker performance
+// Get worker performance (all users with tasks)
 router.get('/stats/staff-performance', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
 
+    // Query using task_assignments table for multi-assignee support
     const performance = db.prepare(`
       SELECT 
         u.id as user_id,
         u.name as user_name,
-        COUNT(t.id) as total_assigned,
+        u.role as user_role,
+        COUNT(DISTINCT ta.task_id) as total_assigned,
         SUM(CASE WHEN t.status IN ('verified', 'completed') THEN 1 ELSE 0 END) as completed,
         SUM(CASE WHEN t.status IN ('in_progress', 'waiting') THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN t.status IN ('planned', 'assigned') AND t.due_date < datetime('now') THEN 1 ELSE 0 END) as overdue
+        SUM(CASE WHEN t.status NOT IN ('verified', 'completed') AND t.due_date < datetime('now') THEN 1 ELSE 0 END) as overdue
       FROM users u
-      LEFT JOIN tasks t ON u.id = t.assigned_to AND t.restaurant_id = ?
-      WHERE u.restaurant_id = ? AND u.role = 'worker'
+      LEFT JOIN task_assignments ta ON u.id = ta.user_id
+      LEFT JOIN tasks t ON ta.task_id = t.id AND t.restaurant_id = ?
+      WHERE u.restaurant_id = ? AND u.status = 'approved'
       GROUP BY u.id
-      ORDER BY completed DESC
+      HAVING total_assigned > 0
+      ORDER BY completed DESC, total_assigned DESC
     `).all(restaurantId, restaurantId) as any[];
 
     // Add completion rate to each staff member
@@ -80,6 +84,7 @@ router.get('/stats/staff-performance', authenticateToken, authorize(['maintainer
 
     res.json(performanceWithRate);
   } catch (error) {
+    console.error('Staff performance error:', error);
     res.status(500).json({ error: 'Failed to fetch staff performance' });
   }
 });
