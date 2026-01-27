@@ -13,6 +13,7 @@ import TagManagementModal from './TagManagementModal';
 import AdminPanel from './AdminPanel';
 import UserManagementModal from './UserManagementModal';
 import { UserApprovalModal } from './UserApprovalModal';
+import Logo from './Logo';
 
 type ViewType = 'daily' | 'kanban' | 'dashboard' | 'kanban-dash';
 
@@ -95,9 +96,12 @@ export default function App() {
       {/* Header */}
       <header className={`${headerBgClass} border-b ${borderClass} sticky top-0 z-40`}>
         <div className="px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🍽️</span>
-            <h1 className={`text-lg font-bold ${textClass}`}>מעקב משימות</h1>
+          <div className="flex items-center gap-3">
+            <Logo size={36} />
+            <div>
+              <h1 className={`text-lg font-bold ${textClass} leading-tight`}>TaskFlow</h1>
+              <p className="text-xs text-teal-500 font-medium">מעקב משימות</p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

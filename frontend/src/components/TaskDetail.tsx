@@ -64,23 +64,6 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
     }
   };
 
-  const handleStartEdit = () => {
-    setIsEditing(true);
-    setEditData({
-      title: currentTask.title,
-      description: currentTask.description,
-      status: currentTask.status,
-      priority: currentTask.priority,
-      assigned_to: currentTask.assigned_to,
-      due_date: currentTask.due_date,
-      tags: currentTask.tags ? currentTask.tags.map((t: any) => t.id) : [],
-    });
-    // Scroll to top when entering edit mode
-    if (contentRef.current) {
-      contentRef.current.scrollTop = 0;
-    }
-  };
-
   if (error) {
     return (
       <div className="fixed inset-0 bg-black/80 flex items-end justify-center z-50">
@@ -104,6 +87,23 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
       </div>
     );
   }
+
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setEditData({
+      title: currentTask.title,
+      description: currentTask.description,
+      status: currentTask.status,
+      priority: currentTask.priority,
+      assigned_to: currentTask.assigned_to,
+      due_date: currentTask.due_date,
+      tags: currentTask.tags ? currentTask.tags.map((t: any) => t.id) : [],
+    });
+    // Scroll to top when entering edit mode
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  };
 
   const handleComplete = async () => {
     try {

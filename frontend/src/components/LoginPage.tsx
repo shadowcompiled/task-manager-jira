@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store';
+import Logo from './Logo';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -71,9 +72,12 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🍽️</div>
-          <h1 className="text-2xl font-bold text-white mb-2">מעקב משימות</h1>
-          <p className="text-slate-400">ניהול תפעול מסעדה</p>
+          <div className="flex justify-center mb-4">
+            <Logo size={72} />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-1">TaskFlow</h1>
+          <p className="text-teal-500 font-medium mb-1">מעקב משימות</p>
+          <p className="text-slate-400 text-sm">מערכת ניהול משימות מקצועית</p>
         </div>
 
         {/* Toggle Login/Register */}
