@@ -65,39 +65,55 @@ html {
   border-radius: 4px;
 }
 
-/* Kanban horizontal scrollbar - more visible */
+/* Kanban horizontal scrollbar - visible and prominent */
 .kanban-scroll {
   scrollbar-width: auto;
-  scrollbar-color: var(--color-primary) transparent;
+  scrollbar-color: #0d9488 #334155;
 }
 
 .kanban-scroll::-webkit-scrollbar {
-  height: 8px;
+  height: 14px;
 }
 
 .kanban-scroll::-webkit-scrollbar-track {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 4px;
-  margin: 0 8px;
+  background: #334155;
+  border-radius: 8px;
+  margin: 0 12px;
+  border: 2px solid transparent;
 }
 
 .kanban-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, var(--color-primary), #14b8a6);
-  border-radius: 4px;
-  min-width: 40px;
+  background: linear-gradient(90deg, #0d9488, #14b8a6, #0d9488);
+  border-radius: 8px;
+  min-width: 60px;
+  border: 2px solid #334155;
 }
 
 .kanban-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(90deg, #14b8a6, #0d9488);
+  background: linear-gradient(90deg, #14b8a6, #2dd4bf, #14b8a6);
+}
+
+.kanban-scroll::-webkit-scrollbar-thumb:active {
+  background: #0f766e;
 }
 
 /* Light mode kanban scrollbar */
+html.light-mode .kanban-scroll {
+  scrollbar-color: #0d9488 #e2e8f0;
+}
+
 html.light-mode .kanban-scroll::-webkit-scrollbar-track {
-  background: rgba(100, 116, 139, 0.15);
+  background: #e2e8f0;
+  border: 2px solid transparent;
 }
 
 html.light-mode .kanban-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, #0d9488, #14b8a6);
+  background: linear-gradient(90deg, #0d9488, #14b8a6, #0d9488);
+  border: 2px solid #e2e8f0;
+}
+
+html.light-mode .kanban-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #14b8a6, #2dd4bf, #14b8a6);
 }
 
 /* Touch-friendly inputs */
