@@ -310,4 +310,56 @@ router.get('/stats/tags', authenticateToken, authorize(['maintainer', 'admin']),
   }
 });
 
+// Get tasks by tag
+router.get('/stats/tasks-by-tag/:tagId', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+  try {
+    const restaurantId = req.user?.restaurantId;
+    const tagId = parseInt(req.params.tagId);
+
+    const tasks = db.prepare(`
+      SELECT 
+        t.id,
+        t.title,
+        t.description,
+        t.status,
+        t.priority,
+        t.due_date,
+        t.created_at,
+        t.updated_at,
+        creator.name as created_by_name
+      FROM tasks t
+      INNER JOIN task_tags tt ON t.id = tt.task_id
+      LEFT JOIN users creator ON t.created_by = creator.id
+      WHERE t.restaurant_id = ? AND tt.tag_id = ?
+      ORDER BY 
+        CASE t.status
+          WHEN 'in_progress' THEN 1
+          WHEN 'waiting' THEN 2
+          WHEN 'assigned' THEN 3
+          WHEN 'planned' THEN 4
+          WHEN 'completed' THEN 5
+          WHEN 'verified' THEN 6
+          ELSE 7
+        END,
+        t.due_date ASC
+    `).all(restaurantId, tagId);
+
+    // Get assignees for each task
+    const tasksWithAssignees = tasks.map((task: any) => {
+      const assignees = db.prepare(`
+        SELECT u.id, u.name, u.email
+        FROM users u
+        INNER JOIN task_assignments ta ON u.id = ta.user_id
+        WHERE ta.task_id = ?
+      `).all(task.id);
+      return { ...task, assignees };
+    });
+
+    res.json(tasksWithAssignees);
+  } catch (error) {
+    console.error('Tasks by tag error:', error);
+    res.status(500).json({ error: 'Failed to fetch tasks by tag' });
+  }
+});
+
 export default router;

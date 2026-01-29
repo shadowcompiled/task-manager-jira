@@ -63,6 +63,17 @@ interface TagStats {
   task_count: number;
 }
 
+interface TagTask {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  due_date: string;
+  created_at: string;
+  assignees: { id: number; name: string }[];
+}
+
 export default function Dashboard() {
   const { user, token } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -74,6 +85,11 @@ export default function Dashboard() {
   const [recurringStats, setRecurringStats] = useState<RecurringStats | null>(null);
   const [tagStats, setTagStats] = useState<TagStats[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Tag tasks modal state
+  const [selectedTag, setSelectedTag] = useState<TagStats | null>(null);
+  const [tagTasks, setTagTasks] = useState<TagTask[]>([]);
+  const [loadingTagTasks, setLoadingTagTasks] = useState(false);
 
   useEffect(() => {
     if (user?.role !== 'admin' && user?.role !== 'maintainer') return;
@@ -124,6 +140,23 @@ export default function Dashboard() {
 
     fetchData();
   }, [user, token]);
+
+  // Fetch tasks by tag
+  const fetchTagTasks = async (tag: TagStats) => {
+    setSelectedTag(tag);
+    setLoadingTagTasks(true);
+    try {
+      const response = await axios.get(`${API_BASE}/dashboard/stats/tasks-by-tag/${tag.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTagTasks(response.data);
+    } catch (error) {
+      console.error('שגיאה בטעינת משימות:', error);
+      setTagTasks([]);
+    } finally {
+      setLoadingTagTasks(false);
+    }
+  };
 
   if (user?.role !== 'admin' && user?.role !== 'maintainer') {
     return (
@@ -428,20 +461,24 @@ export default function Dashboard() {
             <span>🏷️</span>
             <span>שימוש בתגיות</span>
           </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על תגית לצפייה במשימות</p>
           <div className="flex flex-wrap gap-2">
             {tagStats.map((tag) => (
-              <div
+              <button
                 key={tag.id}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-white text-sm font-bold"
+                onClick={() => fetchTagTasks(tag)}
+                onPointerUp={() => fetchTagTasks(tag)}
+                className="flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold cursor-pointer hover:scale-105 active:scale-95 transition-all touch-manipulation shadow-md"
                 style={{ 
                   background: tag.color2 
                     ? `linear-gradient(135deg, ${tag.color} 0%, ${tag.color2} 100%)`
-                    : tag.color 
+                    : tag.color,
+                  WebkitTapHighlightColor: 'transparent'
                 }}
               >
                 <span>{tag.name}</span>
                 <span className="bg-white/30 px-2 py-0.5 rounded-full text-xs">{tag.task_count}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -511,6 +548,127 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Tag Tasks Modal */}
+      {selectedTag && (
+        <div 
+          className="fixed inset-0 bg-black/70 flex items-end justify-center z-50"
+          onClick={() => setSelectedTag(null)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-t-3xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div 
+              className="p-5 border-b border-slate-200 dark:border-slate-700 rounded-t-3xl"
+              style={{ 
+                background: selectedTag.color2 
+                  ? `linear-gradient(135deg, ${selectedTag.color} 0%, ${selectedTag.color2} 100%)`
+                  : selectedTag.color 
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-white">
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <span>🏷️</span>
+                    <span>{selectedTag.name}</span>
+                  </h3>
+                  <p className="text-white/80 text-sm mt-1">{selectedTag.task_count} משימות</p>
+                </div>
+                <button
+                  onClick={() => setSelectedTag(null)}
+                  onPointerUp={() => setSelectedTag(null)}
+                  className="w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl hover:bg-white/30 active:scale-95 transition-all touch-manipulation"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Tasks List */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingTagTasks ? (
+                <div className="flex items-center justify-center py-10">
+                  <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : tagTasks.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-slate-400">אין משימות בתגית זו</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {tagTasks.map((task) => {
+                    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !['completed', 'verified'].includes(task.status);
+                    return (
+                      <div 
+                        key={task.id}
+                        className={`p-4 rounded-xl border ${
+                          isOverdue 
+                            ? 'border-red-300 dark:border-red-500/50 bg-red-50 dark:bg-red-900/10' 
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50'
+                        }`}
+                      >
+                        {/* Title & Priority */}
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white text-sm">{task.title}</h4>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white ${priorityColors[task.priority] || 'bg-slate-500'}`}>
+                            {priorityLabels[task.priority] || task.priority}
+                          </span>
+                        </div>
+
+                        {/* Description */}
+                        {task.description && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 line-clamp-2">{task.description}</p>
+                        )}
+
+                        {/* Status Badge */}
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          <span className={`px-2 py-1 rounded-lg text-xs font-bold text-white ${statusColors[task.status] || 'bg-slate-500'}`}>
+                            {statusLabels[task.status] || task.status}
+                          </span>
+                          {isOverdue && (
+                            <span className="px-2 py-1 rounded-lg text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                              ⚠️ באיחור
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Meta Info */}
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                          {task.due_date && (
+                            <span className={isOverdue ? 'text-red-500 font-bold' : ''}>
+                              📅 {new Date(task.due_date).toLocaleDateString('he-IL')}
+                            </span>
+                          )}
+                          {task.assignees && task.assignees.length > 0 && (
+                            <span>
+                              👤 {task.assignees.map(a => a.name).join(', ')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Close Button */}
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setSelectedTag(null)}
+                onPointerUp={() => setSelectedTag(null)}
+                className="w-full py-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-base hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95 transition-all touch-manipulation"
+                style={{ minHeight: '52px', WebkitTapHighlightColor: 'transparent' }}
+              >
+                סגירה
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
