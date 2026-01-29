@@ -145,42 +145,60 @@ export const sendNotificationToAll = async (title: string, body: string, icon?: 
 // Scheduled notification sender
 let morningNotificationSent = false;
 let eveningNotificationSent = false;
+let lastCheckedDate = '';
+
+// Get Israel time (UTC+2 or UTC+3 depending on DST)
+const getIsraelTime = () => {
+  const now = new Date();
+  // Israel timezone offset
+  const israelTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+  return {
+    hours: israelTime.getHours(),
+    minutes: israelTime.getMinutes(),
+    dateStr: israelTime.toDateString()
+  };
+};
 
 export const checkAndSendScheduledNotifications = async () => {
-  const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-
-  // Reset flags at midnight
-  if (hours === 0 && minutes < 5) {
+  const { hours, minutes, dateStr } = getIsraelTime();
+  
+  // Reset flags at midnight Israel time (new day)
+  if (lastCheckedDate !== dateStr) {
+    console.log(`📅 New day in Israel: ${dateStr}`);
     morningNotificationSent = false;
     eveningNotificationSent = false;
+    lastCheckedDate = dateStr;
   }
 
-  // Morning notification at 9:00
+  // Morning notification at 9:00 Israel time
   if (hours === 9 && minutes < 5 && !morningNotificationSent) {
-    console.log('📲 Sending morning notification...');
-    await sendNotificationToAll(
+    console.log(`📲 Sending morning notification... (Israel time: ${hours}:${minutes})`);
+    const result = await sendNotificationToAll(
       '☀️ בוקר טוב!',
       'לא לשכוח לבצע את המשימות!'
     );
+    console.log(`📲 Morning notification result:`, result);
     morningNotificationSent = true;
   }
 
-  // Evening notification at 22:00
+  // Evening notification at 22:00 Israel time
   if (hours === 22 && minutes < 5 && !eveningNotificationSent) {
-    console.log('📲 Sending evening notification...');
-    await sendNotificationToAll(
+    console.log(`📲 Sending evening notification... (Israel time: ${hours}:${minutes})`);
+    const result = await sendNotificationToAll(
       '🌙 לילה טוב!',
       'לא לשכוח לתקף משימות שביצעת!'
     );
+    console.log(`📲 Evening notification result:`, result);
     eveningNotificationSent = true;
   }
 };
 
 // Start scheduler (runs every minute)
 export const startPushScheduler = () => {
-  console.log('📲 Push notification scheduler started');
+  const { hours, minutes } = getIsraelTime();
+  console.log(`📲 Push notification scheduler started (Israel time: ${hours}:${String(minutes).padStart(2, '0')})`);
+  console.log(`📲 Morning notification scheduled for 9:00 Israel time`);
+  console.log(`📲 Evening notification scheduled for 22:00 Israel time`);
   
   // Check immediately
   checkAndSendScheduledNotifications();
