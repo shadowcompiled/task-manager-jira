@@ -52,6 +52,21 @@ export default function App() {
     }
   };
 
+  // Auto-prompt for notifications on first login
+  useEffect(() => {
+    if (user && isSupported && !isSubscribed && !pushLoading) {
+      const hasAskedBefore = localStorage.getItem('notificationAsked');
+      if (!hasAskedBefore) {
+        // Wait a bit before asking (better UX)
+        const timer = setTimeout(() => {
+          subscribe();
+          localStorage.setItem('notificationAsked', 'true');
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user, isSupported, isSubscribed, pushLoading]);
+
   // Apply theme - uses class-based approach, ignores system preference
   useEffect(() => {
     const html = document.documentElement;
