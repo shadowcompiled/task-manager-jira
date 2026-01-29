@@ -286,9 +286,9 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
                       {/* Scroll Indicator */}
                       {taskCount > 1 && (
                         <div className="absolute bottom-1 left-4 right-4 flex items-center justify-center gap-2 text-xs text-teal-500 dark:text-teal-400 pointer-events-none">
-                          <span>←</span>
-                          <span className="bg-teal-500/20 px-2 py-0.5 rounded-full">גלול לצדדים</span>
                           <span>→</span>
+                          <span className="bg-teal-500/20 px-2 py-0.5 rounded-full">גלול לצדדים</span>
+                          <span>←</span>
                         </div>
                       )}
                     </div>
