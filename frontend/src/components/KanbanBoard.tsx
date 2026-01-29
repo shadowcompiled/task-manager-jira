@@ -165,19 +165,21 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
                 {/* Droppable Area with Horizontal Scroll */}
                 <Droppable droppableId={status.name} direction="horizontal">
                   {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`kanban-scroll overflow-x-auto overflow-y-hidden border-t border-slate-100 dark:border-slate-700/50 pb-1 ${
-                        snapshot.isDraggingOver ? 'bg-teal-50 dark:bg-teal-900/20' : ''
-                      }`}
-                    >
-                      <div className="flex gap-3 p-4 min-h-[180px]" style={{ minWidth: 'min-content' }}>
-                        {taskCount === 0 && !snapshot.isDraggingOver && (
-                          <div className="flex items-center justify-center w-full min-w-[200px] text-slate-400 dark:text-slate-500 text-sm">
-                            אין משימות
-                          </div>
-                        )}
+                    <div className="relative">
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`kanban-scroll overflow-x-auto overflow-y-hidden border-t border-slate-100 dark:border-slate-700/50 ${
+                          snapshot.isDraggingOver ? 'bg-teal-50 dark:bg-teal-900/20' : ''
+                        }`}
+                        style={{ paddingBottom: '36px' }}
+                      >
+                        <div className="flex gap-3 p-4 min-h-[180px]" style={{ minWidth: 'min-content' }}>
+                          {taskCount === 0 && !snapshot.isDraggingOver && (
+                            <div className="flex items-center justify-center w-full min-w-[200px] text-slate-400 dark:text-slate-500 text-sm">
+                              אין משימות
+                            </div>
+                          )}
 
                         {tasksByStatus[status.name]?.map((task, index) => (
                           <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
@@ -279,7 +281,16 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
                           </Draggable>
                         ))}
                         {provided.placeholder}
+                        </div>
                       </div>
+                      {/* Scroll Indicator */}
+                      {taskCount > 1 && (
+                        <div className="absolute bottom-1 left-4 right-4 flex items-center justify-center gap-2 text-xs text-teal-500 dark:text-teal-400 pointer-events-none">
+                          <span>←</span>
+                          <span className="bg-teal-500/20 px-2 py-0.5 rounded-full">גלול לצדדים</span>
+                          <span>→</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </Droppable>
