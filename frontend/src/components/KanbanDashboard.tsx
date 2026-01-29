@@ -172,7 +172,7 @@ export default function KanbanDashboard() {
                 />
                 
                 {/* Quick Status Buttons */}
-                <div className="flex gap-1 mt-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
                   {columns
                     .filter(col => col.name !== task.status)
                     .slice(0, 4)
@@ -180,7 +180,9 @@ export default function KanbanDashboard() {
                       <button
                         key={col.name}
                         onClick={() => handleStatusChange(task.id, col.name)}
-                        className="flex-shrink-0 px-3 py-1 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold whitespace-nowrap"
+                        onTouchEnd={(e) => { e.preventDefault(); handleStatusChange(task.id, col.name); }}
+                        className="flex-shrink-0 px-4 py-3 bg-slate-700 text-slate-300 rounded-xl text-sm font-bold whitespace-nowrap hover:bg-slate-600 active:bg-slate-500 active:scale-95 transition-all touch-manipulation"
+                        style={{ minHeight: '44px', WebkitTapHighlightColor: 'transparent' }}
                       >
                         {col.displayName}
                       </button>
