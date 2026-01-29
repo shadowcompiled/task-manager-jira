@@ -34,19 +34,23 @@ export default function App() {
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showUserApproval, setShowUserApproval] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  // Load theme preference
-  useEffect(() => {
+  // Initialize theme from localStorage only (not system preference)
+  const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
-    }
-  }, []);
+    // Default to dark mode if no preference saved
+    return savedTheme ? savedTheme === 'dark' : true;
+  });
 
-  // Apply theme
+  // Apply theme - uses class-based approach, ignores system preference
   useEffect(() => {
-    document.documentElement.classList.toggle('light-mode', !isDarkMode);
+    const html = document.documentElement;
+    if (isDarkMode) {
+      html.classList.add('dark');
+      html.classList.remove('light-mode');
+    } else {
+      html.classList.remove('dark');
+      html.classList.add('light-mode');
+    }
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
