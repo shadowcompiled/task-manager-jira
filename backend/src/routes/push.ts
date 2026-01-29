@@ -16,7 +16,7 @@ router.get('/vapid-public-key', (req, res) => {
 
 // Subscribe to push notifications
 router.post('/subscribe', authenticateToken, (req: AuthRequest, res: Response) => {
-  const userId = req.user?.userId;
+  const userId = req.user?.id;
   const subscription = req.body;
 
   if (!userId || !subscription || !subscription.endpoint || !subscription.keys) {
