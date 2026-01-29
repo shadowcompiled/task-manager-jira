@@ -299,17 +299,22 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
 
                 <div>
                   <label className="block text-sm font-bold text-teal-400 mb-2">סטטוס</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-3">
                     {Object.entries(statusLabels).map(([value, label]) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => setEditData({ ...editData, status: value })}
-                        className={`py-2 px-3 rounded-xl text-sm font-bold transition-all ${
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          setEditData({ ...editData, status: value });
+                        }}
+                        className={`py-4 px-4 rounded-xl text-base font-bold transition-all active:scale-95 touch-manipulation ${
                           editData.status === value 
-                            ? 'bg-teal-600 text-white ring-2 ring-teal-400' 
-                            : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600'
+                            ? 'bg-teal-600 text-white ring-2 ring-teal-400 shadow-lg' 
+                            : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600 active:bg-slate-500'
                         }`}
+                        style={{ minHeight: '52px', WebkitTapHighlightColor: 'transparent' }}
                       >
                         {label}
                       </button>
@@ -325,11 +330,16 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
                         key={value}
                         type="button"
                         onClick={() => setEditData({ ...editData, priority: value })}
-                        className={`py-2 rounded-xl text-sm font-bold text-white transition-all ${
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          setEditData({ ...editData, priority: value });
+                        }}
+                        className={`py-4 rounded-xl text-sm font-bold text-white transition-all active:scale-95 touch-manipulation ${
                           editData.priority === value 
-                            ? `${priorityColors[value]} ring-2 ring-white/50` 
-                            : 'bg-slate-700/50 opacity-60 hover:opacity-100'
+                            ? `${priorityColors[value]} ring-2 ring-white/50 shadow-lg` 
+                            : 'bg-slate-700/50 opacity-60 hover:opacity-100 active:opacity-100'
                         }`}
+                        style={{ minHeight: '48px', WebkitTapHighlightColor: 'transparent' }}
                       >
                         {label}
                       </button>

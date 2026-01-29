@@ -65,72 +65,64 @@ html {
   border-radius: 4px;
 }
 
-/* Kanban horizontal scrollbar - big, always visible */
+/* Kanban horizontal scrollbar - VERY BIG and always visible */
 .kanban-scroll {
   scrollbar-width: auto;
-  scrollbar-color: #0d9488 #1e293b;
+  scrollbar-color: #14b8a6 #0f172a;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  touch-action: pan-x;
-  overflow-x: scroll !important; /* Always show scrollbar */
+  overflow-x: scroll !important;
+  padding-bottom: 4px;
 }
 
 .kanban-scroll::-webkit-scrollbar {
-  height: 16px;
+  height: 24px !important;
   display: block !important;
+  background: #0f172a;
 }
 
 .kanban-scroll::-webkit-scrollbar-track {
-  background: #1e293b;
-  border-radius: 8px;
-  margin: 0 8px;
+  background: #0f172a;
+  border-radius: 12px;
+  border: 4px solid #1e293b;
 }
 
 .kanban-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #14b8a6, #0d9488);
-  border-radius: 8px;
-  min-width: 60px;
-  border: 3px solid #1e293b;
+  background: #14b8a6;
+  border-radius: 12px;
+  min-width: 80px;
+  border: 4px solid #0f172a;
 }
 
 .kanban-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #2dd4bf, #14b8a6);
+  background: #2dd4bf;
 }
 
 .kanban-scroll::-webkit-scrollbar-thumb:active {
-  background: #0f766e;
-}
-
-/* Always show scrollbar on webkit browsers */
-.kanban-scroll::-webkit-scrollbar-track-piece:start {
-  background: #1e293b;
-}
-
-.kanban-scroll::-webkit-scrollbar-track-piece:end {
-  background: #1e293b;
+  background: #0d9488;
 }
 
 /* Light mode kanban scrollbar */
 html.light-mode .kanban-scroll {
-  scrollbar-color: #0d9488 #e2e8f0;
+  scrollbar-color: #0d9488 #f1f5f9;
+}
+
+html.light-mode .kanban-scroll::-webkit-scrollbar {
+  background: #f1f5f9;
 }
 
 html.light-mode .kanban-scroll::-webkit-scrollbar-track {
-  background: #e2e8f0;
+  background: #f1f5f9;
+  border: 4px solid #e2e8f0;
 }
 
 html.light-mode .kanban-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #14b8a6, #0d9488);
-  border: 3px solid #e2e8f0;
+  background: #0d9488;
+  border: 4px solid #f1f5f9;
 }
 
 html.light-mode .kanban-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #2dd4bf, #14b8a6);
-}
-
-html.light-mode .kanban-scroll::-webkit-scrollbar-track-piece:start,
-html.light-mode .kanban-scroll::-webkit-scrollbar-track-piece:end {
-  background: #e2e8f0;
+  background: #14b8a6;
 }
 
 /* Touch-friendly inputs */
