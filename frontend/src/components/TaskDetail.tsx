@@ -198,7 +198,9 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleStartEdit}
-                className="px-4 py-2 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-500 transition-colors flex items-center gap-2"
+                onTouchEnd={(e) => { e.preventDefault(); handleStartEdit(); }}
+                className="px-5 py-3 bg-teal-600 text-white rounded-xl font-bold text-base hover:bg-teal-500 active:bg-teal-700 transition-colors flex items-center gap-2 touch-manipulation active:scale-95"
+                style={{ minHeight: '48px', WebkitTapHighlightColor: 'transparent' }}
               >
                 <span>✏️</span>
                 <span>עריכה</span>
@@ -206,7 +208,9 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
               {isManager && (
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="p-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-colors"
+                  onTouchEnd={(e) => { e.preventDefault(); setShowDeleteConfirm(true); }}
+                  className="p-3 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 active:bg-red-500/50 transition-colors touch-manipulation active:scale-95"
+                  style={{ minHeight: '48px', minWidth: '48px', WebkitTapHighlightColor: 'transparent' }}
                   title="מחק משימה"
                 >
                   🗑️
@@ -231,14 +235,18 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-3 bg-slate-700 text-slate-300 rounded-xl font-bold hover:bg-slate-600 transition-colors"
+                  onTouchEnd={(e) => { e.preventDefault(); setShowDeleteConfirm(false); }}
+                  className="flex-1 py-4 bg-slate-700 text-slate-300 rounded-xl font-bold text-base hover:bg-slate-600 active:bg-slate-500 transition-colors touch-manipulation active:scale-95"
+                  style={{ minHeight: '52px', WebkitTapHighlightColor: 'transparent' }}
                 >
                   ביטול
                 </button>
                 <button
                   onClick={handleDelete}
+                  onTouchEnd={(e) => { e.preventDefault(); if (!loading) handleDelete(); }}
                   disabled={loading}
-                  className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-4 bg-red-600 text-white rounded-xl font-bold text-base hover:bg-red-500 active:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 touch-manipulation active:scale-95"
+                  style={{ minHeight: '52px', WebkitTapHighlightColor: 'transparent' }}
                 >
                   {loading ? (
                     <>
@@ -402,30 +410,36 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
                 {tags.length > 0 && (
                   <div>
                     <label className="block text-sm font-bold text-teal-400 mb-2">תגיות</label>
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((tag) => (
-                        <button
-                          key={tag.id}
-                          type="button"
-                          onClick={() => {
-                            const currentTags = editData.tags || [];
-                            const newTags = currentTags.includes(tag.id)
-                              ? currentTags.filter((id: number) => id !== tag.id)
-                              : [...currentTags, tag.id];
-                            setEditData({ ...editData, tags: newTags });
-                          }}
-                          className={`px-3 py-2 rounded-xl text-sm font-bold text-white transition-all ${
-                            (editData.tags || []).includes(tag.id) ? 'ring-2 ring-white scale-105' : 'opacity-50 hover:opacity-75'
-                          }`}
-                          style={{ 
-                            background: tag.color2 
-                              ? `linear-gradient(135deg, ${tag.color} 0%, ${tag.color2} 100%)`
-                              : tag.color 
-                          }}
-                        >
-                          {tag.name}
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap gap-3">
+                      {tags.map((tag) => {
+                        const toggleTag = () => {
+                          const currentTags = editData.tags || [];
+                          const newTags = currentTags.includes(tag.id)
+                            ? currentTags.filter((id: number) => id !== tag.id)
+                            : [...currentTags, tag.id];
+                          setEditData({ ...editData, tags: newTags });
+                        };
+                        return (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={toggleTag}
+                            onTouchEnd={(e) => { e.preventDefault(); toggleTag(); }}
+                            className={`px-4 py-3 rounded-xl text-base font-bold text-white transition-all touch-manipulation active:scale-95 ${
+                              (editData.tags || []).includes(tag.id) ? 'ring-2 ring-white scale-105 shadow-lg' : 'opacity-50 hover:opacity-75 active:opacity-100'
+                            }`}
+                            style={{ 
+                              background: tag.color2 
+                                ? `linear-gradient(135deg, ${tag.color} 0%, ${tag.color2} 100%)`
+                                : tag.color,
+                              minHeight: '48px',
+                              WebkitTapHighlightColor: 'transparent'
+                            }}
+                          >
+                            {tag.name}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -566,14 +580,18 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
             <div className="flex gap-3">
               <button
                 onClick={() => { setIsEditing(false); setEditData(null); }}
-                className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-xl font-bold hover:bg-slate-600 transition-colors"
+                onTouchEnd={(e) => { e.preventDefault(); setIsEditing(false); setEditData(null); }}
+                className="flex-1 py-4 bg-slate-700 text-slate-300 rounded-xl font-bold text-base hover:bg-slate-600 active:bg-slate-500 transition-colors touch-manipulation active:scale-95"
+                style={{ minHeight: '56px', WebkitTapHighlightColor: 'transparent' }}
               >
                 ביטול
               </button>
               <button
                 onClick={handleSaveEdit}
+                onTouchEnd={(e) => { e.preventDefault(); if (!loading) handleSaveEdit(); }}
                 disabled={loading}
-                className="flex-1 py-3.5 bg-teal-600 text-white rounded-xl font-bold disabled:opacity-50 hover:bg-teal-500 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-4 bg-teal-600 text-white rounded-xl font-bold text-base disabled:opacity-50 hover:bg-teal-500 active:bg-teal-700 transition-colors flex items-center justify-center gap-2 touch-manipulation active:scale-95"
+                style={{ minHeight: '56px', WebkitTapHighlightColor: 'transparent' }}
               >
                 {loading ? (
                   <>
@@ -593,8 +611,10 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
               {isAssignedToTask && ['assigned', 'in_progress'].includes(currentTask.status) && (
                 <button
                   onClick={handleComplete}
+                  onTouchEnd={(e) => { e.preventDefault(); if (!loading) handleComplete(); }}
                   disabled={loading}
-                  className="flex-1 py-3.5 bg-teal-600 text-white rounded-xl font-bold disabled:opacity-50 hover:bg-teal-500 transition-colors"
+                  className="flex-1 py-4 bg-teal-600 text-white rounded-xl font-bold text-base disabled:opacity-50 hover:bg-teal-500 active:bg-teal-700 transition-colors touch-manipulation active:scale-95"
+                  style={{ minHeight: '56px', WebkitTapHighlightColor: 'transparent' }}
                 >
                   {loading ? 'מסמן...' : '✓ סיום משימה'}
                 </button>
@@ -603,8 +623,10 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
               {isManager && currentTask.status === 'completed' && (
                 <button
                   onClick={handleVerify}
+                  onTouchEnd={(e) => { e.preventDefault(); if (!loading) handleVerify(); }}
                   disabled={loading}
-                  className="flex-1 py-3.5 bg-emerald-600 text-white rounded-xl font-bold disabled:opacity-50 hover:bg-emerald-500 transition-colors"
+                  className="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold text-base disabled:opacity-50 hover:bg-emerald-500 active:bg-emerald-700 transition-colors touch-manipulation active:scale-95"
+                  style={{ minHeight: '56px', WebkitTapHighlightColor: 'transparent' }}
                 >
                   {loading ? 'מאמת...' : '✓ אישור משימה'}
                 </button>
@@ -613,7 +635,9 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
               {/* Always show close button when not in special states */}
               <button
                 onClick={onClose}
-                className="flex-1 py-3.5 bg-slate-700 text-slate-300 rounded-xl font-bold hover:bg-slate-600 transition-colors"
+                onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
+                className="flex-1 py-4 bg-slate-700 text-slate-300 rounded-xl font-bold text-base hover:bg-slate-600 active:bg-slate-500 transition-colors touch-manipulation active:scale-95"
+                style={{ minHeight: '56px', WebkitTapHighlightColor: 'transparent' }}
               >
                 סגירה
               </button>

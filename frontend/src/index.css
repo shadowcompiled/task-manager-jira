@@ -135,6 +135,27 @@ html.light-mode .kanban-scroll::-webkit-scrollbar-thumb:hover {
 input, select, textarea, button {
   font-size: 16px; /* Prevents iOS zoom */
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-friendly buttons */
+button {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Force scrollbar visibility on mobile */
+@media (max-width: 768px) {
+  .kanban-scroll {
+    scrollbar-width: auto !important;
+  }
+  
+  .kanban-scroll::-webkit-scrollbar {
+    height: 28px !important;
+    display: block !important;
+    -webkit-appearance: scrollbar !important;
+  }
 }
 
 input[type="checkbox"] {
