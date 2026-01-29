@@ -328,7 +328,6 @@ router.get('/stats/tasks-by-tag/:tagId', authenticateToken, authorize(['maintain
         t.priority,
         t.due_date,
         t.created_at,
-        t.updated_at,
         creator.name as created_by_name
       FROM tasks t
       INNER JOIN task_tags tt ON t.id = tt.task_id
