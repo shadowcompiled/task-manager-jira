@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import LoginPage from './LoginPage';
 import DailyTaskList from './DailyTaskList';
 import KanbanBoard from './KanbanBoard';
@@ -25,6 +26,7 @@ const roleLabels: Record<string, string> = {
 
 export default function App() {
   const { user, logout, token } = useAuthStore();
+  const { isSupported, isSubscribed, permission, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
   const [currentView, setCurrentView] = useState<ViewType>('daily');
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCreateTask, setShowCreateTask] = useState(false);
@@ -40,6 +42,15 @@ export default function App() {
     // Default to dark mode if no preference saved
     return savedTheme ? savedTheme === 'dark' : true;
   });
+
+  // Handle push notification toggle
+  const handleNotificationToggle = async () => {
+    if (isSubscribed) {
+      await unsubscribe();
+    } else {
+      await subscribe();
+    }
+  };
 
   // Apply theme - uses class-based approach, ignores system preference
   useEffect(() => {
@@ -82,6 +93,24 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Push Notifications Toggle */}
+            {isSupported && (
+              <button
+                onClick={handleNotificationToggle}
+                disabled={pushLoading}
+                className={`p-2 rounded-lg transition-all ${
+                  isSubscribed 
+                    ? 'bg-teal-600 text-white' 
+                    : isDarkMode 
+                      ? 'bg-slate-700 text-slate-400' 
+                      : 'bg-gray-200 text-gray-500'
+                } ${pushLoading ? 'opacity-50' : ''}`}
+                title={isSubscribed ? 'התראות פעילות' : 'הפעל התראות'}
+              >
+                {pushLoading ? '⏳' : isSubscribed ? '🔔' : '🔕'}
+              </button>
+            )}
+
             {/* Dark/Light Mode Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
