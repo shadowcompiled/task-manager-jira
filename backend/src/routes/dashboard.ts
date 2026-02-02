@@ -364,6 +364,66 @@ router.get('/stats/tasks-by-user/:userId', authenticateToken, authorize(['mainta
   }
 });
 
+// Get tasks by priority
+router.get('/stats/tasks-by-priority/:priority', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+  try {
+    const restaurantId = req.user?.restaurantId;
+    const priority = req.params.priority;
+
+    console.log('Fetching tasks for priority:', priority, 'restaurant:', restaurantId);
+
+    const tasks = db.prepare(`
+      SELECT 
+        t.id,
+        t.title,
+        t.description,
+        t.status,
+        t.priority,
+        t.due_date,
+        t.created_at
+      FROM tasks t
+      WHERE t.restaurant_id = ? AND t.priority = ?
+      ORDER BY 
+        CASE t.status
+          WHEN 'in_progress' THEN 1
+          WHEN 'waiting' THEN 2
+          WHEN 'assigned' THEN 3
+          WHEN 'planned' THEN 4
+          WHEN 'completed' THEN 5
+          WHEN 'verified' THEN 6
+          ELSE 7
+        END,
+        t.due_date ASC
+    `).all(restaurantId, priority);
+
+    console.log('Found tasks:', tasks.length);
+
+    // Get tags and assignees for each task
+    const tasksWithDetails = tasks.map((task: any) => {
+      const tags = db.prepare(`
+        SELECT tg.id, tg.name, tg.color, tg.color2
+        FROM tags tg
+        INNER JOIN task_tags tt ON tg.id = tt.tag_id
+        WHERE tt.task_id = ?
+      `).all(task.id);
+
+      const assignees = db.prepare(`
+        SELECT u.id, u.name
+        FROM users u
+        INNER JOIN task_assignments ta ON u.id = ta.user_id
+        WHERE ta.task_id = ?
+      `).all(task.id);
+
+      return { ...task, tags, assignees };
+    });
+
+    res.json(tasksWithDetails);
+  } catch (error) {
+    console.error('Tasks by priority error:', error);
+    res.status(500).json({ error: 'Failed to fetch tasks by priority' });
+  }
+});
+
 // Get tasks by tag
 router.get('/stats/tasks-by-tag/:tagId', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
   try {

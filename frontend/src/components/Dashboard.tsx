@@ -96,6 +96,11 @@ export default function Dashboard() {
   const [workerTasks, setWorkerTasks] = useState<any[]>([]);
   const [loadingWorkerTasks, setLoadingWorkerTasks] = useState(false);
 
+  // Priority tasks modal state
+  const [selectedPriority, setSelectedPriority] = useState<TaskByPriority | null>(null);
+  const [priorityTasks, setPriorityTasks] = useState<any[]>([]);
+  const [loadingPriorityTasks, setLoadingPriorityTasks] = useState(false);
+
   useEffect(() => {
     if (user?.role !== 'admin' && user?.role !== 'maintainer') return;
 
@@ -185,6 +190,26 @@ export default function Dashboard() {
       setWorkerTasks([]);
     } finally {
       setLoadingWorkerTasks(false);
+    }
+  };
+
+  // Fetch tasks by priority
+  const fetchPriorityTasks = async (priorityItem: TaskByPriority) => {
+    console.log('Fetching tasks for priority:', priorityItem.priority);
+    setSelectedPriority(priorityItem);
+    setLoadingPriorityTasks(true);
+    try {
+      const url = `${API_BASE}/dashboard/stats/tasks-by-priority/${priorityItem.priority}`;
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('Priority tasks:', response.data);
+      setPriorityTasks(response.data || []);
+    } catch (error: any) {
+      console.error('שגיאה בטעינת משימות לפי עדיפות:', error);
+      setPriorityTasks([]);
+    } finally {
+      setLoadingPriorityTasks(false);
     }
   };
 
@@ -433,9 +458,16 @@ export default function Dashboard() {
             <span>🎯</span>
             <span>משימות לפי עדיפות</span>
           </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על עדיפות לצפייה במשימות</p>
           <div className="space-y-3">
             {tasksByPriority.map((item) => (
-              <div key={item.priority} className="bg-white dark:bg-slate-700 rounded-xl p-3">
+              <div 
+                key={item.priority} 
+                onClick={() => fetchPriorityTasks(item)}
+                role="button"
+                tabIndex={0}
+                className="bg-white dark:bg-slate-700 rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-amber-300 dark:hover:border-amber-600 border border-transparent active:scale-[0.99] transition-all"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className={`w-3 h-3 rounded-full ${priorityColors[item.priority] || 'bg-slate-500'}`} />
@@ -824,6 +856,145 @@ export default function Dashboard() {
             <div className="p-4 border-t border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setSelectedWorker(null)}
+                className="w-full py-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-base hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95 transition-all touch-manipulation"
+                style={{ minHeight: '52px', WebkitTapHighlightColor: 'transparent' }}
+              >
+                סגירה
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Priority Tasks Modal */}
+      {selectedPriority && (
+        <div 
+          className="fixed inset-0 bg-black/70 flex items-end justify-center z-50"
+          onClick={() => setSelectedPriority(null)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-t-3xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div 
+              className="p-5 border-b border-slate-200 dark:border-slate-700 rounded-t-3xl"
+              style={{ 
+                background: selectedPriority.priority === 'critical' 
+                  ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                  : selectedPriority.priority === 'high'
+                  ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
+                  : selectedPriority.priority === 'medium'
+                  ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                  : 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-white">
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <span>🎯</span>
+                    <span>{priorityLabels[selectedPriority.priority] || selectedPriority.priority}</span>
+                  </h3>
+                  <p className="text-white/80 text-sm mt-1">{selectedPriority.count} משימות</p>
+                </div>
+                <button
+                  onClick={() => setSelectedPriority(null)}
+                  className="w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center text-xl hover:bg-white/30 active:scale-95 transition-all touch-manipulation"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Tasks List */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingPriorityTasks ? (
+                <div className="flex items-center justify-center py-10">
+                  <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : priorityTasks.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-slate-400">אין משימות בעדיפות זו</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {priorityTasks.map((task) => {
+                    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !['completed', 'verified'].includes(task.status);
+                    return (
+                      <div 
+                        key={task.id}
+                        className={`p-4 rounded-xl border ${
+                          isOverdue 
+                            ? 'border-red-300 dark:border-red-500/50 bg-red-50 dark:bg-red-900/10' 
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50'
+                        }`}
+                      >
+                        {/* Title */}
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white text-sm">{task.title}</h4>
+                        </div>
+
+                        {/* Description */}
+                        {task.description && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 line-clamp-2">{task.description}</p>
+                        )}
+
+                        {/* Status Badge */}
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          <span className={`px-2 py-1 rounded-lg text-xs font-bold text-white ${statusColors[task.status] || 'bg-slate-500'}`}>
+                            {statusLabels[task.status] || task.status}
+                          </span>
+                          {isOverdue && (
+                            <span className="px-2 py-1 rounded-lg text-xs font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                              ⚠️ באיחור
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Tags */}
+                        {task.tags && task.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {task.tags.map((tag: any) => (
+                              <span
+                                key={tag.id}
+                                className="px-2 py-0.5 rounded text-[10px] font-bold text-white"
+                                style={{ 
+                                  background: tag.color2 
+                                    ? `linear-gradient(135deg, ${tag.color} 0%, ${tag.color2} 100%)`
+                                    : tag.color 
+                                }}
+                              >
+                                {tag.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Meta Info */}
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                          {task.due_date && (
+                            <span className={isOverdue ? 'text-red-500 font-bold' : ''}>
+                              📅 {new Date(task.due_date).toLocaleDateString('he-IL')}
+                            </span>
+                          )}
+                          {task.assignees && task.assignees.length > 0 && (
+                            <span>
+                              👤 {task.assignees.map((a: any) => a.name).join(', ')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Close Button */}
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setSelectedPriority(null)}
                 className="w-full py-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-base hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95 transition-all touch-manipulation"
                 style={{ minHeight: '52px', WebkitTapHighlightColor: 'transparent' }}
               >
