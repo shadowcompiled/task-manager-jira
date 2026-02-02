@@ -36,6 +36,7 @@ export default function App() {
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showUserApproval, setShowUserApproval] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   // Initialize theme from localStorage only (not system preference)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -79,6 +80,92 @@ export default function App() {
     }
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
+
+  // Handle Android back button / ESC key
+  useEffect(() => {
+    // Check if any modal is open
+    const isAnyModalOpen = () => {
+      return selectedTask || showCreateTask || showStatusManager || showTagManager || 
+             showAdminPanel || showUserManagement || showUserApproval || showMenu || showExitConfirm;
+    };
+
+    // Close the topmost modal
+    const closeTopModal = () => {
+      if (showExitConfirm) {
+        setShowExitConfirm(false);
+        return true;
+      }
+      if (selectedTask) {
+        setSelectedTask(null);
+        return true;
+      }
+      if (showCreateTask) {
+        setShowCreateTask(false);
+        return true;
+      }
+      if (showMenu) {
+        setShowMenu(false);
+        return true;
+      }
+      if (showStatusManager) {
+        setShowStatusManager(false);
+        return true;
+      }
+      if (showTagManager) {
+        setShowTagManager(false);
+        return true;
+      }
+      if (showAdminPanel) {
+        setShowAdminPanel(false);
+        return true;
+      }
+      if (showUserManagement) {
+        setShowUserManagement(false);
+        return true;
+      }
+      if (showUserApproval) {
+        setShowUserApproval(false);
+        return true;
+      }
+      return false;
+    };
+
+    // Handle back button (popstate event)
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      if (isAnyModalOpen()) {
+        closeTopModal();
+        // Push state back to prevent actual navigation
+        window.history.pushState(null, '', window.location.href);
+      } else {
+        // Show exit confirmation
+        setShowExitConfirm(true);
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+
+    // Handle ESC key
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isAnyModalOpen()) {
+          closeTopModal();
+        } else {
+          setShowExitConfirm(true);
+        }
+      }
+    };
+
+    // Push initial state
+    window.history.pushState(null, '', window.location.href);
+    
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedTask, showCreateTask, showStatusManager, showTagManager, showAdminPanel, showUserManagement, showUserApproval, showMenu, showExitConfirm]);
 
   if (!user) {
     return <LoginPage />;
@@ -342,6 +429,42 @@ export default function App() {
           onClose={() => setShowUserApproval(false)}
           token={token || ''}
         />
+      )}
+
+      {/* Exit Confirmation Modal */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div className="text-center mb-6">
+              <span className="text-4xl">👋</span>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-3">יציאה מהאפליקציה</h3>
+              <p className="text-slate-500 dark:text-slate-400 mt-2">האם אתה בטוח שברצונך לצאת?</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                className="flex-1 py-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-base hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95 transition-all"
+                style={{ minHeight: '52px' }}
+              >
+                ביטול
+              </button>
+              <button
+                onClick={() => {
+                  // Close the app - this will work differently depending on how the app is accessed
+                  window.close();
+                  // If window.close() doesn't work (e.g., not opened as popup), go to a blank page
+                  setTimeout(() => {
+                    window.location.href = 'about:blank';
+                  }, 100);
+                }}
+                className="flex-1 py-4 bg-red-600 text-white rounded-xl font-bold text-base hover:bg-red-500 active:scale-95 transition-all"
+                style={{ minHeight: '52px' }}
+              >
+                יציאה
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 // TaskCard component - displays individual task in card format
+import { useRef } from 'react';
 
 interface TaskCardProps {
   task: any;
@@ -33,6 +34,27 @@ const priorityColors: Record<string, string> = {
 
 export default function TaskCard({ task, onClick, onEdit, showEditButton = false }: TaskCardProps) {
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !['completed', 'verified'].includes(task.status);
+  const touchStartY = useRef<number>(0);
+  const isScrolling = useRef<boolean>(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    isScrolling.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartY.current);
+    if (deltaY > 10) {
+      isScrolling.current = true;
+    }
+  };
+
+  const handleTouchEnd = (callback: () => void) => (e: React.TouchEvent) => {
+    if (!isScrolling.current) {
+      e.preventDefault();
+      callback();
+    }
+  };
 
   return (
     <div
@@ -150,7 +172,9 @@ export default function TaskCard({ task, onClick, onEdit, showEditButton = false
       <div className="flex gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
         <button
           onClick={onClick}
-          onTouchEnd={(e) => { e.preventDefault(); onClick(); }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd(onClick)}
           className="flex-1 py-4 bg-slate-100 dark:bg-slate-700 text-teal-600 dark:text-teal-400 rounded-xl text-base font-bold hover:bg-slate-200 dark:hover:bg-slate-600 active:bg-slate-300 dark:active:bg-slate-500 transition-colors active:scale-95 touch-manipulation"
           style={{ minHeight: '52px', WebkitTapHighlightColor: 'transparent' }}
         >
@@ -159,7 +183,9 @@ export default function TaskCard({ task, onClick, onEdit, showEditButton = false
         {showEditButton && onEdit && (
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(); }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd(onEdit)}
             className="flex-1 py-4 bg-teal-600 text-white rounded-xl text-base font-bold hover:bg-teal-500 active:bg-teal-700 transition-colors active:scale-95 touch-manipulation"
             style={{ minHeight: '52px', WebkitTapHighlightColor: 'transparent' }}
           >
