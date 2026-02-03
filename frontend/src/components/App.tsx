@@ -437,25 +437,28 @@ export default function App() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700">
             <div className="text-center mb-6">
               <span className="text-4xl">👋</span>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-3">מה תרצה לעשות?</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-3">יציאה מהאפליקציה</h3>
+              <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">האם לצאת? (תישאר מחובר)</p>
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
               <button
                 onClick={() => setShowExitConfirm(false)}
-                className="w-full py-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-base hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95 transition-all"
+                className="flex-1 py-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-base hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95 transition-all"
                 style={{ minHeight: '52px' }}
               >
-                חזור לאפליקציה
+                ביטול
               </button>
               <button
                 onClick={() => {
-                  logout();
                   setShowExitConfirm(false);
+                  window.close();
+                  const steps = Math.max(1, window.history.length - 1);
+                  window.history.go(-steps);
                 }}
-                className="w-full py-4 bg-red-600 text-white rounded-xl font-bold text-base hover:bg-red-500 active:scale-95 transition-all"
+                className="flex-1 py-4 bg-red-600 text-white rounded-xl font-bold text-base hover:bg-red-500 active:scale-95 transition-all"
                 style={{ minHeight: '52px' }}
               >
-                התנתק מהחשבון
+                יציאה למסך הבית
               </button>
             </div>
           </div>
