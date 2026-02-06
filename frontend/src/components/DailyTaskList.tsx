@@ -53,6 +53,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {pendingTasks.length} משימות פעילות
         </p>
+        <p className="text-xs text-teal-600 dark:text-teal-400 mt-1">📊 מיון: באיחור ← תאריך יעד ← עדיפות</p>
       </div>
 
       {/* Pending Tasks */}

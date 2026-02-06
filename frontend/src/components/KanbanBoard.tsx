@@ -69,12 +69,17 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
     fetchTasks();
   }, [user, token]);
 
-  // Organize tasks by status
+  // Priority order for sorting
+  const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+
+  // Organize tasks by status and sort by priority
   useEffect(() => {
     if (tasks && statuses.length > 0) {
       const grouped: Record<string, any[]> = {};
       statuses.forEach((status) => {
-        grouped[status.name] = tasks.filter((task) => task.status === status.name);
+        grouped[status.name] = tasks
+          .filter((task) => task.status === status.name)
+          .sort((a, b) => (priorityOrder[a.priority] ?? 4) - (priorityOrder[b.priority] ?? 4));
       });
       setTasksByStatus(grouped);
     }
@@ -117,6 +122,7 @@ export default function KanbanBoard({ onTaskSelect }: { onTaskSelect: (task: any
       <div className="p-4 pb-2">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">לוח משימות</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">גרור משימות למעלה/למטה לשינוי סטטוס, גלול ימינה/שמאלה לצפייה</p>
+        <p className="text-xs text-teal-600 dark:text-teal-400 mt-1">📊 מיון: לפי עדיפות (קריטי ← גבוה ← בינוני ← נמוך)</p>
       </div>
 
       {loading && (
