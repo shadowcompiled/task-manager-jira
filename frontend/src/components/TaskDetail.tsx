@@ -298,7 +298,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, initialEditM
             </div>
 
             {/* Edit Mode */}
-            {isEditing ? (
+            {isEditing && editData ? (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-teal-400 mb-2">כותרת</label>
@@ -591,7 +591,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, initialEditM
 
         {/* Action Bar - Always visible at bottom */}
         <div className="shrink-0 p-4 border-t border-slate-700/50 bg-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
-          {isEditing ? (
+          {isEditing && editData ? (
             <div className="flex gap-3">
               <button
                 onClick={() => { setIsEditing(false); setEditData(null); }}
