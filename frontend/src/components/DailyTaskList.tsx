@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTaskStore, useAuthStore } from '../store';
 import TaskCard from './TaskCard';
 
 export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSelect: (task: any) => void; onEditTask?: (task: any) => void }) {
   const { tasks, fetchTasks } = useTaskStore();
   const { user } = useAuthStore();
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     fetchTasks();
@@ -84,19 +85,29 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
       {/* Completed Tasks */}
       {completedTasks.length > 0 && (
         <div>
-          <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full" />
-            משימות שהושלמו ({completedTasks.length})
-          </h2>
-          <div className="space-y-3 opacity-60">
-            {completedTasks.slice(0, 5).map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onClick={() => onTaskSelect(task)}
-              />
-            ))}
-          </div>
+          <button
+            onClick={() => setShowCompleted(!showCompleted)}
+            className="w-full text-sm font-bold text-slate-400 dark:text-slate-500 mb-3 flex items-center justify-between gap-2 p-3 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full" />
+              משימות שהושלמו ({completedTasks.length})
+            </div>
+            <span className={`transition-transform ${showCompleted ? 'rotate-180' : ''}`}>
+              ▼
+            </span>
+          </button>
+          {showCompleted && (
+            <div className="space-y-3 opacity-60">
+              {completedTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => onTaskSelect(task)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

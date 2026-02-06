@@ -54,20 +54,35 @@ export default function App() {
     }
   };
 
-  // Auto-prompt for notifications on first login
+  // Notification permission popup state
+  const [showNotificationPopup, setShowNotificationPopup] = useState(false);
+  const [dontAskAgain, setDontAskAgain] = useState(false);
+
+  // Show notification popup on login if not subscribed
   useEffect(() => {
     if (user && isSupported && !isSubscribed && !pushLoading) {
-      const hasAskedBefore = localStorage.getItem('notificationAsked');
-      if (!hasAskedBefore) {
-        // Wait a bit before asking (better UX)
+      const neverAsk = localStorage.getItem('notificationNeverAsk');
+      if (!neverAsk) {
+        // Wait a bit before showing popup (better UX)
         const timer = setTimeout(() => {
-          subscribe();
-          localStorage.setItem('notificationAsked', 'true');
-        }, 2000);
+          setShowNotificationPopup(true);
+        }, 1500);
         return () => clearTimeout(timer);
       }
     }
   }, [user, isSupported, isSubscribed, pushLoading]);
+
+  const handleNotificationYes = async () => {
+    await subscribe();
+    setShowNotificationPopup(false);
+  };
+
+  const handleNotificationNo = () => {
+    if (dontAskAgain) {
+      localStorage.setItem('notificationNeverAsk', 'true');
+    }
+    setShowNotificationPopup(false);
+  };
 
   // Apply theme - uses class-based approach, ignores system preference
   useEffect(() => {
@@ -432,6 +447,46 @@ export default function App() {
           onClose={() => setShowUserApproval(false)}
           token={token || ''}
         />
+      )}
+
+      {/* Notification Permission Popup */}
+      {showNotificationPopup && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div className="text-center mb-5">
+              <span className="text-4xl">🔔</span>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-3">התראות</h3>
+              <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
+                האם לאפשר התראות? תקבל תזכורות על משימות בשעה 9:00 ו-22:00
+              </p>
+            </div>
+            
+            <label className="flex items-center gap-3 mb-5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={dontAskAgain}
+                onChange={(e) => setDontAskAgain(e.target.checked)}
+                className="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+              />
+              <span className="text-sm text-slate-600 dark:text-slate-400">אל תשאל אותי שוב</span>
+            </label>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleNotificationNo}
+                className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-base hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95 transition-all"
+              >
+                לא
+              </button>
+              <button
+                onClick={handleNotificationYes}
+                className="flex-1 py-3 bg-teal-600 text-white rounded-xl font-bold text-base hover:bg-teal-500 active:scale-95 transition-all"
+              >
+                כן, אפשר
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
