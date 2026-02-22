@@ -24,6 +24,7 @@ export default function App() {
   const { user, logout, token } = useAuthStore();
   const [currentView, setCurrentView] = useState<ViewType>('daily');
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [openTaskInEditMode, setOpenTaskInEditMode] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showStatusManager, setShowStatusManager] = useState(false);
   const [showTagManager, setShowTagManager] = useState(false);
@@ -62,7 +63,7 @@ export default function App() {
     <div className="app-shell min-h-[100dvh] h-[100dvh] max-h-[100dvh] max-w-[100vw] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden min-w-0">
       {/* Header - safe area top for notch; compact on phone */}
       <header className="app-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between gap-2 min-h-[44px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-5 h-12 sm:h-14 flex items-center justify-between gap-2 min-h-[44px]">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <h1 className="text-xl md:text-2xl font-bold text-white truncate drop-shadow-lg">🍽️ מעקב משימות</h1>
             <span className="text-xs md:text-sm text-teal-300/80 hidden sm:inline font-semibold">ניהול משימות במסעדה</span>
@@ -98,54 +99,54 @@ export default function App() {
                   <>
                     <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
                     {/* Mobile: bottom sheet */}
-                    <div className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden">
-                      <div className="flex-1 overflow-y-auto py-2">
+                    <div dir="rtl" className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden">
+                      <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5">
                         {user.role === 'admin' && (
-                          <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                          <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                             👤 משתמשים
                           </button>
                         )}
                         {user.role === 'admin' && (
-                          <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                          <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                             🔔 התראות
                           </button>
                         )}
-                        <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                           ✓ אישור משתמשים
                         </button>
-                        <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                           ⚙️ סטטוסים
                         </button>
-                        <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                           🏷️ תגיות
                         </button>
-                        <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                           👥 צוות
                         </button>
                       </div>
                     </div>
                     {/* Desktop: dropdown */}
-                    <div className="hidden md:block absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50">
+                    <div dir="rtl" className="hidden md:block absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50">
                       {user.role === 'admin' && (
-                        <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                           👤 משתמשים
                         </button>
                       )}
                       {user.role === 'admin' && (
-                        <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                           🔔 התראות
                         </button>
                       )}
-                      <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                         ✓ אישור משתמשים
                       </button>
-                      <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                         ⚙️ סטטוסים
                       </button>
-                      <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                         🏷️ תגיות
                       </button>
-                      <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                         👥 צוות
                       </button>
                     </div>
@@ -238,8 +239,8 @@ export default function App() {
         </nav>
 
       {/* Bottom Navigation for Mobile - safe area, touch targets, create button floats above */}
-      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-3 px-2 sm:px-4">
-        <div className="flex justify-around items-end min-h-[52px] min-w-0 w-full gap-1">
+      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-3 px-4 sm:px-5">
+        <div className="flex justify-around items-end min-h-[52px] min-w-0 w-full gap-1 px-2">
           <button
             onClick={() => setCurrentView('daily')}
             className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
@@ -307,7 +308,7 @@ export default function App() {
             )}
             {currentView === 'kanban' && (
               <motion.div key="kanban" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
-                <KanbanBoard onTaskSelect={setSelectedTask} />
+                <KanbanBoard onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); setOpenTaskInEditMode(true); }} />
               </motion.div>
             )}
             {currentView === 'kanban-dash' && (
@@ -330,7 +331,8 @@ export default function App() {
           <TaskDetail
             key={`task-detail-${selectedTask.id}`}
             taskId={selectedTask.id}
-            onClose={() => setSelectedTask(null)}
+            startInEditMode={openTaskInEditMode}
+            onClose={() => { setSelectedTask(null); setOpenTaskInEditMode(false); }}
             onTaskUpdate={() => {}}
           />
         )}

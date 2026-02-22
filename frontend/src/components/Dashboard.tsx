@@ -319,10 +319,10 @@ export default function Dashboard() {
   };
 
   const EmptySection = ({ title, description }: { title: string; description: string }) => (
-    <div className="rounded-2xl p-5 sm:p-6 border border-slate-600 bg-slate-800/50 text-center">
-      <p className="font-bold text-slate-400 text-sm mb-1">{title}</p>
-      <p className="text-slate-500 text-xs max-w-xs mx-auto">{description}</p>
-      <p className="text-slate-500 text-xs mt-2">אין נתונים להצגה כרגע</p>
+    <div className="rounded-2xl p-4 border border-slate-600 bg-slate-800/50 text-center min-h-0">
+      <p className="font-bold text-slate-400 text-sm mb-0.5">{title}</p>
+      <p className="text-slate-500 text-xs max-w-xs mx-auto leading-tight">{description}</p>
+      <p className="text-slate-500 text-xs mt-1">אין נתונים להצגה כרגע</p>
     </div>
   );
 
@@ -604,9 +604,9 @@ export default function Dashboard() {
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על עובד לצפייה במשימות שלו</p>
         {staffPerformance.length === 0 ? (
-          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-6 text-center shadow-sm border border-slate-200 dark:border-slate-700">
-            <p className="text-slate-400">אין נתונים להצגה</p>
-            <p className="text-sm text-slate-500 mt-1">הקצה משימות לעובדים כדי לראות סטטיסטיקות</p>
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 text-center shadow-sm border border-slate-200 dark:border-slate-700 min-h-0">
+            <p className="text-slate-400 text-sm">אין נתונים להצגה</p>
+            <p className="text-xs text-slate-500 mt-0.5">הקצה משימות לעובדים כדי לראות סטטיסטיקות</p>
           </div>
         ) : (
           <div className="space-y-3">

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTaskStore, useAuthStore } from '../store';
 import axios from 'axios';
 
-export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
+export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditMode }: any) {
   const { currentTask, fetchTask, completeTask, verifyTask, updateTask } = useTaskStore();
   const { user } = useAuthStore();
   const [comment, setComment] = useState('');
@@ -19,6 +19,20 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
       fetchTeamMembers();
     }
   }, [taskId]);
+
+  useEffect(() => {
+    if (currentTask && startInEditMode) {
+      setIsEditing(true);
+      setEditData({
+        title: currentTask.title,
+        description: currentTask.description ?? '',
+        priority: currentTask.priority,
+        status: currentTask.status,
+        due_date: currentTask.due_date ?? '',
+        assigned_to: currentTask.assigned_to ?? undefined,
+      });
+    }
+  }, [currentTask, startInEditMode]);
 
   const fetchTeamMembers = async () => {
     try {

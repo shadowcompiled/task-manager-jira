@@ -13,7 +13,7 @@ interface Status {
   order_index: number;
 }
 
-export default function KanbanBoard({ onTaskSelect }: any) {
+export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect: (task: any) => void; onEditTask?: (task: any) => void }) {
   const { tasks, fetchTasks, updateTask } = useTaskStore();
   const { user, token } = useAuthStore();
   const [tasksByStatus, setTasksByStatus] = useState<Record<string, any[]>>({});
@@ -107,14 +107,14 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`w-full flex-shrink-0 md:w-full rounded-2xl p-3 sm:p-4 transition-all duration-300 shadow-lg border-2 ${
+                    className={`w-full flex-shrink-0 md:w-full rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'
                     }`}
                     style={{ animationDelay: `${idx * 0.1}s` }}
                   >
-                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                    <div className="flex justify-between items-center mb-2">
                       <div className="flex-1 min-w-0">
                         <h2 className="font-bold text-teal-300 text-sm md:text-base mb-1 truncate">
                           {status.display_name}
@@ -124,12 +124,12 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                           style={{ backgroundColor: status.color || '#3b82f6' }}
                         />
                       </div>
-                      <span className="bg-teal-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                      <span className="bg-teal-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
                         {tasksByStatus[status.name]?.length || 0}
                       </span>
                     </div>
 
-                    <div className="space-y-2 md:space-y-3 min-h-96">
+                    <div className={`space-y-2 ${(tasksByStatus[status.name]?.length || 0) === 0 ? 'min-h-28' : 'min-h-0'}`}>
                       {tasksByStatus[status.name]?.map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                           {/* @ts-ignore - react-beautiful-dnd types */}
@@ -137,11 +137,12 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
+                              {...provided.dragHandleProps}
                               style={{
                                 ...provided.draggableProps.style,
                                 ...(snapshot.isDragging
                                   ? {
-                                      transform: `${provided.draggableProps.style?.transform ?? ''} translateY(-32px)`,
+                                      transform: `${provided.draggableProps.style?.transform ?? ''} translateY(-56px)`,
                                       opacity: 1,
                                       boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
                                       borderRadius: '12px',
@@ -149,16 +150,33 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                                     }
                                   : {}),
                               }}
-                              className={`transition-shadow duration-200 rounded-xl overflow-hidden ${
+                              className={`transition-shadow duration-200 rounded-xl ${
                                 snapshot.isDragging ? 'scale-[1.02] ring-2 ring-teal-400' : 'hover:shadow-lg'
                               }`}
                             >
-                              <div {...provided.dragHandleProps} className="touch-manipulation cursor-grab active:cursor-grabbing flex items-center justify-center py-1.5 bg-slate-700/50 border-b border-slate-600/50">
-                                <span className="text-slate-400 text-lg leading-none">⋮⋮</span>
-                              </div>
-                              <div onClick={() => onTaskSelect(task)} className="cursor-pointer">
-                                <TaskCard task={task} onClick={() => onTaskSelect(task)} />
-                              </div>
+                              <TaskCard task={task} onClick={() => (onEditTask || onTaskSelect)(task)} />
+                              {statuses.length > 0 && (
+                                <div className="flex flex-wrap gap-1 p-2 border-t border-slate-600/50" onClick={(e) => e.stopPropagation()}>
+                                  {statuses.filter((s) => s.name !== task.status).slice(0, 4).map((s) => (
+                                    <button
+                                      key={s.name}
+                                      type="button"
+                                      onClick={async () => {
+                                        try {
+                                          await updateTask(task.id, { status: s.name });
+                                          await fetchTasks();
+                                        } catch (err) {
+                                          console.error('Failed to update status', err);
+                                        }
+                                      }}
+                                      className="px-2 py-0.5 rounded text-[10px] font-bold border border-slate-500 bg-slate-700/80 text-slate-200 hover:bg-teal-600/80 hover:border-teal-500"
+                                      style={{ borderColor: s.color || undefined }}
+                                    >
+                                      {s.display_name}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )}
                         </Draggable>
@@ -166,9 +184,9 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                       {provided.placeholder}
 
                       {(!tasksByStatus[status.name] || tasksByStatus[status.name].length === 0) && (
-                        <div className="text-center py-12 text-slate-400">
-                          <p className="text-sm font-semibold">✨ אין משימות</p>
-                          <p className="text-xs mt-1">גרור משימות לכאן</p>
+                        <div className="text-center py-6 text-slate-400">
+                          <p className="text-xs font-semibold">✨ אין משימות</p>
+                          <p className="text-[10px] mt-0.5">גרור משימות לכאן</p>
                         </div>
                       )}
                     </div>
