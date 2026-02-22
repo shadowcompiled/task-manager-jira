@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided, DraggableStateSnapshot } from 'react-beautiful-dnd';
 import axios from 'axios';
 import { useAuthStore } from '../store';
 
@@ -332,11 +332,11 @@ export default function Dashboard() {
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="dashboard-sections" direction="vertical">
-          {(provided) => (
+          {(provided: DroppableProvided) => (
             <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-4">
               {sectionOrder.map((sectionId, index) => (
                 <Draggable key={sectionId} draggableId={sectionId} index={index}>
-                  {(provided, snapshot) => (
+                  {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
