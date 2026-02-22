@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import db from '../database';
+import { sql } from '../database';
 
 // VAPID keys - you should set these in environment variables
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BDVge7vM17zFt4KRNYL6ec7T5pBwWjy_i2adO0GjDOod__enfciamu0xMMvWe4zvmpSezX0f2yrOS2fda_y2so0';
@@ -20,45 +20,32 @@ webpush.setVapidDetails(
 
 export const getVapidPublicKey = () => VAPID_PUBLIC_KEY;
 
-// Save subscription to database
-export const saveSubscription = (userId: number, subscription: any) => {
+export async function saveSubscription(userId: number, subscription: any): Promise<boolean> {
   const { endpoint, keys } = subscription;
-  
   try {
-    // Delete existing subscription for this endpoint (if any)
-    db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(endpoint);
-    
-    // Insert new subscription
-    db.prepare(`
-      INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
-      VALUES (?, ?, ?, ?)
-    `).run(userId, endpoint, keys.p256dh, keys.auth);
-    
+    await sql`DELETE FROM push_subscriptions WHERE endpoint = ${endpoint}`;
+    await sql`INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth) VALUES (${userId}, ${endpoint}, ${keys.p256dh}, ${keys.auth})`;
     console.log(`✅ Push subscription saved for user ${userId}`);
     return true;
   } catch (error) {
     console.error('Error saving push subscription:', error);
     return false;
   }
-};
+}
 
-// Remove subscription from database
-export const removeSubscription = (endpoint: string) => {
+export async function removeSubscription(endpoint: string): Promise<boolean> {
   try {
-    db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(endpoint);
+    await sql`DELETE FROM push_subscriptions WHERE endpoint = ${endpoint}`;
     console.log('✅ Push subscription removed');
     return true;
   } catch (error) {
     console.error('Error removing push subscription:', error);
     return false;
   }
-};
+}
 
-// Send notification to a specific user
-export const sendNotificationToUser = async (userId: number, title: string, body: string, icon?: string) => {
-  const subscriptions = db.prepare(`
-    SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?
-  `).all(userId) as any[];
+export async function sendNotificationToUser(userId: number, title: string, body: string, icon?: string): Promise<{ successCount: number; failCount: number }> {
+  const { rows: subscriptions } = await sql`SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ${userId}`;
 
   const payload = JSON.stringify({
     title,
@@ -72,37 +59,21 @@ export const sendNotificationToUser = async (userId: number, title: string, body
   let successCount = 0;
   let failCount = 0;
 
-  for (const sub of subscriptions) {
-    const pushSubscription = {
-      endpoint: sub.endpoint,
-      keys: {
-        p256dh: sub.p256dh,
-        auth: sub.auth
-      }
-    };
-
+  for (const sub of subscriptions as any[]) {
     try {
-      await webpush.sendNotification(pushSubscription, payload);
+      await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
       successCount++;
     } catch (error: any) {
       failCount++;
       console.error(`Push notification failed for endpoint ${sub.endpoint}:`, error.message);
-      
-      // Remove invalid subscriptions (expired or unsubscribed)
-      if (error.statusCode === 404 || error.statusCode === 410) {
-        removeSubscription(sub.endpoint);
-      }
+      if (error.statusCode === 404 || error.statusCode === 410) await removeSubscription(sub.endpoint);
     }
   }
-
   return { successCount, failCount };
-};
+}
 
-// Send notification to all users
-export const sendNotificationToAll = async (title: string, body: string, icon?: string) => {
-  const subscriptions = db.prepare(`
-    SELECT endpoint, p256dh, auth FROM push_subscriptions
-  `).all() as any[];
+export async function sendNotificationToAll(title: string, body: string, icon?: string): Promise<{ successCount: number; failCount: number }> {
+  const { rows: subscriptions } = await sql`SELECT endpoint, p256dh, auth FROM push_subscriptions`;
 
   const payload = JSON.stringify({
     title,
@@ -116,31 +87,18 @@ export const sendNotificationToAll = async (title: string, body: string, icon?: 
   let successCount = 0;
   let failCount = 0;
 
-  for (const sub of subscriptions) {
-    const pushSubscription = {
-      endpoint: sub.endpoint,
-      keys: {
-        p256dh: sub.p256dh,
-        auth: sub.auth
-      }
-    };
-
+  for (const sub of subscriptions as any[]) {
     try {
-      await webpush.sendNotification(pushSubscription, payload);
+      await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
       successCount++;
     } catch (error: any) {
       failCount++;
-      
-      // Remove invalid subscriptions
-      if (error.statusCode === 404 || error.statusCode === 410) {
-        removeSubscription(sub.endpoint);
-      }
+      if (error.statusCode === 404 || error.statusCode === 410) await removeSubscription(sub.endpoint);
     }
   }
-
   console.log(`📲 Push notifications sent: ${successCount} success, ${failCount} failed`);
   return { successCount, failCount };
-};
+}
 
 // Scheduled notification sender
 let morningNotificationSent = false;

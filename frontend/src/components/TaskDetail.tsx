@@ -22,7 +22,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
   const fetchTeamMembers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/tasks/team/members`, {
+      const response = await axios.get(`${(import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api'))}/tasks/team/members`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTeamMembers(response.data);

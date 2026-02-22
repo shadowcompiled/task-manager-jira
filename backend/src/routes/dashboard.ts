@@ -1,87 +1,59 @@
 import express, { Response } from 'express';
-import db from '../database';
+import { sql } from '../database';
 import { AuthRequest, authenticateToken, authorize } from '../middleware';
 
 const router = express.Router();
 
-// Get dashboard stats for maintainer/admin
-router.get('/stats/overview', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/overview', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
-
-    const totalTasks = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ?
-    `).get(restaurantId) as any;
-
-    const completedTasks = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ? AND status = 'verified'
-    `).get(restaurantId) as any;
-
-    const overdueTasks = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks 
-      WHERE restaurant_id = ? AND status != 'verified' AND status != 'completed' 
-      AND due_date < datetime('now')
-    `).get(restaurantId) as any;
-
-    const inProgressTasks = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ? AND status = 'in_progress'
-    `).get(restaurantId) as any;
-
-    const completionRate = totalTasks.count > 0 
-      ? Math.round((completedTasks.count / totalTasks.count) * 100)
-      : 0;
-
-    // Calculate pending (not completed/verified)
-    const pendingTasks = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks 
-      WHERE restaurant_id = ? AND status NOT IN ('completed', 'verified')
-    `).get(restaurantId) as any;
-
+    const [totalRes, completedRes, overdueRes, inProgressRes, pendingRes] = await Promise.all([
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId}`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND status = 'verified'`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND status NOT IN ('verified', 'completed') AND due_date < NOW()`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND status = 'in_progress'`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND status NOT IN ('completed', 'verified')`
+    ]);
+    const totalTasks = (totalRes.rows[0] as any)?.count ?? 0;
+    const completedTasks = (completedRes.rows[0] as any)?.count ?? 0;
+    const overdueTasks = (overdueRes.rows[0] as any)?.count ?? 0;
+    const inProgressTasks = (inProgressRes.rows[0] as any)?.count ?? 0;
+    const pendingTasks = (pendingRes.rows[0] as any)?.count ?? 0;
+    const completionRate = totalTasks > 0 ? Math.round((Number(completedTasks) / Number(totalTasks)) * 100) : 0;
     res.json({
-      total_tasks: totalTasks.count,
-      completed_tasks: completedTasks.count,
+      total_tasks: Number(totalTasks),
+      completed_tasks: Number(completedTasks),
       completion_rate: completionRate,
-      overdue_tasks: overdueTasks.count,
-      pending_tasks: pendingTasks.count,
-      in_progress_tasks: inProgressTasks.count,
+      overdue_tasks: Number(overdueTasks),
+      pending_tasks: Number(pendingTasks),
+      in_progress_tasks: Number(inProgressTasks)
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
 });
 
-// Get worker performance (all users with tasks)
-router.get('/stats/staff-performance', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/staff-performance', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
-
-    // Query using task_assignments table for multi-assignee support
-    const performance = db.prepare(`
-      SELECT 
-        u.id as user_id,
-        u.name as user_name,
-        u.role as user_role,
+    const { rows } = await sql`
+      SELECT u.id as user_id, u.name as user_name, u.role as user_role,
         COUNT(DISTINCT ta.task_id) as total_assigned,
-        SUM(CASE WHEN t.status IN ('verified', 'completed') THEN 1 ELSE 0 END) as completed,
-        SUM(CASE WHEN t.status IN ('in_progress', 'waiting') THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN t.status NOT IN ('verified', 'completed') AND t.due_date < datetime('now') THEN 1 ELSE 0 END) as overdue
+        SUM(CASE WHEN t.status IN ('verified', 'completed') THEN 1 ELSE 0 END)::int as completed,
+        SUM(CASE WHEN t.status IN ('in_progress', 'waiting') THEN 1 ELSE 0 END)::int as in_progress,
+        SUM(CASE WHEN t.status NOT IN ('verified', 'completed') AND t.due_date < NOW() THEN 1 ELSE 0 END)::int as overdue
       FROM users u
       LEFT JOIN task_assignments ta ON u.id = ta.user_id
-      LEFT JOIN tasks t ON ta.task_id = t.id AND t.restaurant_id = ?
-      WHERE u.restaurant_id = ? AND u.status = 'approved'
+      LEFT JOIN tasks t ON ta.task_id = t.id AND t.restaurant_id = ${restaurantId}
+      WHERE u.restaurant_id = ${restaurantId} AND u.status = 'approved'
       GROUP BY u.id
-      HAVING total_assigned > 0
+      HAVING COUNT(DISTINCT ta.task_id) > 0
       ORDER BY completed DESC, total_assigned DESC
-    `).all(restaurantId, restaurantId) as any[];
-
-    // Add completion rate to each staff member
-    const performanceWithRate = performance.map((staff: any) => ({
+    `;
+    const performanceWithRate = (rows as any[]).map(staff => ({
       ...staff,
-      completion_rate: staff.total_assigned > 0 
-        ? Math.round((staff.completed / staff.total_assigned) * 100)
-        : 0
+      completion_rate: staff.total_assigned > 0 ? Math.round((staff.completed / staff.total_assigned) * 100) : 0
     }));
-
     res.json(performanceWithRate);
   } catch (error) {
     console.error('Staff performance error:', error);
@@ -89,274 +61,149 @@ router.get('/stats/staff-performance', authenticateToken, authorize(['maintainer
   }
 });
 
-// Get task breakdown by category/priority
-router.get('/stats/tasks-by-priority', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/tasks-by-priority', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
-
-    const byPriority = db.prepare(`
-      SELECT 
-        priority,
-        COUNT(*) as count,
-        SUM(CASE WHEN status = 'verified' THEN 1 ELSE 0 END) as completed,
-        SUM(CASE WHEN status IN ('in_progress', 'waiting') THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN status IN ('planned', 'assigned') AND due_date < datetime('now') THEN 1 ELSE 0 END) as overdue
-      FROM tasks
-      WHERE restaurant_id = ?
+    const { rows } = await sql`
+      SELECT priority, COUNT(*)::int as count,
+        SUM(CASE WHEN status = 'verified' THEN 1 ELSE 0 END)::int as completed,
+        SUM(CASE WHEN status IN ('in_progress', 'waiting') THEN 1 ELSE 0 END)::int as in_progress,
+        SUM(CASE WHEN status IN ('planned', 'assigned') AND due_date < NOW() THEN 1 ELSE 0 END)::int as overdue
+      FROM tasks WHERE restaurant_id = ${restaurantId}
       GROUP BY priority
-    `).all(restaurantId);
-
-    res.json(byPriority);
+    `;
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch task breakdown' });
   }
 });
 
-// Get overdue tasks
-router.get('/stats/overdue-tasks', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/overdue-tasks', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
-
-    const overdue = db.prepare(`
-      SELECT 
-        t.*,
-        u.name as assigned_to_name,
-        creator.name as created_by_name
+    const { rows } = await sql`
+      SELECT t.*, u.name as assigned_to_name, creator.name as created_by_name
       FROM tasks t
       LEFT JOIN users u ON t.assigned_to = u.id
       LEFT JOIN users creator ON t.created_by = creator.id
-      WHERE t.restaurant_id = ? 
-      AND t.status NOT IN ('verified', 'completed')
-      AND t.due_date < datetime('now')
+      WHERE t.restaurant_id = ${restaurantId} AND t.status NOT IN ('verified', 'completed') AND t.due_date < NOW()
       ORDER BY t.due_date ASC
-    `).all(restaurantId);
-
-    res.json(overdue);
+    `;
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch overdue tasks' });
   }
 });
 
-// Get tasks by status
-router.get('/stats/by-status', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/by-status', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
-
-    const byStatus = db.prepare(`
-      SELECT 
-        status,
-        COUNT(*) as count
-      FROM tasks
-      WHERE restaurant_id = ?
+    const { rows } = await sql`
+      SELECT status, COUNT(*)::int as count FROM tasks
+      WHERE restaurant_id = ${restaurantId}
       GROUP BY status
-      ORDER BY 
-        CASE status
-          WHEN 'planned' THEN 1
-          WHEN 'assigned' THEN 2
-          WHEN 'in_progress' THEN 3
-          WHEN 'waiting' THEN 4
-          WHEN 'completed' THEN 5
-          WHEN 'verified' THEN 6
-          ELSE 7
-        END
-    `).all(restaurantId);
-
-    res.json(byStatus);
+      ORDER BY CASE status WHEN 'planned' THEN 1 WHEN 'assigned' THEN 2 WHEN 'in_progress' THEN 3 WHEN 'waiting' THEN 4 WHEN 'completed' THEN 5 WHEN 'verified' THEN 6 ELSE 7 END
+    `;
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch tasks by status' });
   }
 });
 
-// Get today's stats
-router.get('/stats/today', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/today', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
-
-    // Tasks completed today
-    const completedToday = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks 
-      WHERE restaurant_id = ? 
-      AND status IN ('completed', 'verified')
-      AND date(updated_at) = date('now')
-    `).get(restaurantId) as any;
-
-    // Tasks due today
-    const dueToday = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks 
-      WHERE restaurant_id = ? 
-      AND date(due_date) = date('now')
-    `).get(restaurantId) as any;
-
-    // Tasks created today
-    const createdToday = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks 
-      WHERE restaurant_id = ? 
-      AND date(created_at) = date('now')
-    `).get(restaurantId) as any;
-
-    // Tasks due in next 24 hours (not completed)
-    const dueSoon = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks 
-      WHERE restaurant_id = ? 
-      AND status NOT IN ('completed', 'verified')
-      AND due_date BETWEEN datetime('now') AND datetime('now', '+1 day')
-    `).get(restaurantId) as any;
-
+    const [completedToday, dueToday, createdToday, dueSoon] = await Promise.all([
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND status IN ('completed', 'verified') AND (completed_at::date = CURRENT_DATE OR updated_at::date = CURRENT_DATE)`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND due_date::date = CURRENT_DATE`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND created_at::date = CURRENT_DATE`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND status NOT IN ('completed', 'verified') AND due_date BETWEEN NOW() AND NOW() + INTERVAL '1 day'`
+    ]);
     res.json({
-      completed_today: completedToday.count,
-      due_today: dueToday.count,
-      created_today: createdToday.count,
-      due_soon: dueSoon.count
+      completed_today: Number((completedToday.rows[0] as any)?.count ?? 0),
+      due_today: Number((dueToday.rows[0] as any)?.count ?? 0),
+      created_today: Number((createdToday.rows[0] as any)?.count ?? 0),
+      due_soon: Number((dueSoon.rows[0] as any)?.count ?? 0)
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch today stats' });
   }
 });
 
-// Get this week's stats
-router.get('/stats/weekly', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/weekly', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
-
-    // Tasks completed this week
-    const completedThisWeek = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks 
-      WHERE restaurant_id = ? 
-      AND status IN ('completed', 'verified')
-      AND date(updated_at) >= date('now', '-7 days')
-    `).get(restaurantId) as any;
-
-    // Tasks created this week
-    const createdThisWeek = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks 
-      WHERE restaurant_id = ? 
-      AND date(created_at) >= date('now', '-7 days')
-    `).get(restaurantId) as any;
-
-    // Daily breakdown for the week
-    const dailyBreakdown = db.prepare(`
-      SELECT 
-        date(created_at) as date,
-        COUNT(*) as created,
-        SUM(CASE WHEN status IN ('completed', 'verified') THEN 1 ELSE 0 END) as completed
-      FROM tasks
-      WHERE restaurant_id = ? 
-      AND date(created_at) >= date('now', '-7 days')
-      GROUP BY date(created_at)
-      ORDER BY date(created_at) DESC
-    `).all(restaurantId);
-
+    const [completedRes, createdRes, dailyRes] = await Promise.all([
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND status IN ('completed', 'verified') AND (completed_at >= NOW() - INTERVAL '7 days' OR updated_at >= NOW() - INTERVAL '7 days')`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND created_at >= NOW() - INTERVAL '7 days'`,
+      sql`
+        SELECT (created_at::date)::text as date, COUNT(*)::int as created,
+          SUM(CASE WHEN status IN ('completed', 'verified') THEN 1 ELSE 0 END)::int as completed
+        FROM tasks WHERE restaurant_id = ${restaurantId} AND created_at >= NOW() - INTERVAL '7 days'
+        GROUP BY created_at::date ORDER BY created_at::date DESC
+      `
+    ]);
     res.json({
-      completed_this_week: completedThisWeek.count,
-      created_this_week: createdThisWeek.count,
-      daily_breakdown: dailyBreakdown
+      completed_this_week: Number((completedRes.rows[0] as any)?.count ?? 0),
+      created_this_week: Number((createdRes.rows[0] as any)?.count ?? 0),
+      daily_breakdown: dailyRes.rows
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch weekly stats' });
   }
 });
 
-// Get recurring tasks stats
-router.get('/stats/recurring', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/recurring', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
-
-    const recurringStats = db.prepare(`
-      SELECT 
-        recurrence,
-        COUNT(*) as count,
-        SUM(CASE WHEN status IN ('completed', 'verified') THEN 1 ELSE 0 END) as completed
-      FROM tasks
-      WHERE restaurant_id = ? AND recurrence != 'once'
-      GROUP BY recurrence
-    `).all(restaurantId);
-
-    const totalRecurring = db.prepare(`
-      SELECT COUNT(*) as count FROM tasks 
-      WHERE restaurant_id = ? AND recurrence != 'once'
-    `).get(restaurantId) as any;
-
+    const [totalRes, byTypeRes] = await Promise.all([
+      sql`SELECT COUNT(*) as count FROM tasks WHERE restaurant_id = ${restaurantId} AND recurrence != 'once'`,
+      sql`
+        SELECT recurrence, COUNT(*)::int as count, SUM(CASE WHEN status IN ('completed', 'verified') THEN 1 ELSE 0 END)::int as completed
+        FROM tasks WHERE restaurant_id = ${restaurantId} AND recurrence != 'once'
+        GROUP BY recurrence
+      `
+    ]);
     res.json({
-      total_recurring: totalRecurring.count,
-      by_type: recurringStats
+      total_recurring: Number((totalRes.rows[0] as any)?.count ?? 0),
+      by_type: byTypeRes.rows
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch recurring stats' });
   }
 });
 
-// Get tags usage stats
-router.get('/stats/tags', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/tags', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
-
-    const tagsUsage = db.prepare(`
-      SELECT 
-        tg.id,
-        tg.name,
-        tg.color,
-        tg.color2,
-        COUNT(DISTINCT t.id) as task_count
+    const { rows } = await sql`
+      SELECT tg.id, tg.name, tg.color, tg.color2, COUNT(DISTINCT t.id)::int as task_count
       FROM tags tg
       LEFT JOIN task_tags tt ON tg.id = tt.tag_id
-      LEFT JOIN tasks t ON tt.task_id = t.id AND t.restaurant_id = ?
-      WHERE tg.restaurant_id = ?
-      GROUP BY tg.id
-      ORDER BY task_count DESC
-    `).all(restaurantId, restaurantId);
-
-    res.json(tagsUsage);
+      LEFT JOIN tasks t ON tt.task_id = t.id AND t.restaurant_id = ${restaurantId}
+      WHERE tg.restaurant_id = ${restaurantId}
+      GROUP BY tg.id ORDER BY task_count DESC
+    `;
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch tags stats' });
   }
 });
 
-// Get tasks by user (worker)
-router.get('/stats/tasks-by-user/:userId', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/tasks-by-user/:userId', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
     const userId = parseInt(req.params.userId);
-
-    console.log('Fetching tasks for user:', userId, 'restaurant:', restaurantId);
-
-    const tasks = db.prepare(`
-      SELECT 
-        t.id,
-        t.title,
-        t.description,
-        t.status,
-        t.priority,
-        t.due_date,
-        t.created_at
-      FROM tasks t
-      INNER JOIN task_assignments ta ON t.id = ta.task_id
-      WHERE t.restaurant_id = ? AND ta.user_id = ?
-      ORDER BY 
-        CASE t.status
-          WHEN 'in_progress' THEN 1
-          WHEN 'waiting' THEN 2
-          WHEN 'assigned' THEN 3
-          WHEN 'planned' THEN 4
-          WHEN 'completed' THEN 5
-          WHEN 'verified' THEN 6
-          ELSE 7
-        END,
-        t.due_date ASC
-    `).all(restaurantId, userId);
-
-    console.log('Found tasks:', tasks.length);
-
-    // Get tags for each task
-    const tasksWithTags = tasks.map((task: any) => {
-      const tags = db.prepare(`
-        SELECT tg.id, tg.name, tg.color, tg.color2
-        FROM tags tg
-        INNER JOIN task_tags tt ON tg.id = tt.tag_id
-        WHERE tt.task_id = ?
-      `).all(task.id);
-      return { ...task, tags };
-    });
-
+    const { rows: tasks } = await sql`
+      SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date, t.created_at
+      FROM tasks t INNER JOIN task_assignments ta ON t.id = ta.task_id
+      WHERE t.restaurant_id = ${restaurantId} AND ta.user_id = ${userId}
+      ORDER BY CASE t.status WHEN 'in_progress' THEN 1 WHEN 'waiting' THEN 2 WHEN 'assigned' THEN 3 WHEN 'planned' THEN 4 WHEN 'completed' THEN 5 WHEN 'verified' THEN 6 ELSE 7 END, t.due_date ASC NULLS LAST
+    `;
+    const tasksWithTags = await Promise.all((tasks as any[]).map(async task => {
+      const tagRes = await sql`SELECT tg.id, tg.name, tg.color, tg.color2 FROM tags tg INNER JOIN task_tags tt ON tg.id = tt.tag_id WHERE tt.task_id = ${task.id}`;
+      return { ...task, tags: tagRes.rows };
+    }));
     res.json(tasksWithTags);
   } catch (error) {
     console.error('Tasks by user error:', error);
@@ -364,59 +211,22 @@ router.get('/stats/tasks-by-user/:userId', authenticateToken, authorize(['mainta
   }
 });
 
-// Get tasks by priority
-router.get('/stats/tasks-by-priority/:priority', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/tasks-by-priority/:priority', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
     const priority = req.params.priority;
-
-    console.log('Fetching tasks for priority:', priority, 'restaurant:', restaurantId);
-
-    const tasks = db.prepare(`
-      SELECT 
-        t.id,
-        t.title,
-        t.description,
-        t.status,
-        t.priority,
-        t.due_date,
-        t.created_at
-      FROM tasks t
-      WHERE t.restaurant_id = ? AND t.priority = ?
-      ORDER BY 
-        CASE t.status
-          WHEN 'in_progress' THEN 1
-          WHEN 'waiting' THEN 2
-          WHEN 'assigned' THEN 3
-          WHEN 'planned' THEN 4
-          WHEN 'completed' THEN 5
-          WHEN 'verified' THEN 6
-          ELSE 7
-        END,
-        t.due_date ASC
-    `).all(restaurantId, priority);
-
-    console.log('Found tasks:', tasks.length);
-
-    // Get tags and assignees for each task
-    const tasksWithDetails = tasks.map((task: any) => {
-      const tags = db.prepare(`
-        SELECT tg.id, tg.name, tg.color, tg.color2
-        FROM tags tg
-        INNER JOIN task_tags tt ON tg.id = tt.tag_id
-        WHERE tt.task_id = ?
-      `).all(task.id);
-
-      const assignees = db.prepare(`
-        SELECT u.id, u.name
-        FROM users u
-        INNER JOIN task_assignments ta ON u.id = ta.user_id
-        WHERE ta.task_id = ?
-      `).all(task.id);
-
-      return { ...task, tags, assignees };
-    });
-
+    const { rows: tasks } = await sql`
+      SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date, t.created_at
+      FROM tasks t WHERE t.restaurant_id = ${restaurantId} AND t.priority = ${priority}
+      ORDER BY CASE t.status WHEN 'in_progress' THEN 1 WHEN 'waiting' THEN 2 WHEN 'assigned' THEN 3 WHEN 'planned' THEN 4 WHEN 'completed' THEN 5 WHEN 'verified' THEN 6 ELSE 7 END, t.due_date ASC NULLS LAST
+    `;
+    const tasksWithDetails = await Promise.all((tasks as any[]).map(async task => {
+      const [tagRes, assigneeRes] = await Promise.all([
+        sql`SELECT tg.id, tg.name, tg.color, tg.color2 FROM tags tg INNER JOIN task_tags tt ON tg.id = tt.tag_id WHERE tt.task_id = ${task.id}`,
+        sql`SELECT u.id, u.name FROM users u INNER JOIN task_assignments ta ON u.id = ta.user_id WHERE ta.task_id = ${task.id}`
+      ]);
+      return { ...task, tags: tagRes.rows, assignees: assigneeRes.rows };
+    }));
     res.json(tasksWithDetails);
   } catch (error) {
     console.error('Tasks by priority error:', error);
@@ -424,54 +234,20 @@ router.get('/stats/tasks-by-priority/:priority', authenticateToken, authorize(['
   }
 });
 
-// Get tasks by tag
-router.get('/stats/tasks-by-tag/:tagId', authenticateToken, authorize(['maintainer', 'admin']), (req: AuthRequest, res: Response) => {
+router.get('/stats/tasks-by-tag/:tagId', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.user?.restaurantId;
     const tagId = parseInt(req.params.tagId);
-    
-    console.log('Fetching tasks for tag:', tagId, 'restaurant:', restaurantId);
-
-    const tasks = db.prepare(`
-      SELECT 
-        t.id,
-        t.title,
-        t.description,
-        t.status,
-        t.priority,
-        t.due_date,
-        t.created_at,
-        creator.name as created_by_name
-      FROM tasks t
-      INNER JOIN task_tags tt ON t.id = tt.task_id
-      LEFT JOIN users creator ON t.created_by = creator.id
-      WHERE t.restaurant_id = ? AND tt.tag_id = ?
-      ORDER BY 
-        CASE t.status
-          WHEN 'in_progress' THEN 1
-          WHEN 'waiting' THEN 2
-          WHEN 'assigned' THEN 3
-          WHEN 'planned' THEN 4
-          WHEN 'completed' THEN 5
-          WHEN 'verified' THEN 6
-          ELSE 7
-        END,
-        t.due_date ASC
-    `).all(restaurantId, tagId);
-
-    console.log('Found tasks:', tasks.length);
-
-    // Get assignees for each task
-    const tasksWithAssignees = tasks.map((task: any) => {
-      const assignees = db.prepare(`
-        SELECT u.id, u.name, u.email
-        FROM users u
-        INNER JOIN task_assignments ta ON u.id = ta.user_id
-        WHERE ta.task_id = ?
-      `).all(task.id);
-      return { ...task, assignees };
-    });
-
+    const { rows: tasks } = await sql`
+      SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date, t.created_at, creator.name as created_by_name
+      FROM tasks t INNER JOIN task_tags tt ON t.id = tt.task_id LEFT JOIN users creator ON t.created_by = creator.id
+      WHERE t.restaurant_id = ${restaurantId} AND tt.tag_id = ${tagId}
+      ORDER BY CASE t.status WHEN 'in_progress' THEN 1 WHEN 'waiting' THEN 2 WHEN 'assigned' THEN 3 WHEN 'planned' THEN 4 WHEN 'completed' THEN 5 WHEN 'verified' THEN 6 ELSE 7 END, t.due_date ASC NULLS LAST
+    `;
+    const tasksWithAssignees = await Promise.all((tasks as any[]).map(async task => {
+      const assigneeRes = await sql`SELECT u.id, u.name, u.email FROM users u INNER JOIN task_assignments ta ON u.id = ta.user_id WHERE ta.task_id = ${task.id}`;
+      return { ...task, assignees: assigneeRes.rows };
+    }));
     res.json(tasksWithAssignees);
   } catch (error) {
     console.error('Tasks by tag error:', error);

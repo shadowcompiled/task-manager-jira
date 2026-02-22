@@ -1,120 +1,96 @@
 import express, { Response } from 'express';
-import db from '../database';
-import { authenticateToken, AuthRequest } from '../middleware';
+import { sql } from '../database';
+import { AuthRequest, authenticateToken } from '../middleware';
 
 const router = express.Router();
 
-// Get all statuses for a restaurant
-router.get('/restaurant/:restaurantId', authenticateToken, (req: AuthRequest, res: Response) => {
+router.get('/restaurant/:restaurantId', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const { restaurantId } = req.params;
-    const statuses = db
-      .prepare(
-        `SELECT id, name, display_name, color, order_index FROM statuses 
-         WHERE restaurant_id = ? 
-         ORDER BY order_index ASC`
-      )
-      .all(restaurantId);
-    res.json(statuses);
+    const restaurantId = req.params.restaurantId;
+    const { rows } = await sql`
+      SELECT id, name, display_name, color, order_index FROM statuses
+      WHERE restaurant_id = ${restaurantId}
+      ORDER BY order_index ASC
+    `;
+    res.json(rows);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Create a new status (admin/maintainer only)
-router.post('/', authenticateToken, (req: AuthRequest, res: Response) => {
+router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { restaurantId, name, displayName, color } = req.body;
-    
-    // Check if user is admin or maintainer
-    const user = db.prepare('SELECT role FROM users WHERE id = ?').get(req.user?.id) as any;
+    const userRows = await sql`SELECT role FROM users WHERE id = ${req.user?.id}`;
+    const user = userRows.rows[0] as any;
     if (!['admin', 'maintainer'].includes(user?.role)) {
       return res.status(403).json({ error: 'Only admins and maintainers can create statuses' });
     }
-
-    // Get the highest order_index
-    const maxOrder = db
-      .prepare('SELECT MAX(order_index) as max_order FROM statuses WHERE restaurant_id = ?')
-      .get(restaurantId) as any;
-    const orderIndex = (maxOrder?.max_order ?? -1) + 1;
-
-    const result = db
-      .prepare(
-        `INSERT INTO statuses (restaurant_id, name, display_name, color, order_index)
-         VALUES (?, ?, ?, ?, ?)`
-      )
-      .run(restaurantId, name, displayName, color || '#808080', orderIndex);
-
-    res.json({ id: result.lastInsertRowid, name, displayName, color: color || '#808080', orderIndex });
+    const maxRows = await sql`SELECT MAX(order_index) as max_order FROM statuses WHERE restaurant_id = ${restaurantId}`;
+    const maxOrder = (maxRows.rows[0] as any)?.max_order ?? -1;
+    const orderIndex = maxOrder + 1;
+    const result = await sql`
+      INSERT INTO statuses (restaurant_id, name, display_name, color, order_index)
+      VALUES (${restaurantId}, ${name}, ${displayName}, ${color || '#808080'}, ${orderIndex})
+      RETURNING id, name, display_name, color, order_index
+    `;
+    const row = result.rows[0] as any;
+    res.json({ id: row.id, name, displayName, color: color || '#808080', orderIndex });
   } catch (error: any) {
-    if (error.message.includes('UNIQUE constraint failed')) {
+    if (error.message?.includes('unique') || error.code === '23505') {
       return res.status(400).json({ error: 'Status name already exists for this restaurant' });
     }
     res.status(500).json({ error: error.message });
   }
 });
 
-// Update a status (admin/maintainer only)
-router.put('/:id', authenticateToken, (req: AuthRequest, res: Response) => {
+router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id;
     const { displayName, color } = req.body;
-
-    // Check if user is admin or maintainer
-    const user = db.prepare('SELECT role FROM users WHERE id = ?').get(req.user?.id) as any;
+    const userRows = await sql`SELECT role FROM users WHERE id = ${req.user?.id}`;
+    const user = userRows.rows[0] as any;
     if (!['admin', 'maintainer'].includes(user?.role)) {
       return res.status(403).json({ error: 'Only admins and maintainers can update statuses' });
     }
-
-    db.prepare(
-      `UPDATE statuses SET display_name = ?, color = ? WHERE id = ?`
-    ).run(displayName, color, id);
-
+    await sql`UPDATE statuses SET display_name = ${displayName}, color = ${color} WHERE id = ${id}`;
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Delete a status (admin/maintainer only)
-router.delete('/:id', authenticateToken, (req: AuthRequest, res: Response) => {
+router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
-
-    // Check if user is admin or maintainer
-    const user = db.prepare('SELECT role FROM users WHERE id = ?').get(req.user?.id) as any;
+    const id = req.params.id;
+    const userRows = await sql`SELECT role FROM users WHERE id = ${req.user?.id}`;
+    const user = userRows.rows[0] as any;
     if (!['admin', 'maintainer'].includes(user?.role)) {
       return res.status(403).json({ error: 'Only admins and maintainers can delete statuses' });
     }
-
-    // Check if status is being used
-    const count = db.prepare('SELECT COUNT(*) as count FROM tasks WHERE status = (SELECT name FROM statuses WHERE id = ?)').get(id) as any;
-    if (count.count > 0) {
+    const countRows = await sql`SELECT COUNT(*) as count FROM tasks WHERE status = (SELECT name FROM statuses WHERE id = ${id})`;
+    const count = (countRows.rows[0] as any)?.count ?? 0;
+    if (Number(count) > 0) {
       return res.status(400).json({ error: 'Cannot delete status that has tasks' });
     }
-
-    db.prepare('DELETE FROM statuses WHERE id = ?').run(id);
+    await sql`DELETE FROM statuses WHERE id = ${id}`;
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Reorder statuses
-router.post('/reorder', authenticateToken, (req: AuthRequest, res: Response) => {
+router.post('/reorder', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { statuses } = req.body;
-
-    // Check if user is admin or maintainer
-    const user = db.prepare('SELECT role FROM users WHERE id = ?').get(req.user?.id) as any;
+    const userRows = await sql`SELECT role FROM users WHERE id = ${req.user?.id}`;
+    const user = userRows.rows[0] as any;
     if (!['admin', 'maintainer'].includes(user?.role)) {
       return res.status(403).json({ error: 'Only admins and maintainers can reorder statuses' });
     }
-
-    statuses.forEach((status: any, index: number) => {
-      db.prepare('UPDATE statuses SET order_index = ? WHERE id = ?').run(index, status.id);
-    });
-
+    for (let i = 0; i < statuses.length; i++) {
+      await sql`UPDATE statuses SET order_index = ${i} WHERE id = ${(statuses[i] as any).id}`;
+    }
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

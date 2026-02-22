@@ -3,15 +3,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useTaskStore, useAuthStore } from '../store';
 import TaskCard from './TaskCard';
 import axios from 'axios';
-
-const statusLabels: Record<string, string> = {
-  planned: 'מתוכנן',
-  assigned: 'הוקצה',
-  in_progress: 'בתהליך',
-  waiting: 'בהמתנה',
-  completed: 'הושלם',
-  verified: 'אומת',
-};
+import { API_BASE } from '../store';
 
 interface Status {
   id: number;
@@ -28,16 +20,12 @@ export default function KanbanBoard({ onTaskSelect }: any) {
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // DEBUG: Log user and token for troubleshooting
-  console.log('KANBAN DEBUG user:', user);
-  console.log('KANBAN DEBUG token:', token);
-
   useEffect(() => {
     if (!user || !token) return;
     const fetchStatuses = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`/api/statuses/restaurant/${user.restaurant_id}`, {
+        const res = await axios.get(`${API_BASE}/statuses/restaurant/${user.restaurant_id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setStatuses(res.data);
@@ -50,60 +38,31 @@ export default function KanbanBoard({ onTaskSelect }: any) {
     fetchStatuses();
   }, [user, token]);
 
-  return (
-    <div className="w-full flex flex-col gap-4">
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div
-          className="flex gap-4 overflow-x-auto pb-2"
-          style={{ WebkitOverflowScrolling: 'touch' }}
-        >
-          {statuses.map((status, idx) => (
-            <Droppable key={status.name} droppableId={status.name}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`flex-shrink-0 bg-white rounded-lg shadow-md p-2 min-h-[200px] transition-all duration-200 ${snapshot.isDraggingOver ? 'ring-2 ring-blue-400' : ''}`}
-                  style={{ minWidth: 180, maxWidth: 260, width: '80vw', maxHeight: '80vh' }}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-base md:text-lg" style={{ backgroundColor: status.color || '#3b82f6', color: '#fff', padding: '4px 12px', borderRadius: 8 }}>
-                      {status.display_name}
-                    </span>
-                    <span className="text-xs text-gray-500">{tasksByStatus[status.name]?.length || 0}</span>
-                  </div>
-                  {tasksByStatus[status.name]?.map((task, i) => (
-                    <Draggable key={task.id} draggableId={task.id.toString()} index={i}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`mb-2 ${snapshot.isDragging ? 'ring-2 ring-blue-400' : ''}`}
-                          style={{ touchAction: 'manipulation' }}
-                        >
-                          <TaskCard task={task} onClick={() => onTaskSelect(task)} />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          ))}
-        </div>
-      </DragDropContext>
-    </div>
-  );
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
-      return;
-    }
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
-    // @ts-ignore - react-beautiful-dnd types
+  useEffect(() => {
+    const byStatus: Record<string, any[]> = {};
+    statuses.forEach((s) => { byStatus[s.name] = []; });
+    const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+    tasks.forEach((t) => {
+      if (byStatus[t.status]) {
+        byStatus[t.status].push(t);
+      }
+    });
+    Object.keys(byStatus).forEach((status) => {
+      byStatus[status].sort((a, b) => (priorityOrder[a.priority] ?? 4) - (priorityOrder[b.priority] ?? 4));
+    });
+    setTasksByStatus(byStatus);
+  }, [tasks, statuses]);
+
+  const handleDragEnd = async (result: any) => {
+    const { source, destination } = result;
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
     const taskId = parseInt(result.draggableId);
-    const newStatus = destination.droppableId as any;
-
+    const newStatus = destination.droppableId;
     try {
       setLoading(true);
       await updateTask(taskId, { status: newStatus });

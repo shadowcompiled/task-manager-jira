@@ -20,7 +20,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
 
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/auth/register`,
+        `${import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api')}/auth/register`,
         {
           name,
           email,

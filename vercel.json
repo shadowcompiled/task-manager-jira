@@ -1,33 +1,11 @@
 {
-  "version": 2,
-  "buildCommand": "npm run build",
-  "builds": [
-    {
-      "src": "backend/dist/server.js",
-      "use": "@vercel/node",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
-    },
-    {
-      "src": "frontend/dist/**",
-      "use": "@vercel/static"
-    }
+  "buildCommand": "cd backend && npm install && npm run build && cd ../frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/dist/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/dist/index.html"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "JWT_SECRET": "@JWT_SECRET",
-    "DATABASE_PATH": "@DATABASE_PATH",
-    "PORT": "3000"
-  }
+  "crons": [
+    { "path": "/api/cron/daily-notifications", "schedule": "0 * * * *" },
+    { "path": "/api/cron/push-scheduled", "schedule": "* * * * *" }
+  ]
 }

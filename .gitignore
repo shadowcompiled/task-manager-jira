@@ -6,6 +6,9 @@ node_modules/
 # Build outputs
 dist/
 build/
+frontend/src/**/*.js
+frontend/src/**/*.d.ts
+frontend/src/**/*.js.map
 
 # Environment variables - NEVER commit these!
 .env

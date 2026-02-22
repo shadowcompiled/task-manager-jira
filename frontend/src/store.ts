@@ -7,8 +7,8 @@ if (token) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 
-// API Base URL - uses same domain in production, localhost in development
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// API Base URL - same origin /api in production, localhost in dev unless VITE_API_URL set
+export const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
 // Unified roles: backend uses 'admin', 'maintainer', 'worker'; frontend used 'admin', 'manager', 'staff'.
 // Allow all for compatibility and migration.

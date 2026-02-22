@@ -9,7 +9,7 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
   useEffect(() => {
     if (isOpen) {

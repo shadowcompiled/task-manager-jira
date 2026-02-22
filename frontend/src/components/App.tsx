@@ -1,6 +1,3 @@
-  // DEBUG: Log user and token for troubleshooting
-  console.log('DEBUG user:', user);
-  console.log('DEBUG token:', token);
 import { useState } from 'react';
 import { useAuthStore } from '../store';
 import LoginPage from './LoginPage';
@@ -15,6 +12,7 @@ import TagManagementModal from './TagManagementModal';
 import AdminPanel from './AdminPanel';
 import UserManagementModal from './UserManagementModal';
 import { UserApprovalModal } from './UserApprovalModal';
+import UsersNotificationStatusModal from './UsersNotificationStatusModal';
 
 type ViewType = 'daily' | 'kanban' | 'dashboard' | 'kanban-dash';
 
@@ -29,6 +27,8 @@ export default function App() {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showUserApproval, setShowUserApproval] = useState(false);
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+  const [showUsersNotificationStatus, setShowUsersNotificationStatus] = useState(false);
 
   if (!user) {
     return <LoginPage />;
@@ -49,53 +49,64 @@ export default function App() {
               <p className="font-bold text-white text-sm drop-shadow-lg">{user.name}</p>
               <p className="text-xs text-teal-300/80 capitalize font-semibold">{user.role}</p>
             </div>
+            {/* Mobile: single menu button */}
             {(user.role === 'admin' || user.role === 'manager' || user.role === 'maintainer') && (
-              <>
-                {user.role === 'admin' && (
-                  <button
-                    onClick={() => setShowAdminPanel(true)}
-                    className="px-2 md:px-3 py-2 bg-teal-600/80 hover:bg-teal-700 text-white rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-95 text-xs md:text-sm font-bold whitespace-nowrap backdrop-blur shadow-lg hover:shadow-teal-500/50"
-                    title="Add new user"
-                  >
-                    👤 Users
-                  </button>
+              <div className="md:hidden relative">
+                <button
+                  onClick={() => setShowHeaderMenu(!showHeaderMenu)}
+                  className="p-2 rounded-lg bg-slate-600/80 text-white min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  title="Menu"
+                  aria-label="Open menu"
+                >
+                  ⋯
+                </button>
+                {showHeaderMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
+                    <div className="absolute right-0 top-full mt-1 py-2 w-48 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50">
+                      {user.role === 'admin' && (
+                        <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
+                          👤 Users
+                        </button>
+                      )}
+                      {user.role === 'admin' && (
+                        <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
+                          🔔 Notifications
+                        </button>
+                      )}
+                      <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
+                        ✓ Approve
+                      </button>
+                      <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
+                        ⚙️ Status
+                      </button>
+                      <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
+                        🏷️ Tags
+                      </button>
+                      <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
+                        👥 Team
+                      </button>
+                    </div>
+                  </>
                 )}
-                <button
-                  onClick={() => setShowUserApproval(true)}
-                  className="px-2 md:px-3 py-2 bg-orange-600/80 hover:bg-orange-700 text-white rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-95 text-xs md:text-sm font-bold whitespace-nowrap backdrop-blur shadow-lg hover:shadow-orange-500/50"
-                  title="Approve pending users"
-                >
-                  ✓ Approve
-                </button>
-                <button
-                  onClick={() => setShowStatusManager(true)}
-                  className="px-2 md:px-3 py-2 bg-cyan-600/80 hover:bg-cyan-700 text-white rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-95 text-xs md:text-sm font-bold whitespace-nowrap backdrop-blur shadow-lg hover:shadow-cyan-500/50"
-                  title="Manage statuses"
-                >
-                  ⚙️ Status
-                </button>
-                <button
-                  onClick={() => setShowTagManager(true)}
-                  className="px-2 md:px-3 py-2 bg-emerald-600/80 hover:bg-emerald-700 text-white rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-95 text-xs md:text-sm font-bold whitespace-nowrap backdrop-blur shadow-lg hover:shadow-emerald-500/50"
-                  title="Manage tags"
-                >
-                  🏷️ Tags
-                </button>
-              </>
+              </div>
             )}
+            {/* Desktop: all buttons */}
             {(user.role === 'admin' || user.role === 'manager' || user.role === 'maintainer') && (
-              <button
-                onClick={() => setShowUserManagement(true)}
-                className="px-2 md:px-3 py-2 bg-purple-600/80 hover:bg-purple-700 text-white rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-95 text-xs md:text-sm font-bold whitespace-nowrap backdrop-blur shadow-lg hover:shadow-purple-500/50"
-                title="Manage team users"
-              >
-                👥 Team
-              </button>
+              <div className="hidden md:flex items-center gap-2">
+                {user.role === 'admin' && (
+                  <button onClick={() => setShowAdminPanel(true)} className="px-3 py-2 bg-teal-600/80 hover:bg-teal-700 text-white rounded-lg text-sm font-bold whitespace-nowrap" title="Add new user">👤 Users</button>
+                )}
+                {user.role === 'admin' && (
+                  <button onClick={() => setShowUsersNotificationStatus(true)} className="px-3 py-2 bg-amber-600/80 hover:bg-amber-700 text-white rounded-lg text-sm font-bold whitespace-nowrap" title="Users & notifications">🔔</button>
+                )}
+                <button onClick={() => setShowUserApproval(true)} className="px-3 py-2 bg-orange-600/80 hover:bg-orange-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">✓ Approve</button>
+                <button onClick={() => setShowStatusManager(true)} className="px-3 py-2 bg-cyan-600/80 hover:bg-cyan-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">⚙️ Status</button>
+                <button onClick={() => setShowTagManager(true)} className="px-3 py-2 bg-emerald-600/80 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">🏷️ Tags</button>
+                <button onClick={() => setShowUserManagement(true)} className="px-3 py-2 bg-purple-600/80 hover:bg-purple-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">👥 Team</button>
+              </div>
             )}
-            <button
-              onClick={logout}
-              className="px-2 md:px-4 py-2 bg-red-600/80 hover:bg-red-700 text-white rounded-lg transition-all duration-300 transform hover:scale-110 active:scale-95 text-xs md:text-sm font-bold backdrop-blur shadow-lg hover:shadow-red-500/50"
-            >
+            <button onClick={logout} className="px-3 md:px-4 py-2 bg-red-600/80 hover:bg-red-700 text-white rounded-lg text-sm font-bold min-h-[44px]">
               🔓 Logout
             </button>
           </div>
@@ -292,6 +303,11 @@ export default function App() {
           onClose={() => setShowUserApproval(false)}
           token={token || ''}
         />
+      )}
+
+      {/* Users & Notifications Status (admin only) */}
+      {showUsersNotificationStatus && user?.role === 'admin' && (
+        <UsersNotificationStatusModal onClose={() => setShowUsersNotificationStatus(false)} />
       )}
     </div>
   );
