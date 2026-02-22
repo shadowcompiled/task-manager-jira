@@ -257,17 +257,17 @@ export default function KanbanDashboard() {
       {loading ? (
         <div className="text-center text-gray-600 py-12 font-bold">⏳ טוען משימות...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-hidden md:overflow-x-auto pb-6 min-w-0 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 overflow-x-hidden md:overflow-x-auto pb-6 min-w-0 w-full">
           {columns.map((column) => (
             <div
               key={column.id}
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(column.name)}
-              className="kanban-column bg-white rounded-lg shadow-lg border-2 border-gray-200 p-4 flex flex-col animate-slideIn hover:shadow-xl transition-shadow"
+              className="kanban-column bg-white rounded-lg shadow-lg border-2 border-gray-200 p-3 flex flex-col animate-slideIn hover:shadow-xl transition-shadow"
               style={{ borderTopColor: column.color }}
             >
               {/* Column Header */}
-              <div className="mb-4 pb-3 border-b-2" style={{ borderBottomColor: column.color }}>
+              <div className="mb-2 pb-2 border-b-2" style={{ borderBottomColor: column.color }}>
                 <h2
                   className="font-bold text-lg text-white px-3 py-2 rounded-lg text-center"
                   style={{ backgroundColor: column.color }}
@@ -280,14 +280,14 @@ export default function KanbanDashboard() {
               </div>
 
               {/* Tasks */}
-              <div className="space-y-3 flex-1 overflow-y-auto">
+              <div className="space-y-2 flex-1 overflow-y-auto">
                 {column.tasks.length > 0 ? (
                   column.tasks.map((task) => (
                     <div
                       key={task.id}
                       draggable
                       onDragStart={() => handleDragStart(task)}
-                      className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-lg p-3 cursor-move hover:shadow-lg hover:border-blue-400 transition-all duration-200 ease-out transform hover:scale-[1.02] active:scale-[0.98]"
+                      className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-lg p-2.5 cursor-move hover:shadow-lg hover:border-blue-400 transition-all duration-200 ease-out transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                       {/* Task Title */}
                       <h3 className="font-bold text-gray-800 text-sm mb-2 line-clamp-2">
@@ -346,7 +346,7 @@ export default function KanbanDashboard() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-gray-400 py-8 text-sm font-semibold">
+                  <p className="text-center text-gray-400 py-3 text-xs font-semibold">
                     אין משימות
                   </p>
                 )}

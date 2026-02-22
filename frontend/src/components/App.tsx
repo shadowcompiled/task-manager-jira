@@ -98,8 +98,8 @@ export default function App() {
                 {showHeaderMenu && (
                   <>
                     <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
-                    {/* Mobile: bottom sheet */}
-                    <div dir="rtl" className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden">
+                    {/* Mobile: right-aligned menu panel */}
+                    <div dir="rtl" className="md:hidden fixed right-0 bottom-0 top-auto z-50 w-72 min-w-[16rem] max-w-[85vw] max-h-[70vh] rounded-tl-2xl rounded-bl-2xl bg-slate-800 border border-b-0 border-l border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden">
                       <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5" dir="rtl">
                         {user.role === 'admin' && (
                           <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
@@ -240,66 +240,68 @@ export default function App() {
 
       {/* Bottom Navigation for Mobile - safe area, touch targets, create button floats above */}
       <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-3 px-5 sm:px-6">
-        <div className="flex justify-around items-end min-h-[52px] min-w-0 w-full gap-1 px-3">
-          <button
-            onClick={() => setCurrentView('daily')}
-            className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
-              currentView === 'daily'
-                ? 'text-teal-300 bg-slate-700/50'
-                : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-            }`}
-          >
-            <span className="truncate w-full">📋 יומי</span>
-          </button>
-          <button
-            onClick={() => setCurrentView('kanban')}
-            className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
-              currentView === 'kanban'
-                ? 'text-teal-300 bg-slate-700/50'
-                : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-            }`}
-          >
-            <span className="truncate w-full">🧱 לוח</span>
-          </button>
-          {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
-            <>
-              {/* Floating round create button - sits above the bar */}
-              <motion.button
-                onClick={() => setShowCreateTask(true)}
-                className="create-btn-float flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 -mt-6 sm:-mt-7 rounded-full text-white bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg border-4 border-slate-800 hover:from-teal-600 hover:to-emerald-700 flex flex-col items-center justify-center touch-manipulation z-10"
-                title="משימה חדשה"
-                aria-label="צור משימה"
-                whileTap={{ scale: 0.92 }}
-              >
-                <span className="text-2xl sm:text-3xl leading-none">➕</span>
-              </motion.button>
-              <button
-                onClick={() => setCurrentView('kanban-dash')}
-                className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
-                  currentView === 'kanban-dash'
-                    ? 'text-teal-300 bg-slate-700/50'
-                    : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-                }`}
-              >
-                <span className="truncate w-full">🎯 משימות</span>
-              </button>
-              <button
-                onClick={() => setCurrentView('dashboard')}
-                className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
-                  currentView === 'dashboard'
-                    ? 'text-teal-300 bg-slate-700/50'
-                    : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-                }`}
-              >
-                <span className="truncate w-full">📊 סטטיסטיקה</span>
-              </button>
-            </>
-          )}
+        <div className="flex justify-center w-full">
+          <div className="flex justify-around items-end min-h-[52px] min-w-0 w-full gap-1 px-3 max-w-sm">
+            <button
+              onClick={() => setCurrentView('daily')}
+              className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
+                currentView === 'daily'
+                  ? 'text-teal-300 bg-slate-700/50'
+                  : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+              }`}
+            >
+              <span className="truncate w-full">📋 יומי</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('kanban')}
+              className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
+                currentView === 'kanban'
+                  ? 'text-teal-300 bg-slate-700/50'
+                  : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+              }`}
+            >
+              <span className="truncate w-full">🧱 לוח</span>
+            </button>
+            {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
+              <>
+                {/* Floating round create button - half in footer, half out */}
+                <motion.button
+                  onClick={() => setShowCreateTask(true)}
+                  className="create-btn-float flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 -mt-8 sm:-mt-9 rounded-full text-white bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg border-4 border-slate-800 hover:from-teal-600 hover:to-emerald-700 flex flex-col items-center justify-center touch-manipulation z-10"
+                  title="משימה חדשה"
+                  aria-label="צור משימה"
+                  whileTap={{ scale: 0.92 }}
+                >
+                  <span className="text-2xl sm:text-3xl leading-none">➕</span>
+                </motion.button>
+                <button
+                  onClick={() => setCurrentView('kanban-dash')}
+                  className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
+                    currentView === 'kanban-dash'
+                      ? 'text-teal-300 bg-slate-700/50'
+                      : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+                  }`}
+                >
+                  <span className="truncate w-full">🎯 משימות</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('dashboard')}
+                  className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
+                    currentView === 'dashboard'
+                      ? 'text-teal-300 bg-slate-700/50'
+                      : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+                  }`}
+                >
+                  <span className="truncate w-full">📊 סטטיסטיקה</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
         {/* Main Content - scrollable; phone: padding above bottom nav, iOS momentum scroll */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(5.5rem,calc(5rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(6rem,calc(5.5rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
           <AnimatePresence mode="wait">
             {currentView === 'daily' && (
               <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
