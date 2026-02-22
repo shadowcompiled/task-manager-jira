@@ -93,7 +93,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
 
   return (
     <div
-      className="p-3 sm:p-4 max-w-2xl mx-auto w-full min-w-0"
+      className="p-4 sm:p-4 max-w-2xl mx-auto w-full min-w-0 pb-6"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -129,7 +129,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
           <button
             key={f}
             onClick={() => setQuickFilter(f)}
-            className={`shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+            className={`shrink-0 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-bold transition-colors touch-manipulation ${
               quickFilter === f
                 ? 'bg-teal-600 text-white'
                 : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
@@ -157,7 +157,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
           </div>
         ) : (
           <motion.div
-            className="space-y-3"
+            className="space-y-3 sm:space-y-4"
             variants={listVariants}
             initial="hidden"
             animate="visible"

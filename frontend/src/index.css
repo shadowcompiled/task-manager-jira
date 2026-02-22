@@ -340,6 +340,25 @@ html.light-mode body {
   color: var(--color-text);
 }
 
+/* App shell, header and bottom bar - full background in light mode */
+html.light-mode .app-shell {
+  background: linear-gradient(to bottom right, #f5f4f1 0%, #faf9f7 50%, #f5f4f1 100%) !important;
+}
+html.light-mode .app-header {
+  background: linear-gradient(to right, #ffffff 0%, #f5f4f1 50%, #ffffff 100%) !important;
+  border-color: #e8e6e1;
+}
+html.light-mode .app-bottom-bar {
+  background: linear-gradient(to right, #ffffff 0%, #f5f4f1 50%, #ffffff 100%) !important;
+  border-color: #e8e6e1;
+}
+html.light-mode .create-btn-float {
+  border-color: #f5f4f1 !important;
+}
+html.light-mode .kanban-page {
+  background: linear-gradient(to bottom right, #f5f4f1 0%, #faf9f7 50%, #f5f4f1 100%) !important;
+}
+
 /* Scrollbar for light mode */
 html.light-mode ::-webkit-scrollbar-track {
   background: #f5f4f1;

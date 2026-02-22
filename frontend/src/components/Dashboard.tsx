@@ -318,12 +318,16 @@ export default function Dashboard() {
     worker: 'עובד',
   };
 
-  const EmptySection = () => (
-    <div className="rounded-2xl p-6 border border-slate-600 bg-slate-800/50 text-center text-slate-500 text-sm">אין נתונים</div>
+  const EmptySection = ({ title, description }: { title: string; description: string }) => (
+    <div className="rounded-2xl p-5 sm:p-6 border border-slate-600 bg-slate-800/50 text-center">
+      <p className="font-bold text-slate-400 text-sm mb-1">{title}</p>
+      <p className="text-slate-500 text-xs max-w-xs mx-auto">{description}</p>
+      <p className="text-slate-500 text-xs mt-2">אין נתונים להצגה כרגע</p>
+    </div>
   );
 
   return (
-    <div className="p-3 sm:p-4 pb-6 max-w-2xl mx-auto w-full min-w-0">
+    <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-2xl mx-auto w-full min-w-0">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">סטטיסטיקה</h1>
@@ -342,7 +346,7 @@ export default function Dashboard() {
                       {...provided.draggableProps}
                       className={`rounded-2xl overflow-hidden border border-slate-600 bg-slate-800/40 transition-shadow ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-teal-500' : ''}`}
                     >
-                      <div {...provided.dragHandleProps} className="flex items-center justify-center py-2 bg-slate-700/60 border-b border-slate-600 cursor-grab active:cursor-grabbing text-slate-400 hover:text-teal-400 touch-manipulation select-none">
+                      <div {...provided.dragHandleProps} className="flex items-center justify-center min-h-[44px] py-3 bg-slate-700/60 border-b border-slate-600 cursor-grab active:cursor-grabbing text-slate-400 hover:text-teal-400 touch-manipulation select-none">
                         <span className="text-lg">⋮⋮</span>
                       </div>
                       <div className="p-0">
@@ -371,7 +375,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-              ) : <EmptySection />)}
+              ) : <EmptySection title="📅 היום" description="משימות שהושלמו היום, עם תאריך יעד היום, שנוצרו היום או שמועדן ב-24 השעות הקרובות" />)}
               {sectionId === 'mainStats' && (stats ? (
         <div className="grid grid-cols-2 gap-3 p-4">
           {/* Total Tasks */}
@@ -418,7 +422,7 @@ export default function Dashboard() {
             <p className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.overdue_tasks}</p>
           </div>
         </div>
-              ) : <EmptySection />)}
+              ) : <EmptySection title="נתונים כלליים" description="סה״כ משימות, הושלמו, ממתינות ובאיחור במערכת" />)}
               {sectionId === 'completion' && (stats ? (
         <div className="bg-teal-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <div className="flex items-center justify-between mb-3">
@@ -435,7 +439,7 @@ export default function Dashboard() {
             />
           </div>
         </div>
-              ) : <EmptySection />)}
+              ) : <EmptySection title="אחוז השלמה" description="אחוז המשימות שהושלמו מתוך סה״כ המשימות" />)}
               {sectionId === 'weekly' && (weeklyStats ? (
         <div className="bg-purple-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -469,7 +473,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-              ) : <EmptySection />)}
+              ) : <EmptySection title="📈 סיכום שבועי" description="משימות שהושלמו ונוצרו בשבעת הימים האחרונים, עם פירוט יומי" />)}
               {sectionId === 'byStatus' && (tasksByStatus.length > 0 ? (
         <div className="bg-indigo-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -502,7 +506,7 @@ export default function Dashboard() {
             })}
           </div>
         </div>
-              ) : <EmptySection />)}
+              ) : <EmptySection title="📌 לפי סטטוס" description="כמה משימות בכל סטטוס: מתוכנן, הוקצה, בביצוע, הושלם ועוד" />)}
               {sectionId === 'byPriority' && (tasksByPriority.length > 0 ? (
         <div className="bg-amber-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -545,7 +549,7 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-              ) : <EmptySection />)}
+              ) : <EmptySection title="🎯 לפי עדיפות" description="משימות לפי דחיפות: נמוכה, בינונית, גבוהה, קריטית. לחץ לצפייה ברשימה" />)}
               {sectionId === 'recurring' && (recurringStats && recurringStats.total_recurring > 0 ? (
         <div className="bg-cyan-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -563,7 +567,7 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-              ) : <EmptySection />)}
+              ) : <EmptySection title="🔄 משימות חוזרות" description="משימות עם חזרתיות יומית, שבועית או חודשית" />)}
               {sectionId === 'tags' && (tagStats.length > 0 ? (
         <div className="bg-pink-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -591,7 +595,7 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-              ) : <EmptySection />)}
+              ) : <EmptySection title="🏷️ תגיות" description="שימוש בתגיות במשימות. לחץ על תגית כדי לראות משימות" />)}
               {sectionId === 'staff' && (
       <div className="p-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">

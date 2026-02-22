@@ -75,7 +75,7 @@ export default function KanbanBoard({ onTaskSelect }: any) {
   };
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 min-h-full w-full min-w-0">
+    <div className="kanban-page p-4 sm:p-4 md:p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 min-h-full w-full min-w-0">
       <style>{`
         @keyframes slideDown {
           from { opacity: 0; transform: translateY(-20px); }
@@ -137,15 +137,28 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`transition-all duration-200 ${
-                                snapshot.isDragging 
-                                  ? 'opacity-50 scale-95 shadow-2xl' 
-                                  : 'opacity-100 shadow-sm'
-                              } hover:shadow-lg`}
-                              onClick={() => onTaskSelect(task)}
+                              style={{
+                                ...provided.draggableProps.style,
+                                ...(snapshot.isDragging
+                                  ? {
+                                      transform: `${provided.draggableProps.style?.transform ?? ''} translateY(-32px)`,
+                                      opacity: 1,
+                                      boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
+                                      borderRadius: '12px',
+                                      zIndex: 9999,
+                                    }
+                                  : {}),
+                              }}
+                              className={`transition-shadow duration-200 rounded-xl overflow-hidden ${
+                                snapshot.isDragging ? 'scale-[1.02] ring-2 ring-teal-400' : 'hover:shadow-lg'
+                              }`}
                             >
-                              <TaskCard task={task} onClick={() => onTaskSelect(task)} />
+                              <div {...provided.dragHandleProps} className="touch-manipulation cursor-grab active:cursor-grabbing flex items-center justify-center py-1.5 bg-slate-700/50 border-b border-slate-600/50">
+                                <span className="text-slate-400 text-lg leading-none">⋮⋮</span>
+                              </div>
+                              <div onClick={() => onTaskSelect(task)} className="cursor-pointer">
+                                <TaskCard task={task} onClick={() => onTaskSelect(task)} />
+                              </div>
                             </div>
                           )}
                         </Draggable>

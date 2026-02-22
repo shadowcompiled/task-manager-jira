@@ -59,9 +59,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] h-[100dvh] max-h-[100dvh] max-w-[100vw] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden min-w-0">
+    <div className="app-shell min-h-[100dvh] h-[100dvh] max-h-[100dvh] max-w-[100vw] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden min-w-0">
       {/* Header - safe area top for notch; compact on phone */}
-      <header className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top)]">
+      <header className="app-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top)]">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between gap-2 min-h-[44px]">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <h1 className="text-xl md:text-2xl font-bold text-white truncate drop-shadow-lg">🍽️ מעקב משימות</h1>
@@ -237,14 +237,14 @@ export default function App() {
           </div>
         </nav>
 
-      {/* Bottom Navigation for Mobile - safe area, touch targets, no overflow */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
-        <div className="flex justify-around items-stretch min-h-[56px] min-w-0 w-full">
+      {/* Bottom Navigation for Mobile - safe area, touch targets, create button floats above */}
+      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-3 px-2 sm:px-4">
+        <div className="flex justify-around items-end min-h-[52px] min-w-0 w-full gap-1">
           <button
             onClick={() => setCurrentView('daily')}
-            className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] ${
+            className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
               currentView === 'daily'
-                ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
+                ? 'text-teal-300 bg-slate-700/50'
                 : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
             }`}
           >
@@ -252,9 +252,9 @@ export default function App() {
           </button>
           <button
             onClick={() => setCurrentView('kanban')}
-            className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] ${
+            className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
               currentView === 'kanban'
-                ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
+                ? 'text-teal-300 bg-slate-700/50'
                 : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
             }`}
           >
@@ -262,22 +262,21 @@ export default function App() {
           </button>
           {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
             <>
+              {/* Floating round create button - sits above the bar */}
               <motion.button
                 onClick={() => setShowCreateTask(true)}
-                className="flex-1 min-w-0 min-h-[48px] py-3 text-center text-xl font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 shadow-lg border-t-2 border-teal-400 hover:from-teal-700 hover:to-emerald-700 hover:text-teal-100 transition-all rounded-none flex flex-col items-center justify-center touch-manipulation"
+                className="create-btn-float flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 -mt-6 sm:-mt-7 rounded-full text-white bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg border-4 border-slate-800 hover:from-teal-600 hover:to-emerald-700 flex flex-col items-center justify-center touch-manipulation z-10"
                 title="משימה חדשה"
                 aria-label="צור משימה"
-                style={{ zIndex: 10 }}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.92 }}
               >
-                <span className="text-2xl leading-none">➕</span>
-                <span className="text-xs font-bold mt-0.5 max-[360px]:hidden">צור</span>
+                <span className="text-2xl sm:text-3xl leading-none">➕</span>
               </motion.button>
               <button
                 onClick={() => setCurrentView('kanban-dash')}
-                className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] ${
+                className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
                   currentView === 'kanban-dash'
-                    ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
+                    ? 'text-teal-300 bg-slate-700/50'
                     : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
                 }`}
               >
@@ -285,9 +284,9 @@ export default function App() {
               </button>
               <button
                 onClick={() => setCurrentView('dashboard')}
-                className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] ${
+                className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] rounded-xl ${
                   currentView === 'dashboard'
-                    ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
+                    ? 'text-teal-300 bg-slate-700/50'
                     : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
                 }`}
               >
@@ -299,7 +298,7 @@ export default function App() {
       </div>
 
         {/* Main Content - scrollable; phone: padding above bottom nav, iOS momentum scroll */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(4.5rem,calc(4rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(5.5rem,calc(5rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
           <AnimatePresence mode="wait">
             {currentView === 'daily' && (
               <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
