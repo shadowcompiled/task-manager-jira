@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useTaskStore, useAuthStore } from '../store';
+import type { Task } from '../store';
 import TaskCard from './TaskCard';
 import axios from 'axios';
 import { API_BASE } from '../store';
@@ -163,7 +164,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
                                       type="button"
                                       onClick={async () => {
                                         try {
-                                          await updateTask(task.id, { status: s.name });
+                                          await updateTask(task.id, { status: s.name as Task['status'] });
                                           await fetchTasks();
                                         } catch (err) {
                                           console.error('Failed to update status', err);
