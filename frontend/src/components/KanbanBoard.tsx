@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useTaskStore, useAuthStore } from '../store';
-import type { Task } from '../store';
 import TaskCard from './TaskCard';
 import axios from 'axios';
 import { API_BASE } from '../store';
@@ -151,33 +150,11 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
                                     }
                                   : {}),
                               }}
-                              className={`transition-shadow duration-200 rounded-xl ${
+                              className={`transition-transform duration-200 ease-out transition-shadow duration-200 rounded-xl ${
                                 snapshot.isDragging ? 'scale-[1.02] ring-2 ring-teal-400' : 'hover:shadow-lg'
                               }`}
                             >
                               <TaskCard task={task} onClick={() => (onEditTask || onTaskSelect)(task)} />
-                              {statuses.length > 0 && (
-                                <div className="flex flex-wrap gap-1 p-2 border-t border-slate-600/50" onClick={(e) => e.stopPropagation()}>
-                                  {statuses.filter((s) => s.name !== task.status).slice(0, 4).map((s) => (
-                                    <button
-                                      key={s.name}
-                                      type="button"
-                                      onClick={async () => {
-                                        try {
-                                          await updateTask(task.id, { status: s.name as Task['status'] });
-                                          await fetchTasks();
-                                        } catch (err) {
-                                          console.error('Failed to update status', err);
-                                        }
-                                      }}
-                                      className="px-2 py-0.5 rounded text-[10px] font-bold border border-slate-500 bg-slate-700/80 text-slate-200 hover:bg-teal-600/80 hover:border-teal-500"
-                                      style={{ borderColor: s.color || undefined }}
-                                    >
-                                      {s.display_name}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
                             </div>
                           )}
                         </Draggable>

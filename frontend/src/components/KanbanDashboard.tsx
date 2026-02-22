@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTaskStore, useAuthStore } from '../store';
+import type { Task } from '../store';
 import axios from 'axios';
 
 interface TaskWithAssignee {
@@ -286,7 +287,7 @@ export default function KanbanDashboard() {
                       key={task.id}
                       draggable
                       onDragStart={() => handleDragStart(task)}
-                      className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-lg p-3 cursor-move hover:shadow-lg hover:border-blue-400 transition-all transform hover:scale-105 active:scale-95"
+                      className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-lg p-3 cursor-move hover:shadow-lg hover:border-blue-400 transition-all duration-200 ease-out transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                       {/* Task Title */}
                       <h3 className="font-bold text-gray-800 text-sm mb-2 line-clamp-2">
@@ -320,6 +321,28 @@ export default function KanbanDashboard() {
                       {task.description && (
                         <p className="text-xs text-gray-600 line-clamp-2 mb-2">{task.description}</p>
                       )}
+
+                      {/* Status shortcuts */}
+                      <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-200" onClick={(e) => e.stopPropagation()}>
+                        {DEFAULT_STATUSES.filter((s) => s.name !== task.status).slice(0, 4).map((s) => (
+                          <button
+                            key={s.name}
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await updateTask(task.id, { status: s.name as Task['status'] });
+                                await loadTasks();
+                              } catch (err) {
+                                console.error('Failed to update status', err);
+                              }
+                            }}
+                            className="px-2 py-0.5 rounded text-[10px] font-bold border bg-white/80 text-gray-700 hover:opacity-90 transition-opacity"
+                            style={{ borderColor: s.color, color: s.color }}
+                          >
+                            {s.displayName}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   ))
                 ) : (

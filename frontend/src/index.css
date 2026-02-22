@@ -333,6 +333,9 @@ html.light-mode {
   --color-text-muted: #718096;   /* Medium gray */
   --color-border: #e8e6e1;       /* Warm border */
   --color-border-light: #f5f4f1; /* Light warm border */
+  --light-primary: #0d9488;     /* teal-600 - buttons and links */
+  --light-surface: #ffffff;
+  --light-text: #1a202c;
 }
 
 html.light-mode body {
@@ -517,6 +520,7 @@ html.light-mode .bg-black\/60 {
 }
 
 /* Teal accent - slightly warmer */
+html.light-mode .text-teal-300,
 html.light-mode .text-teal-400 {
   color: #0d9488;
 }
@@ -661,4 +665,25 @@ html.light-mode .hover\:text-red-500:hover {
 html.light-mode .bg-red-50,
 html.light-mode .hover\:bg-red-50:hover {
   background-color: #fff5f5;
+}
+
+/* Light mode: gradients and surfaces that use slate-950/slate-900 */
+html.light-mode .from-slate-950,
+html.light-mode .via-slate-900,
+html.light-mode .to-slate-950 {
+  --tw-gradient-from: #faf9f7;
+  --tw-gradient-to: rgba(250, 249, 247, 0);
+  --tw-gradient-stops: var(--tw-gradient-from), #f5f4f1, var(--tw-gradient-to);
+}
+html.light-mode .border-teal-500\/40 {
+  border-color: rgba(13, 148, 136, 0.35);
+}
+html.light-mode .border-teal-500\/30 {
+  border-color: rgba(13, 148, 136, 0.25);
+}
+/* Modals and dropdowns - ensure light surface */
+html.light-mode [class*="modal"],
+html.light-mode [class*="dropdown"] {
+  background-color: var(--light-surface);
+  color: var(--light-text);
 }

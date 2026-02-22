@@ -344,7 +344,7 @@ export default function Dashboard() {
                     <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
-                      className={`rounded-2xl overflow-hidden border border-slate-600 bg-slate-800/40 transition-shadow ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-teal-500' : ''}`}
+                      className={`rounded-2xl overflow-hidden border border-slate-600 bg-slate-800/40 transition-shadow duration-200 transition-transform duration-200 ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-teal-500' : ''}`}
                     >
                       <div {...provided.dragHandleProps} className="flex items-center justify-center min-h-[44px] py-3 bg-slate-700/60 border-b border-slate-600 cursor-grab active:cursor-grabbing text-slate-400 hover:text-teal-400 touch-manipulation select-none">
                         <span className="text-lg">⋮⋮</span>

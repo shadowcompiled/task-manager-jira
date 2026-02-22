@@ -3,14 +3,14 @@ import ReactDOM from 'react-dom/client'
 import App from './components/App'
 import './index.css'
 
-// Apply saved theme before first paint to avoid flash
+// Apply saved theme before first paint; default to light when missing or invalid
 const savedTheme = localStorage.getItem('mission-tracker-theme')
-if (savedTheme === 'light') {
-  document.documentElement.classList.remove('dark')
-  document.documentElement.classList.add('light-mode')
-} else {
+if (savedTheme === 'dark') {
   document.documentElement.classList.add('dark')
   document.documentElement.classList.remove('light-mode')
+} else {
+  document.documentElement.classList.remove('dark')
+  document.documentElement.classList.add('light-mode')
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
