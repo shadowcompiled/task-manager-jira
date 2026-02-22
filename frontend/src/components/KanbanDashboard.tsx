@@ -256,7 +256,7 @@ export default function KanbanDashboard() {
       {loading ? (
         <div className="text-center text-gray-600 py-12 font-bold">⏳ טוען משימות...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-hidden md:overflow-x-auto pb-6 min-w-0 w-full">
           {columns.map((column) => (
             <div
               key={column.id}

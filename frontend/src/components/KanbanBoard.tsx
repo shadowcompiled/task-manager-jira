@@ -98,8 +98,8 @@ export default function KanbanBoard({ onTaskSelect }: any) {
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="kanban-scroll overflow-x-auto -mx-3 md:mx-0">
-          <div className="flex gap-2 md:gap-3 min-w-fit px-3 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0">
+          <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-3 w-full md:min-w-fit px-3 md:px-0">
             {statuses.map((status, idx) => (
               <Droppable key={status.name} droppableId={status.name}>
                 {/* @ts-ignore - react-beautiful-dnd types */}
@@ -107,7 +107,7 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`flex-shrink-0 w-52 sm:w-60 md:w-full rounded-2xl p-3 sm:p-4 transition-all duration-300 shadow-lg border-2 ${
+                    className={`w-full flex-shrink-0 md:w-full rounded-2xl p-3 sm:p-4 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store';
 import LoginPage from './LoginPage';
@@ -18,6 +18,8 @@ import UsersNotificationStatusModal from './UsersNotificationStatusModal';
 type ViewType = 'daily' | 'kanban' | 'dashboard' | 'kanban-dash';
 
 
+const THEME_KEY = 'mission-tracker-theme';
+
 export default function App() {
   const { user, logout, token } = useAuthStore();
   const [currentView, setCurrentView] = useState<ViewType>('daily');
@@ -30,13 +32,34 @@ export default function App() {
   const [showUserApproval, setShowUserApproval] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [showUsersNotificationStatus, setShowUsersNotificationStatus] = useState(false);
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    return (localStorage.getItem(THEME_KEY) ?? 'dark') !== 'light';
+  });
+
+  const setTheme = useCallback((dark: boolean) => {
+    setIsDark(dark);
+    if (dark) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light-mode');
+      localStorage.setItem(THEME_KEY, 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light-mode');
+      localStorage.setItem(THEME_KEY, 'light');
+    }
+  }, []);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(THEME_KEY);
+    setIsDark((stored ?? 'dark') !== 'light');
+  }, []);
 
   if (!user) {
     return <LoginPage />;
   }
 
   return (
-    <div className="min-h-[100dvh] h-[100dvh] max-h-[100dvh] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden">
+    <div className="min-h-[100dvh] h-[100dvh] max-h-[100dvh] max-w-[100vw] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden min-w-0">
       {/* Header - safe area top for notch; compact on phone */}
       <header className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top)]">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between gap-2 min-h-[44px]">
@@ -50,6 +73,16 @@ export default function App() {
               <p className="font-bold text-white text-sm drop-shadow-lg">{user.name}</p>
               <p className="text-xs text-teal-300/80 capitalize font-semibold">{user.role}</p>
             </div>
+            {/* Theme toggle - visible on mobile (and desktop) */}
+            <button
+              type="button"
+              onClick={() => setTheme(!isDark)}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-slate-600/80 text-white p-2 md:p-2"
+              title={isDark ? 'מצב בהיר' : 'מצב כהה'}
+              aria-label={isDark ? 'מצב בהיר' : 'מצב כהה'}
+            >
+              {isDark ? '☀️' : '🌙'}
+            </button>
             {/* Mobile: single menu button */}
             {(user.role === 'admin' || user.role === 'manager' || user.role === 'maintainer') && (
               <div className="md:hidden relative">
@@ -63,8 +96,36 @@ export default function App() {
                 </button>
                 {showHeaderMenu && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
-                    <div className="absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50">
+                    <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
+                    {/* Mobile: bottom sheet */}
+                    <div className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden">
+                      <div className="flex-1 overflow-y-auto py-2">
+                        {user.role === 'admin' && (
+                          <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                            👤 משתמשים
+                          </button>
+                        )}
+                        {user.role === 'admin' && (
+                          <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                            🔔 התראות
+                          </button>
+                        )}
+                        <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                          ✓ אישור משתמשים
+                        </button>
+                        <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                          ⚙️ סטטוסים
+                        </button>
+                        <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                          🏷️ תגיות
+                        </button>
+                        <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[48px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                          👥 צוות
+                        </button>
+                      </div>
+                    </div>
+                    {/* Desktop: dropdown */}
+                    <div className="hidden md:block absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50">
                       {user.role === 'admin' && (
                         <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
                           👤 משתמשים
@@ -114,7 +175,7 @@ export default function App() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-hidden flex">
+      <div className="flex-1 overflow-hidden flex min-w-0">
         {/* Sidebar Navigation */}
         <nav className="hidden md:flex md:flex-col w-48 bg-slate-800 border-r border-teal-500/30 shadow-xl overflow-y-auto">
           <div className="p-4 space-y-2">
@@ -176,61 +237,61 @@ export default function App() {
           </div>
         </nav>
 
-      {/* Bottom Navigation for Mobile - safe area and touch targets */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 safe-area-inset-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-        <div className="flex justify-around items-stretch min-h-[56px]">
+      {/* Bottom Navigation for Mobile - safe area, touch targets, no overflow */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)]">
+        <div className="flex justify-around items-stretch min-h-[56px] min-w-0 w-full">
           <button
             onClick={() => setCurrentView('daily')}
-            className={`flex-1 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation ${
+            className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] ${
               currentView === 'daily'
                 ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
                 : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
             }`}
           >
-            📋 יומי
+            <span className="truncate w-full">📋 יומי</span>
           </button>
           <button
             onClick={() => setCurrentView('kanban')}
-            className={`flex-1 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation ${
+            className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] ${
               currentView === 'kanban'
                 ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
                 : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
             }`}
           >
-            🧱 לוח
+            <span className="truncate w-full">🧱 לוח</span>
           </button>
           {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
             <>
               <motion.button
                 onClick={() => setShowCreateTask(true)}
-                className="flex-1 min-h-[48px] py-3 text-center text-xl font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 shadow-lg border-t-2 border-teal-400 hover:from-teal-700 hover:to-emerald-700 hover:text-teal-100 transition-all rounded-none flex flex-col items-center justify-center touch-manipulation"
+                className="flex-1 min-w-0 min-h-[48px] py-3 text-center text-xl font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 shadow-lg border-t-2 border-teal-400 hover:from-teal-700 hover:to-emerald-700 hover:text-teal-100 transition-all rounded-none flex flex-col items-center justify-center touch-manipulation"
                 title="משימה חדשה"
                 aria-label="צור משימה"
                 style={{ zIndex: 10 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <span className="text-2xl leading-none">➕</span>
-                <span className="text-xs font-bold mt-0.5">צור</span>
+                <span className="text-xs font-bold mt-0.5 max-[360px]:hidden">צור</span>
               </motion.button>
               <button
                 onClick={() => setCurrentView('kanban-dash')}
-                className={`flex-1 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation ${
+                className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] ${
                   currentView === 'kanban-dash'
                     ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
                     : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
                 }`}
               >
-                🎯 משימות
+                <span className="truncate w-full">🎯 משימות</span>
               </button>
               <button
                 onClick={() => setCurrentView('dashboard')}
-                className={`flex-1 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation ${
+                className={`flex-1 min-w-0 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation truncate max-[360px]:text-[0.65rem] ${
                   currentView === 'dashboard'
                     ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
                     : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
                 }`}
               >
-                📊 סטטיסטיקה
+                <span className="truncate w-full">📊 סטטיסטיקה</span>
               </button>
             </>
           )}
