@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store';
 import LoginPage from './LoginPage';
 import DailyTaskList from './DailyTaskList';
@@ -35,13 +36,13 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b-4 border-teal-500/40 shadow-2xl sticky top-0 z-40 transform transition-transform duration-300">
-        <div className="max-w-7xl mx-auto px-3 md:px-4 h-16 flex items-center justify-between gap-2">
+    <div className="min-h-[100dvh] h-[100dvh] max-h-[100dvh] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden">
+      {/* Header - safe area top for notch; compact on phone */}
+      <header className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between gap-2 min-h-[44px]">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
-            <h1 className="text-xl md:text-2xl font-bold text-white truncate drop-shadow-lg">🍽️ Mission Tracker</h1>
-            <span className="text-xs md:text-sm text-teal-300/80 hidden sm:inline font-semibold">Restaurant Operations</span>
+            <h1 className="text-xl md:text-2xl font-bold text-white truncate drop-shadow-lg">🍽️ מעקב משימות</h1>
+            <span className="text-xs md:text-sm text-teal-300/80 hidden sm:inline font-semibold">ניהול משימות במסעדה</span>
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
@@ -55,36 +56,36 @@ export default function App() {
                 <button
                   onClick={() => setShowHeaderMenu(!showHeaderMenu)}
                   className="p-2 rounded-lg bg-slate-600/80 text-white min-h-[44px] min-w-[44px] flex items-center justify-center"
-                  title="Menu"
-                  aria-label="Open menu"
+                  title="תפריט"
+                  aria-label="פתח תפריט"
                 >
                   ⋯
                 </button>
                 {showHeaderMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
-                    <div className="absolute right-0 top-full mt-1 py-2 w-48 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50">
+                    <div className="absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50">
                       {user.role === 'admin' && (
-                        <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
-                          👤 Users
+                        <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                          👤 משתמשים
                         </button>
                       )}
                       {user.role === 'admin' && (
-                        <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
-                          🔔 Notifications
+                        <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                          🔔 התראות
                         </button>
                       )}
-                      <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
-                        ✓ Approve
+                      <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        ✓ אישור משתמשים
                       </button>
-                      <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
-                        ⚙️ Status
+                      <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        ⚙️ סטטוסים
                       </button>
-                      <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
-                        🏷️ Tags
+                      <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        🏷️ תגיות
                       </button>
-                      <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 text-white hover:bg-slate-700 text-sm font-bold">
-                        👥 Team
+                      <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end text-white hover:bg-slate-700 text-sm font-bold">
+                        👥 צוות
                       </button>
                     </div>
                   </>
@@ -95,20 +96,20 @@ export default function App() {
             {(user.role === 'admin' || user.role === 'manager' || user.role === 'maintainer') && (
               <div className="hidden md:flex items-center gap-2">
                 {user.role === 'admin' && (
-                  <button onClick={() => setShowAdminPanel(true)} className="px-3 py-2 bg-teal-600/80 hover:bg-teal-700 text-white rounded-lg text-sm font-bold whitespace-nowrap" title="Add new user">👤 Users</button>
+                  <button onClick={() => setShowAdminPanel(true)} className="px-3 py-2 bg-teal-600/80 hover:bg-teal-700 text-white rounded-lg text-sm font-bold whitespace-nowrap" title="משתמשים">👤 משתמשים</button>
                 )}
                 {user.role === 'admin' && (
-                  <button onClick={() => setShowUsersNotificationStatus(true)} className="px-3 py-2 bg-amber-600/80 hover:bg-amber-700 text-white rounded-lg text-sm font-bold whitespace-nowrap" title="Users & notifications">🔔</button>
+                  <button onClick={() => setShowUsersNotificationStatus(true)} className="px-3 py-2 bg-amber-600/80 hover:bg-amber-700 text-white rounded-lg text-sm font-bold whitespace-nowrap" title="התראות">🔔</button>
                 )}
-                <button onClick={() => setShowUserApproval(true)} className="px-3 py-2 bg-orange-600/80 hover:bg-orange-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">✓ Approve</button>
-                <button onClick={() => setShowStatusManager(true)} className="px-3 py-2 bg-cyan-600/80 hover:bg-cyan-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">⚙️ Status</button>
-                <button onClick={() => setShowTagManager(true)} className="px-3 py-2 bg-emerald-600/80 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">🏷️ Tags</button>
-                <button onClick={() => setShowUserManagement(true)} className="px-3 py-2 bg-purple-600/80 hover:bg-purple-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">👥 Team</button>
+                <button onClick={() => setShowUserApproval(true)} className="px-3 py-2 bg-orange-600/80 hover:bg-orange-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">✓ אישור</button>
+                <button onClick={() => setShowStatusManager(true)} className="px-3 py-2 bg-cyan-600/80 hover:bg-cyan-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">⚙️ סטטוסים</button>
+                <button onClick={() => setShowTagManager(true)} className="px-3 py-2 bg-emerald-600/80 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">🏷️ תגיות</button>
+                <button onClick={() => setShowUserManagement(true)} className="px-3 py-2 bg-purple-600/80 hover:bg-purple-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">👥 צוות</button>
               </div>
             )}
-            <button onClick={logout} className="px-3 md:px-4 py-2 bg-red-600/80 hover:bg-red-700 text-white rounded-lg text-sm font-bold min-h-[44px]">
-              🔓 Logout
-            </button>
+            <motion.button onClick={logout} className="px-3 md:px-4 py-2 bg-red-600/80 hover:bg-red-700 text-white rounded-lg text-sm font-bold min-h-[44px]" whileTap={{ scale: 0.96 }}>
+              🔓 התנתק
+            </motion.button>
           </div>
         </div>
       </header>
@@ -125,7 +126,7 @@ export default function App() {
                   : 'text-slate-300 hover:bg-slate-700 hover:text-white'
               }`}
             >
-              📋 Daily
+              📋 יומי
             </button>
 
             <button
@@ -136,7 +137,7 @@ export default function App() {
                   : 'text-slate-300 hover:bg-slate-700 hover:text-white'
               }`}
             >
-              🧱 Kanban
+              🧱 לוח
             </button>
 
             {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
@@ -149,7 +150,7 @@ export default function App() {
                       : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                   }`}
                 >
-                  🎯 Missions
+                  🎯 משימות
                 </button>
                 <button
                   onClick={() => setCurrentView('dashboard')}
@@ -159,7 +160,7 @@ export default function App() {
                       : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                   }`}
                 >
-                  📊 Dashboard
+                  📊 סטטיסטיקה
                 </button>
               </>
             )}
@@ -169,104 +170,122 @@ export default function App() {
                 onClick={() => setShowCreateTask(true)}
                 className="w-full text-left px-4 py-3 rounded-lg font-bold bg-gradient-to-r from-teal-600 to-emerald-600 text-white hover:from-teal-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg mt-4 hover:shadow-teal-500/50"
               >
-                ➕ Create Mission
+                ➕ משימה חדשה
               </button>
             )}
           </div>
         </nav>
 
-      {/* Bottom Navigation for Mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50">
-        <div className="flex justify-around items-center">
+      {/* Bottom Navigation for Mobile - safe area and touch targets */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 safe-area-inset-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+        <div className="flex justify-around items-stretch min-h-[56px]">
           <button
             onClick={() => setCurrentView('daily')}
-            className={`flex-1 py-3 text-center text-xs font-semibold transition-all ${
+            className={`flex-1 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation ${
               currentView === 'daily'
                 ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
-                : 'text-slate-400 hover:text-teal-300'
+                : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
             }`}
           >
-            📋 Daily
+            📋 יומי
           </button>
           <button
             onClick={() => setCurrentView('kanban')}
-            className={`flex-1 py-3 text-center text-xs font-semibold transition-all ${
+            className={`flex-1 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation ${
               currentView === 'kanban'
                 ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
-                : 'text-slate-400 hover:text-teal-300'
+                : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
             }`}
           >
-            🧱 Kanban
+            🧱 לוח
           </button>
           {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
             <>
-              <button
+              <motion.button
                 onClick={() => setShowCreateTask(true)}
-                className="flex-1 py-3 text-center text-xl font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 shadow-lg border-t-2 border-teal-400 hover:from-teal-700 hover:to-emerald-700 hover:text-teal-100 hover:scale-110 transition-all rounded-none"
-                title="Create new mission"
+                className="flex-1 min-h-[48px] py-3 text-center text-xl font-bold text-white bg-gradient-to-r from-teal-600 to-emerald-600 shadow-lg border-t-2 border-teal-400 hover:from-teal-700 hover:to-emerald-700 hover:text-teal-100 transition-all rounded-none flex flex-col items-center justify-center touch-manipulation"
+                title="משימה חדשה"
+                aria-label="צור משימה"
                 style={{ zIndex: 10 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <span className="inline-flex flex-col items-center">
-                  <span className="text-2xl leading-none">➕</span>
-                  <span className="text-xs font-bold mt-1">Create</span>
-                </span>
-              </button>
+                <span className="text-2xl leading-none">➕</span>
+                <span className="text-xs font-bold mt-0.5">צור</span>
+              </motion.button>
               <button
                 onClick={() => setCurrentView('kanban-dash')}
-                className={`flex-1 py-3 text-center text-xs font-semibold transition-all ${
+                className={`flex-1 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation ${
                   currentView === 'kanban-dash'
                     ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
-                    : 'text-slate-400 hover:text-teal-300'
+                    : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
                 }`}
               >
-                🎯 Missions
+                🎯 משימות
               </button>
               <button
                 onClick={() => setCurrentView('dashboard')}
-                className={`flex-1 py-3 text-center text-xs font-semibold transition-all ${
+                className={`flex-1 min-h-[48px] py-3 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation ${
                   currentView === 'dashboard'
                     ? 'text-teal-300 border-t-2 border-teal-400 bg-slate-700/50'
-                    : 'text-slate-400 hover:text-teal-300'
+                    : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
                 }`}
               >
-                📊 Dashboard
+                📊 סטטיסטיקה
               </button>
             </>
           )}
         </div>
       </div>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto pb-20 md:pb-0">
-          {currentView === 'daily' && (
-            <DailyTaskList onTaskSelect={setSelectedTask} />
-          )}
-          {currentView === 'kanban' && (
-            <KanbanBoard onTaskSelect={setSelectedTask} />
-          )}
-          {currentView === 'kanban-dash' && <KanbanDashboard />}
-          {currentView === 'dashboard' && <Dashboard />}
+        {/* Main Content - scrollable; phone: padding above bottom nav, iOS momentum scroll */}
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(4.5rem,calc(4rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
+          <AnimatePresence mode="wait">
+            {currentView === 'daily' && (
+              <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
+                <DailyTaskList onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); }} />
+              </motion.div>
+            )}
+            {currentView === 'kanban' && (
+              <motion.div key="kanban" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
+                <KanbanBoard onTaskSelect={setSelectedTask} />
+              </motion.div>
+            )}
+            {currentView === 'kanban-dash' && (
+              <motion.div key="kanban-dash" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
+                <KanbanDashboard />
+              </motion.div>
+            )}
+            {currentView === 'dashboard' && (
+              <motion.div key="dashboard" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
+                <Dashboard />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </main>
       </div>
 
       {/* Task Detail Modal */}
-      {selectedTask && (
-        <TaskDetail
-          taskId={selectedTask.id}
-          onClose={() => setSelectedTask(null)}
-          onTaskUpdate={() => {
-            // Refresh data
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {selectedTask && (
+          <TaskDetail
+            key={`task-detail-${selectedTask.id}`}
+            taskId={selectedTask.id}
+            onClose={() => setSelectedTask(null)}
+            onTaskUpdate={() => {}}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Create Task Modal */}
-      {showCreateTask && (
-        <CreateTaskModal
-          onClose={() => setShowCreateTask(false)}
-          onTaskCreated={() => setShowCreateTask(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showCreateTask && (
+          <CreateTaskModal
+            key="create-task-modal"
+            onClose={() => setShowCreateTask(false)}
+            onTaskCreated={() => setShowCreateTask(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Status Manager Modal */}
       {showStatusManager && (

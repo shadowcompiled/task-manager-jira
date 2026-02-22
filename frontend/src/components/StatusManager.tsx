@@ -26,6 +26,8 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
     color: '#808080',
   });
   const [error, setError] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', displayName: '', color: '#808080' });
 
   const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
@@ -41,7 +43,7 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
       });
       setStatuses(response.data);
     } catch (err: any) {
-      setError('Failed to load statuses');
+      setError('טעינת הסטטוסים נכשלה');
     }
   };
 
@@ -70,14 +72,52 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
       await fetchStatuses();
       onStatusesChanged();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create status');
+      setError(err.response?.data?.error || 'יצירת הסטטוס נכשלה');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startEdit = (status: Status) => {
+    setEditingId(status.id);
+    setEditForm({ name: status.name, displayName: status.display_name, color: status.color });
+    setError('');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({ name: '', displayName: '', color: '#808080' });
+  };
+
+  const handleUpdateStatus = async () => {
+    if (editingId == null || !editForm.displayName.trim()) {
+      setError('תווית נדרשת');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      await axios.put(
+        `${API_BASE}/statuses/${editingId}`,
+        {
+          displayName: editForm.displayName.trim(),
+          color: editForm.color,
+          ...(editForm.name.trim() ? { name: editForm.name.trim().toLowerCase().replace(/\s+/g, '_') } : {}),
+        },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      await fetchStatuses();
+      onStatusesChanged();
+      cancelEdit();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'עדכון הסטטוס נכשל');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteStatus = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this status?')) return;
+    if (!confirm('למחוק את הסטטוס הזה?')) return;
 
     try {
       setLoading(true);
@@ -87,7 +127,7 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
       await fetchStatuses();
       onStatusesChanged();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to delete status');
+      setError(err.response?.data?.error || 'מחיקת הסטטוס נכשלה');
     } finally {
       setLoading(false);
     }
@@ -95,12 +135,12 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
 
   if (user?.role !== 'admin') {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 text-center">
-          <p className="text-gray-700">רק מנהלי מערכת יכולים לנהל סטטוסים</p>
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 safe-area-padding">
+        <div className="bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 text-center border border-slate-600">
+          <p className="text-slate-200">רק מנהלי מערכת יכולים לנהל סטטוסים</p>
           <button
             onClick={onClose}
-            className="mt-4 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
+            className="mt-4 min-h-[48px] px-4 py-3 bg-slate-600 text-white rounded-xl hover:bg-slate-500 transition font-semibold"
           >
             סגור
           </button>
@@ -110,106 +150,167 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full my-8">
-        <div className="p-6 border-b flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">⚙️ ניהול סטטוסים</h2>
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 safe-area-padding">
+      <div className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-slate-600 sm:border-teal-500/30">
+        <div className="p-4 sm:p-6 border-b border-slate-600 flex justify-between items-center shrink-0">
+          <h2 className="text-xl font-bold text-white">⚙️ ניהול סטטוסים</h2>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-full text-xl"
+            aria-label="סגור"
           >
             ✕
           </button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-96 overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
           {/* Add New Status */}
-          <div className="border rounded-lg p-4 bg-blue-50">
-            <h3 className="font-semibold text-gray-800 mb-4">הוסף סטטוס חדש</h3>
+          <div className="border border-slate-600 rounded-xl p-4 bg-slate-700/50">
+            <h3 className="font-semibold text-white mb-4">הוסף סטטוס חדש</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  שם סטטוס (עברית)
-                </label>
+                <label className="block text-sm font-semibold text-slate-300 mb-1">שם סטטוס (עברית)</label>
                 <input
                   type="text"
                   value={newStatus.name}
                   onChange={(e) => setNewStatus({ ...newStatus, name: e.target.value })}
                   placeholder="למשל, בהמתנה"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-3 border border-slate-600 rounded-xl bg-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:outline-none min-h-[44px]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  תווית (עברית)
-                </label>
+                <label className="block text-sm font-semibold text-slate-300 mb-1">תווית (עברית)</label>
                 <input
                   type="text"
                   value={newStatus.displayName}
                   onChange={(e) => setNewStatus({ ...newStatus, displayName: e.target.value })}
                   placeholder="למשל, בהמתנה"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-3 border border-slate-600 rounded-xl bg-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:outline-none min-h-[44px]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">צבע</label>
-                <div className="flex gap-2">
+                <label className="block text-sm font-semibold text-slate-300 mb-1">צבע</label>
+                <div className="flex gap-2 items-center">
                   <input
                     type="color"
                     value={newStatus.color}
                     onChange={(e) => setNewStatus({ ...newStatus, color: e.target.value })}
-                    className="w-16 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                    className="w-12 h-10 border border-slate-600 rounded-xl cursor-pointer bg-slate-700"
                   />
                   <input
                     type="text"
                     value={newStatus.color}
                     onChange={(e) => setNewStatus({ ...newStatus, color: e.target.value })}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="flex-1 px-3 py-3 border border-slate-600 rounded-xl bg-slate-700 text-white text-sm min-h-[44px] focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
               </div>
               {error && (
-                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
+                <div className="bg-red-500/20 text-red-300 p-3 rounded-xl text-sm border border-red-500/30">
                   {error}
                 </div>
               )}
               <button
                 onClick={handleAddStatus}
                 disabled={loading}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-semibold transition"
+                className="w-full min-h-[48px] px-4 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-500 disabled:opacity-50 font-semibold transition"
               >
                 {loading ? 'הוספה...' : 'הוסף סטטוס'}
               </button>
             </div>
           </div>
 
-          {/* Current Statuses */}
+          {/* Current Statuses - admins can edit and delete ALL statuses */}
           <div>
-            <h3 className="font-semibold text-gray-800 mb-4">סטטוסים קיימים</h3>
+            <h3 className="font-semibold text-white mb-4">סטטוסים קיימים</h3>
             <div className="space-y-2">
               {statuses.map((status) => (
                 <div
                   key={status.id}
-                  className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition"
+                  className="p-4 border border-slate-600 rounded-xl bg-slate-700/50 transition"
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-6 h-6 rounded border-2 border-gray-300"
-                      style={{ backgroundColor: status.color }}
-                    />
-                    <div>
-                      <p className="font-semibold text-gray-800">{status.display_name}</p>
-                      <p className="text-xs text-gray-500">{status.name}</p>
+                  {editingId === status.id ? (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1">שם פנימי (אנגלית)</label>
+                        <input
+                          type="text"
+                          value={editForm.name}
+                          onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                          placeholder="למשל in_progress"
+                          className="w-full px-3 py-2.5 border border-slate-600 rounded-xl bg-slate-700 text-white text-sm min-h-[44px] focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1">תווית (עברית)</label>
+                        <input
+                          type="text"
+                          value={editForm.displayName}
+                          onChange={(e) => setEditForm((f) => ({ ...f, displayName: e.target.value }))}
+                          className="w-full px-3 py-2.5 border border-slate-600 rounded-xl bg-slate-700 text-white text-sm min-h-[44px] focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <label className="text-xs font-semibold text-slate-400">צבע</label>
+                        <input
+                          type="color"
+                          value={editForm.color}
+                          onChange={(e) => setEditForm((f) => ({ ...f, color: e.target.value }))}
+                          className="w-10 h-9 rounded-lg border border-slate-600 cursor-pointer bg-slate-700"
+                        />
+                        <input
+                          type="text"
+                          value={editForm.color}
+                          onChange={(e) => setEditForm((f) => ({ ...f, color: e.target.value }))}
+                          className="flex-1 min-w-0 px-2 py-2 border border-slate-600 rounded-xl bg-slate-700 text-white text-sm min-h-[40px] focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleUpdateStatus}
+                          disabled={loading}
+                          className="min-h-[44px] px-4 py-2 bg-teal-600 text-white rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-teal-500"
+                        >
+                          {loading ? 'שומר...' : 'שמור'}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="min-h-[44px] px-4 py-2 bg-slate-600 text-white rounded-xl text-sm font-medium hover:bg-slate-500"
+                        >
+                          ביטול
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  {!status.name.includes('planned') && !status.name.includes('assigned') && (
-                    <button
-                      onClick={() => handleDeleteStatus(status.id)}
-                      disabled={loading}
-                      className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-sm font-medium disabled:opacity-50 transition"
-                    >
-                      מחק
-                    </button>
+                  ) : (
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className="w-6 h-6 rounded border-2 border-slate-500 shrink-0"
+                          style={{ backgroundColor: status.color }}
+                        />
+                        <div className="min-w-0">
+                          <p className="font-semibold text-white truncate">{status.display_name}</p>
+                          <p className="text-xs text-slate-400 truncate">{status.name}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEdit(status)}
+                          disabled={loading}
+                          className="min-h-[44px] px-3 py-2 bg-teal-600/80 text-white hover:bg-teal-500 rounded-xl text-sm font-medium disabled:opacity-50 transition"
+                        >
+                          עריכה
+                        </button>
+                        <button
+                          onClick={() => handleDeleteStatus(status.id)}
+                          disabled={loading}
+                          className="min-h-[44px] px-3 py-2 bg-red-600/80 text-white hover:bg-red-500 rounded-xl text-sm font-medium disabled:opacity-50 transition"
+                        >
+                          מחק
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               ))}
@@ -217,10 +318,10 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
           </div>
         </div>
 
-        <div className="p-6 border-t flex gap-3 justify-end">
+        <div className="p-4 sm:p-6 border-t border-slate-600 flex gap-3 justify-end pb-[env(safe-area-inset-bottom)] sm:pb-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold"
+            className="min-h-[48px] px-4 py-3 bg-slate-600 text-white rounded-xl hover:bg-slate-500 transition font-semibold"
           >
             סגור
           </button>

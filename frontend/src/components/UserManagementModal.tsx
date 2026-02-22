@@ -27,14 +27,14 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
       });
       setUsers(response.data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch users');
+      setError(err.response?.data?.error || 'טעינת המשתמשים נכשלה');
     } finally {
       setLoading(false);
     }
   };
 
   const handlePromoteToAdmin = async (userId: number, userName: string) => {
-    if (!window.confirm(`Promote ${userName} to Admin?`)) {
+    if (!window.confirm(`להעלות את ${userName} למנהל?`)) {
       return;
     }
 
@@ -49,13 +49,13 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setSuccessMessage(`${userName} promoted to Admin successfully!`);
+      setSuccessMessage(`${userName} הועלה למנהל בהצלחה!`);
       setTimeout(() => {
         setSuccessMessage('');
         fetchUsers();
       }, 2000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to promote user');
+      setError(err.response?.data?.error || 'העלאת המשתמש נכשלה');
     }
   };
 
@@ -65,7 +65,7 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-teal-500/30 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">👥 User Management</h2>
+          <h2 className="text-2xl font-bold text-white">👥 ניהול משתמשים</h2>
           <button
             onClick={onClose}
             className="text-3xl text-slate-400 hover:text-white transition-colors"
@@ -88,11 +88,11 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
 
         {loading ? (
           <div className="text-center py-8">
-            <p className="text-slate-300 text-lg">Loading users...</p>
+            <p className="text-slate-300 text-lg">טוען משתמשים...</p>
           </div>
         ) : users.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-slate-400">No team members found</p>
+            <p className="text-slate-400">לא נמצאו חברי צוות</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -105,7 +105,7 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
                   <p className="font-bold text-white">{u.name}</p>
                   <p className="text-sm text-slate-400">{u.email}</p>
                   <p className="text-xs text-teal-300 mt-1">
-                    Role: <span className="font-semibold">{u.role.toUpperCase()}</span>
+                    תפקיד: <span className="font-semibold">{u.role === 'admin' ? 'מנהל' : u.role === 'manager' ? 'מנהל צוות' : 'עובד'}</span>
                   </p>
                 </div>
 
@@ -114,13 +114,13 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
                     onClick={() => handlePromoteToAdmin(u.id, u.name)}
                     className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95 whitespace-nowrap ml-4"
                   >
-                    📈 Promote
+                    📈 העלה למנהל
                   </button>
                 )}
 
                 {u.role === 'admin' && (
                   <span className="px-4 py-2 bg-emerald-600/30 text-emerald-300 font-bold rounded-lg border border-emerald-500/50">
-                    👑 Admin
+                    👑 מנהל
                   </span>
                 )}
               </div>
@@ -132,7 +132,7 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
           onClick={onClose}
           className="w-full mt-6 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg transition-all duration-300"
         >
-          Close
+          סגירה
         </button>
       </div>
     </div>

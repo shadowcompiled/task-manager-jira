@@ -47,13 +47,30 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
 router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id;
-    const { displayName, color } = req.body;
+    const { displayName, color, name: newName } = req.body;
     const userRows = await sql`SELECT role FROM users WHERE id = ${req.user?.id}`;
     const user = userRows.rows[0] as any;
     if (!['admin', 'maintainer'].includes(user?.role)) {
       return res.status(403).json({ error: 'Only admins and maintainers can update statuses' });
     }
-    await sql`UPDATE statuses SET display_name = ${displayName}, color = ${color} WHERE id = ${id}`;
+    const statusRows = await sql`SELECT id, name, display_name, color, restaurant_id FROM statuses WHERE id = ${id}`;
+    const existing = statusRows.rows[0] as any;
+    if (!existing) return res.status(404).json({ error: 'Status not found' });
+
+    const display_name = displayName !== undefined ? displayName : existing.display_name;
+    const color_val = color !== undefined ? color : existing.color;
+
+    if (newName !== undefined && newName !== existing.name) {
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Only admins can change status internal name' });
+      }
+      const normalizedName = String(newName).toLowerCase().replace(/\s+/g, '_');
+      await sql`UPDATE statuses SET name = ${normalizedName}, display_name = ${display_name}, color = ${color_val} WHERE id = ${id}`;
+      await sql`UPDATE tasks SET status = ${normalizedName} WHERE restaurant_id = ${existing.restaurant_id} AND status = ${existing.name}`;
+      return res.json({ success: true, name: normalizedName });
+    }
+
+    await sql`UPDATE statuses SET display_name = ${display_name}, color = ${color_val} WHERE id = ${id}`;
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

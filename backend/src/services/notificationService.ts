@@ -138,14 +138,17 @@ export async function processRecurringTasks() {
   }
 }
 
+/** Delete tasks that have been in completed/verified status for more than 3 days. */
 export async function cleanupOldCompletedTasks() {
   try {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    const oneWeekAgoStr = oneWeekAgo.toISOString();
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const threeDaysAgoStr = threeDaysAgo.toISOString();
     const { rows: tasksToDelete } = await sql`
       SELECT id, title FROM tasks
-      WHERE status IN ('completed', 'verified') AND due_date IS NOT NULL AND due_date < ${oneWeekAgoStr} AND recurrence = 'once'
+      WHERE status IN ('completed', 'verified')
+        AND COALESCE(completed_at, verified_at) IS NOT NULL
+        AND COALESCE(completed_at, verified_at) < ${threeDaysAgoStr}
     `;
     if (tasksToDelete.length > 0) {
       for (const task of tasksToDelete as any[]) {
@@ -157,9 +160,11 @@ export async function cleanupOldCompletedTasks() {
       }
       await sql`
         DELETE FROM tasks
-        WHERE status IN ('completed', 'verified') AND due_date IS NOT NULL AND due_date < ${oneWeekAgoStr} AND recurrence = 'once'
+        WHERE status IN ('completed', 'verified')
+          AND COALESCE(completed_at, verified_at) IS NOT NULL
+          AND COALESCE(completed_at, verified_at) < ${threeDaysAgoStr}
       `;
-      console.log(`Cleaned up ${tasksToDelete.length} old completed tasks`);
+      console.log(`Cleaned up ${tasksToDelete.length} old completed tasks (completed > 3 days ago)`);
     }
   } catch (error: any) {
     console.error('Error cleaning up old tasks:', error.message);

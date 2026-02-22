@@ -1,4 +1,4 @@
-// TaskCard component - displays individual task in card format
+import { motion } from 'framer-motion';
 
 const priorityLabels = {
   critical: 'דחוף ביותר',
@@ -17,7 +17,7 @@ const statusLabels = {
   overdue: 'בפיגור',
 };
 
-export default function TaskCard({ task, onClick }: any) {
+export default function TaskCard({ task, onClick, showEditButton, onEdit }: any) {
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !['completed', 'verified'].includes(task.status);
 
   const priorityEmojis = {
@@ -28,16 +28,33 @@ export default function TaskCard({ task, onClick }: any) {
   };
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      whileTap={{ scale: 0.99 }}
       onClick={onClick}
-      className={`p-3 md:p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-2xl active:scale-95 ${
+      className={`p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 min-h-[72px] ${
         isOverdue
-          ? 'border-red-400 bg-gradient-to-br from-red-50 to-pink-50 shadow-md'
-          : 'border-blue-200 bg-white hover:border-blue-400 shadow-md hover:shadow-xl'
+          ? 'border-red-400/80 bg-slate-800/80 shadow-md'
+          : 'border-teal-500/30 bg-slate-800/60 hover:border-teal-400/50 shadow-md'
       }`}
     >
-      <div className="flex justify-between items-start mb-2 md:mb-3 gap-2">
-        <h3 className="font-bold text-base md:text-lg text-gray-800 flex-1 line-clamp-2 group-hover:text-blue-600">{task.title}</h3>
+      <div className="flex justify-between items-start mb-2 gap-2">
+        <h3 className="font-bold text-base text-white flex-1 line-clamp-2">{task.title}</h3>
+        <div className="flex items-center gap-1 shrink-0">
+          {showEditButton && onEdit && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.92 }}
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(); }}
+              className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-slate-600 hover:bg-teal-500/80 text-white text-sm"
+              aria-label="עריכה"
+            >
+              ✏️
+            </motion.button>
+          )}
         <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-1 md:ml-2 shadow-md ${
           task.priority === 'critical'
             ? 'bg-gradient-to-r from-red-500 to-orange-600 text-white'
@@ -49,10 +66,11 @@ export default function TaskCard({ task, onClick }: any) {
         }`}>
           {priorityEmojis[task.priority as keyof typeof priorityEmojis]} {priorityLabels[task.priority as keyof typeof priorityLabels]}
         </span>
+        </div>
       </div>
 
       {task.description && (
-        <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3 line-clamp-2 leading-relaxed">{task.description}</p>
+        <p className="text-xs sm:text-sm text-slate-400 mb-2 line-clamp-2 leading-relaxed">{task.description}</p>
       )}
 
       <div className="flex flex-wrap justify-between items-start gap-1 md:gap-2 mb-2 md:mb-3">
@@ -76,14 +94,14 @@ export default function TaskCard({ task, onClick }: any) {
           </span>
           {task.recurrence !== 'once' && (
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md">
-              🔄 {task.recurrence === 'daily' ? 'יומי' : task.recurrence === 'weekly' ? 'שבועי' : task.recurrence}
+              🔄 {task.recurrence === 'daily' ? 'יומי' : task.recurrence === 'weekly' ? 'שבועי' : task.recurrence === 'monthly' ? 'חודשי' : task.recurrence}
             </span>
           )}
         </div>
       </div>
 
-      {(task.due_date || task.estimated_time) && (
-        <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t border-gray-200 text-xs text-gray-600 space-y-1">
+      {(task.due_date || task.estimated_time || task.assigned_to_name) && (
+        <div className="mt-2 pt-2 border-t border-slate-600 text-xs text-slate-400 space-y-1">
           {task.due_date && (
             <div className="flex items-center gap-2 font-semibold">
               <span>📅</span>
@@ -110,6 +128,6 @@ export default function TaskCard({ task, onClick }: any) {
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

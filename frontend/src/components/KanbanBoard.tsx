@@ -75,39 +75,31 @@ export default function KanbanBoard({ onTaskSelect }: any) {
   };
 
   return (
-    <div className="p-4 md:p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 min-h-screen">
+    <div className="p-3 sm:p-4 md:p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 min-h-full w-full min-w-0">
       <style>{`
         @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .animate-slideDown {
-          animation: slideDown 0.4s ease-out forwards;
-        }
+        .animate-slideDown { animation: slideDown 0.4s ease-out forwards; }
       `}</style>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-slideDown">
-        <h1 className="text-4xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">🧱 לוח פעולות</h1>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 sm:mb-6 gap-3 animate-slideDown">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">🧱 לוח פעולות</h1>
         {user?.role === 'admin' && (
-          <div className="text-sm text-gray-600 font-semibold bg-blue-50 border-l-4 border-blue-500 px-4 py-2 rounded">💡 גרור משימות בין עמודות לעדכון הסטטוס</div>
+          <div className="text-xs sm:text-sm text-slate-400 font-semibold bg-slate-800 border-r-4 border-teal-500 px-3 py-2 rounded-xl">💡 גרור משימות בין עמודות לעדכון הסטטוס</div>
         )}
       </div>
 
       {loading && (
-        <div className="bg-gradient-to-r from-blue-100 to-purple-100 border-2 border-blue-300 rounded-xl p-4 mb-6 text-center shadow-md">
-          <p className="text-blue-700 font-bold">⏳ טוען...</p>
+        <div className="bg-slate-800 border border-teal-500/40 rounded-xl p-4 mb-4 sm:mb-6 text-center">
+          <p className="text-teal-400 font-bold">⏳ טוען...</p>
         </div>
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="overflow-x-auto pb-4 -mx-4 md:mx-0">
-          <div className="flex gap-2 md:gap-3 min-w-fit px-4 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="kanban-scroll overflow-x-auto -mx-3 md:mx-0">
+          <div className="flex gap-2 md:gap-3 min-w-fit px-3 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {statuses.map((status, idx) => (
               <Droppable key={status.name} droppableId={status.name}>
                 {/* @ts-ignore - react-beautiful-dnd types */}
@@ -115,16 +107,16 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`flex-shrink-0 w-56 sm:w-60 md:w-full rounded-2xl p-4 transition-all duration-300 shadow-lg border-2 transform hover:scale-105 ${
+                    className={`flex-shrink-0 w-52 sm:w-60 md:w-full rounded-2xl p-3 sm:p-4 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
-                        ? 'bg-gradient-to-br from-blue-200 to-purple-200 border-blue-500 scale-105' 
-                        : 'bg-white border-blue-100 hover:border-blue-300'
+                        ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
+                        : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'
                     }`}
                     style={{ animationDelay: `${idx * 0.1}s` }}
                   >
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex-1">
-                        <h2 className="font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent text-sm md:text-base mb-2">
+                    <div className="flex justify-between items-center mb-3 sm:mb-4">
+                      <div className="flex-1 min-w-0">
+                        <h2 className="font-bold text-teal-300 text-sm md:text-base mb-1 truncate">
                           {status.display_name}
                         </h2>
                         <div
@@ -132,7 +124,7 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                           style={{ backgroundColor: status.color || '#3b82f6' }}
                         />
                       </div>
-                      <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                      <span className="bg-teal-600 text-white px-3 py-1 rounded-full text-xs font-bold">
                         {tasksByStatus[status.name]?.length || 0}
                       </span>
                     </div>
@@ -161,9 +153,9 @@ export default function KanbanBoard({ onTaskSelect }: any) {
                       {provided.placeholder}
 
                       {(!tasksByStatus[status.name] || tasksByStatus[status.name].length === 0) && (
-                        <div className="text-center py-12 text-gray-300">
-                          <p className="text-sm font-semibold">✨ اين مشام</p>
-                          <p className="text-xs mt-1">اسحب المهام هنا</p>
+                        <div className="text-center py-12 text-slate-400">
+                          <p className="text-sm font-semibold">✨ אין משימות</p>
+                          <p className="text-xs mt-1">גרור משימות לכאן</p>
                         </div>
                       )}
                     </div>

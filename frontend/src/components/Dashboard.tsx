@@ -1,6 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import axios from 'axios';
 import { useAuthStore } from '../store';
+
+const DASHBOARD_SECTION_ORDER_KEY = 'dashboard-section-order';
+const DEFAULT_SECTION_ORDER = [
+  'today',
+  'mainStats',
+  'completion',
+  'weekly',
+  'byStatus',
+  'byPriority',
+  'recurring',
+  'tags',
+  'staff',
+] as const;
+type SectionId = (typeof DEFAULT_SECTION_ORDER)[number];
+
+function getStoredSectionOrder(): SectionId[] {
+  try {
+    const raw = localStorage.getItem(DASHBOARD_SECTION_ORDER_KEY);
+    if (!raw) return [...DEFAULT_SECTION_ORDER];
+    const parsed = JSON.parse(raw) as string[];
+    const valid = new Set(DEFAULT_SECTION_ORDER);
+    return parsed.filter((id): id is SectionId => valid.has(id as SectionId));
+  } catch {
+    return [...DEFAULT_SECTION_ORDER];
+  }
+}
+function persistSectionOrder(order: SectionId[]) {
+  localStorage.setItem(DASHBOARD_SECTION_ORDER_KEY, JSON.stringify(order));
+}
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -100,6 +130,18 @@ export default function Dashboard() {
   const [selectedPriority, setSelectedPriority] = useState<TaskByPriority | null>(null);
   const [priorityTasks, setPriorityTasks] = useState<any[]>([]);
   const [loadingPriorityTasks, setLoadingPriorityTasks] = useState(false);
+
+  // Vertical drag-and-drop section order (persisted)
+  const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => getStoredSectionOrder());
+
+  const handleDragEnd = useCallback((result: DropResult) => {
+    if (!result.destination || result.destination.index === result.source.index) return;
+    const next = Array.from(sectionOrder);
+    const [removed] = next.splice(result.source.index, 1);
+    next.splice(result.destination.index, 0, removed);
+    setSectionOrder(next);
+    persistSectionOrder(next);
+  }, [sectionOrder]);
 
   useEffect(() => {
     if (user?.role !== 'admin' && user?.role !== 'maintainer') return;
@@ -276,17 +318,36 @@ export default function Dashboard() {
     worker: 'עובד',
   };
 
+  const EmptySection = () => (
+    <div className="rounded-2xl p-6 border border-slate-600 bg-slate-800/50 text-center text-slate-500 text-sm">אין נתונים</div>
+  );
+
   return (
-    <div className="p-4 pb-24 max-w-2xl mx-auto">
+    <div className="p-3 sm:p-4 pb-6 max-w-2xl mx-auto w-full min-w-0">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">סטטיסטיקה</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">סקירה כללית של ביצועי המשימות</p>
       </div>
 
-      {/* Today's Quick Stats */}
-      {todayStats && (
-        <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-2xl p-5 mb-6 text-white shadow-lg">
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="dashboard-sections" direction="vertical">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-4">
+              {sectionOrder.map((sectionId, index) => (
+                <Draggable key={sectionId} draggableId={sectionId} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={`rounded-2xl overflow-hidden border border-slate-600 bg-slate-800/40 transition-shadow ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-teal-500' : ''}`}
+                    >
+                      <div {...provided.dragHandleProps} className="flex items-center justify-center py-2 bg-slate-700/60 border-b border-slate-600 cursor-grab active:cursor-grabbing text-slate-400 hover:text-teal-400 touch-manipulation select-none">
+                        <span className="text-lg">⋮⋮</span>
+                      </div>
+                      <div className="p-0">
+              {sectionId === 'today' && (todayStats ? (
+        <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-none p-5 text-white shadow-lg">
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
             <span>📅</span>
             <span>היום</span>
@@ -310,11 +371,9 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Main Stats - Clean card design */}
-      {stats && (
-        <div className="grid grid-cols-2 gap-3 mb-6">
+              ) : <EmptySection />)}
+              {sectionId === 'mainStats' && (stats ? (
+        <div className="grid grid-cols-2 gap-3 p-4">
           {/* Total Tasks */}
           <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-3 mb-2">
@@ -359,11 +418,9 @@ export default function Dashboard() {
             <p className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.overdue_tasks}</p>
           </div>
         </div>
-      )}
-
-      {/* Completion Rate - Clean progress bar */}
-      {stats && (
-        <div className="bg-teal-50 dark:bg-slate-800 rounded-2xl p-5 mb-6 shadow-sm border border-teal-200 dark:border-slate-700">
+              ) : <EmptySection />)}
+              {sectionId === 'completion' && (stats ? (
+        <div className="bg-teal-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="text-xl">📊</span>
@@ -378,11 +435,9 @@ export default function Dashboard() {
             />
           </div>
         </div>
-      )}
-
-      {/* Weekly Summary */}
-      {weeklyStats && (
-        <div className="bg-purple-50 dark:bg-slate-800 rounded-2xl p-5 mb-6 shadow-sm border border-purple-200 dark:border-slate-700">
+              ) : <EmptySection />)}
+              {sectionId === 'weekly' && (weeklyStats ? (
+        <div className="bg-purple-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>📈</span>
             <span>סיכום שבועי</span>
@@ -414,11 +469,9 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-      )}
-
-      {/* Tasks by Status */}
-      {tasksByStatus.length > 0 && (
-        <div className="bg-indigo-50 dark:bg-slate-800 rounded-2xl p-5 mb-6 shadow-sm border border-indigo-200 dark:border-slate-700">
+              ) : <EmptySection />)}
+              {sectionId === 'byStatus' && (tasksByStatus.length > 0 ? (
+        <div className="bg-indigo-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>📌</span>
             <span>משימות לפי סטטוס</span>
@@ -449,11 +502,9 @@ export default function Dashboard() {
             })}
           </div>
         </div>
-      )}
-
-      {/* Tasks by Priority */}
-      {tasksByPriority.length > 0 && (
-        <div className="bg-amber-50 dark:bg-slate-800 rounded-2xl p-5 mb-6 shadow-sm border border-amber-200 dark:border-slate-700">
+              ) : <EmptySection />)}
+              {sectionId === 'byPriority' && (tasksByPriority.length > 0 ? (
+        <div className="bg-amber-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>🎯</span>
             <span>משימות לפי עדיפות</span>
@@ -494,11 +545,9 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-      )}
-
-      {/* Recurring Tasks */}
-      {recurringStats && recurringStats.total_recurring > 0 && (
-        <div className="bg-cyan-50 dark:bg-slate-800 rounded-2xl p-5 mb-6 shadow-sm border border-cyan-200 dark:border-slate-700">
+              ) : <EmptySection />)}
+              {sectionId === 'recurring' && (recurringStats && recurringStats.total_recurring > 0 ? (
+        <div className="bg-cyan-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>🔄</span>
             <span>משימות חוזרות</span>
@@ -514,11 +563,9 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-      )}
-
-      {/* Tags Usage */}
-      {tagStats.length > 0 && (
-        <div className="bg-pink-50 dark:bg-slate-800 rounded-2xl p-5 mb-6 shadow-sm border border-pink-200 dark:border-slate-700">
+              ) : <EmptySection />)}
+              {sectionId === 'tags' && (tagStats.length > 0 ? (
+        <div className="bg-pink-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>🏷️</span>
             <span>שימוש בתגיות</span>
@@ -544,10 +591,9 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-      )}
-
-      {/* Staff Performance - Modern cards */}
-      <div className="mb-6">
+              ) : <EmptySection />)}
+              {sectionId === 'staff' && (
+      <div className="p-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <span>👥</span>
           <span>ביצועי צוות</span>
@@ -614,6 +660,18 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+              )}
+
+                      </div>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       {/* Tag Tasks Modal */}
       {selectedTag && (

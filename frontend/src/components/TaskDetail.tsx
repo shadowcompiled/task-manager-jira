@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useTaskStore, useAuthStore } from '../store';
 import axios from 'axios';
 
@@ -14,7 +15,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
   useEffect(() => {
     if (taskId) {
       setError('');
-      fetchTask(taskId).catch(() => setError('Failed to load task'));
+      fetchTask(taskId).catch(() => setError('טעינת המשימה נכשלה'));
       fetchTeamMembers();
     }
   }, [taskId]);
@@ -33,24 +34,35 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-red-500 text-white rounded-lg p-6 max-w-md">
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 safe-area-padding">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-slate-800 border border-red-500/30 text-white rounded-2xl p-6 max-w-md w-full"
+        >
           <p className="font-bold mb-4">{error}</p>
-          <button
+          <motion.button
+            whileTap={{ scale: 0.98 }}
             onClick={onClose}
-            className="w-full bg-red-700 hover:bg-red-800 px-4 py-2 rounded text-white font-bold"
+            className="w-full min-h-[48px] bg-red-600 hover:bg-red-700 px-4 py-3 rounded-xl text-white font-bold"
           >
-            Close
-          </button>
-        </div>
+            סגירה
+          </motion.button>
+        </motion.div>
       </div>
     );
   }
 
   if (!currentTask) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg p-6">Loading task...</div>
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 safe-area-padding">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="bg-slate-800 rounded-2xl p-6 text-slate-300"
+        >
+          טוען משימה...
+        </motion.div>
       </div>
     );
   }
@@ -103,39 +115,52 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full my-8">
-        <div className="p-6 border-b flex justify-between items-start">
-          <div className="flex-1">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto safe-area-padding"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+        className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92dvh] sm:max-h-[90vh] my-0 sm:my-8 flex flex-col border border-teal-500/20"
+      >
+        <div className="p-4 sm:p-6 border-b border-slate-600 flex justify-between items-start shrink-0">
+          <div className="flex-1 min-w-0">
             {isEditing ? (
               <input
                 type="text"
                 value={editData.title}
                 onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                className="text-2xl font-bold w-full border rounded px-2 py-1"
+                className="text-xl sm:text-2xl font-bold w-full border border-slate-600 rounded-xl px-3 py-2 bg-slate-700 text-white"
               />
             ) : (
-              <h2 className="text-2xl font-bold text-gray-800">{currentTask.title}</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-white">{currentTask.title}</h2>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl ml-4"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white text-2xl rounded-full shrink-0"
+            aria-label="סגור"
           >
             ✕
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
           {/* Status & Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">סטטוס</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">סטטוס</label>
               {isEditing ? (
                 <select
                   value={editData.status}
                   onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2.5 border border-slate-600 rounded-xl bg-slate-700 text-white min-h-[44px]"
                 >
                   {['planned', 'assigned', 'in_progress', 'waiting', 'completed', 'verified'].map((s) => {
                     const labels: Record<string, string> = {
@@ -156,12 +181,12 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
               )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">עדיפות</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">עדיפות</label>
               {isEditing ? (
                 <select
                   value={editData.priority}
                   onChange={(e) => setEditData({ ...editData, priority: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2.5 border border-slate-600 rounded-xl bg-slate-700 text-white min-h-[44px]"
                 >
                   {['low', 'medium', 'high', 'critical'].map((p) => {
                     const labels: Record<string, string> = {
@@ -183,27 +208,27 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">תיאור</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">תיאור</label>
             {isEditing ? (
               <textarea
                 value={editData.description || ''}
                 onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg h-24"
+                className="w-full px-3 py-2 border border-slate-600 rounded-xl bg-slate-700 text-white h-24"
               />
             ) : (
-              <p className="text-gray-700 whitespace-pre-wrap">{currentTask.description || 'אין תיאור'}</p>
+              <p className="text-slate-300 whitespace-pre-wrap">{currentTask.description || 'אין תיאור'}</p>
             )}
           </div>
 
           {/* Assignment & Due Date */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="font-semibold text-gray-700 block mb-2">הוקצה ל:</label>
+              <label className="font-semibold text-slate-300 block mb-2">הוקצה ל:</label>
               {isEditing ? (
                 <select
                   value={editData.assigned_to || ''}
                   onChange={(e) => setEditData({ ...editData, assigned_to: e.target.value ? parseInt(e.target.value) : null })}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2.5 border border-slate-600 rounded-xl bg-slate-700 text-white min-h-[44px]"
                 >
                   <option value="">לא הוקצה</option>
                   {teamMembers.map((member) => (
@@ -211,20 +236,20 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
                   ))}
                 </select>
               ) : (
-                <p className="text-gray-600">{currentTask.assigned_to_name || 'לא הוקצה'}</p>
+                <p className="text-slate-400">{currentTask.assigned_to_name || 'לא הוקצה'}</p>
               )}
             </div>
             <div>
-              <label className="font-semibold text-gray-700 block mb-2">תאריך יעד:</label>
+              <label className="font-semibold text-slate-300 block mb-2">תאריך יעד:</label>
               {isEditing ? (
                 <input
                   type="date"
                   value={editData.due_date ? editData.due_date.split('T')[0] : ''}
                   onChange={(e) => setEditData({ ...editData, due_date: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2.5 border border-slate-600 rounded-xl bg-slate-700 text-white min-h-[44px]"
                 />
               ) : (
-                <p className="text-gray-600">
+                <p className="text-slate-400">
                   {currentTask.due_date ? new Date(currentTask.due_date).toLocaleDateString('he-IL') : 'אין תאריך יעד'}
                 </p>
               )}
@@ -234,7 +259,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
           {/* Checklists */}
           {currentTask.checklists && currentTask.checklists.length > 0 && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">רשימת בדיקה</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-3">רשימת בדיקה</label>
               <div className="space-y-2">
                 {currentTask.checklists.map((item: any) => (
                   <label key={item.id} className="flex items-center gap-3 cursor-pointer">
@@ -244,7 +269,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
                       readOnly
                       className="w-5 h-5"
                     />
-                    <span className={item.completed ? 'line-through text-gray-400' : 'text-gray-700'}>
+                    <span className={item.completed ? 'line-through text-slate-500' : 'text-slate-300'}>
                       {item.item}
                     </span>
                   </label>
@@ -256,13 +281,13 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
           {/* Comments */}
           {currentTask.comments && currentTask.comments.length > 0 && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">הערות</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-3">הערות</label>
               <div className="space-y-3 max-h-48 overflow-y-auto">
                 {currentTask.comments.map((c: any) => (
-                  <div key={c.id} className="bg-gray-50 p-3 rounded-lg">
-                    <p className="font-semibold text-sm text-gray-800">{c.user_name}</p>
-                    <p className="text-gray-700 text-sm mt-1">{c.content}</p>
-                    <p className="text-xs text-gray-500 mt-1">{new Date(c.created_at).toLocaleString('he-IL')}</p>
+                  <div key={c.id} className="bg-slate-700/50 p-3 rounded-xl">
+                    <p className="font-semibold text-sm text-white">{c.user_name}</p>
+                    <p className="text-slate-300 text-sm mt-1">{c.content}</p>
+                    <p className="text-xs text-slate-500 mt-1">{new Date(c.created_at).toLocaleString('he-IL')}</p>
                   </div>
                 ))}
               </div>
@@ -272,38 +297,44 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
           {/* Add comment for verification */}
           {user?.role === 'manager' && currentTask.status === 'completed' && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">הערת אימות</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">הערת אימות</label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="הוסף משוב לפני אימות..."
-                className="w-full px-3 py-2 border rounded-lg h-20"
+                className="w-full px-3 py-2 border border-slate-600 rounded-xl bg-slate-700 text-white h-20"
               />
             </div>
           )}
         </div>
 
         {/* Actions */}
-        <div className="p-6 border-t flex gap-3 justify-end flex-wrap">
+        <div className="p-4 sm:p-6 border-t border-slate-600 flex gap-3 justify-end flex-wrap pb-[env(safe-area-inset-bottom)] sm:pb-6">
           {isEditing ? (
             <>
-              <button
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setIsEditing(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
+                className="min-h-[48px] px-4 py-3 bg-slate-600 text-white rounded-xl hover:bg-slate-500 transition"
               >
                 ביטול
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.98 }}
                 onClick={handleSaveEdit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                className="min-h-[48px] px-4 py-3 bg-teal-500 text-white rounded-xl hover:bg-teal-400 transition"
               >
                 שמירת שינויים
-              </button>
+              </motion.button>
             </>
           ) : (
             <>
               {(user?.role !== 'staff' || user?.id === currentTask.assigned_to) && (
-                <button
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     setIsEditing(true);
                     setEditData({
@@ -315,37 +346,43 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate }: any) {
                       due_date: currentTask.due_date
                     });
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  className="min-h-[48px] px-4 py-3 bg-teal-500 text-white rounded-xl hover:bg-teal-400 transition"
                 >
                   עריכה
-                </button>
+                </motion.button>
               )}
               {user?.id === currentTask.assigned_to && currentTask.status === 'assigned' && (
-                <button
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleComplete}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                  className="min-h-[48px] px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-500 transition"
                 >
                   סימון כמושלם
-                </button>
+                </motion.button>
               )}
               {user?.role === 'manager' && currentTask.status === 'completed' && (
-                <button
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleVerify}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                  className="min-h-[48px] px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-500 transition"
                 >
                   ✓ אימות
-                </button>
+                </motion.button>
               )}
             </>
           )}
-          <button
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.98 }}
             onClick={onClose}
-            className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
+            className="min-h-[48px] px-4 py-3 bg-slate-600 text-white rounded-xl hover:bg-slate-500 transition"
           >
             סגירה
-          </button>
+          </motion.button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

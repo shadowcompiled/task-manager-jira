@@ -1,6 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useTaskStore, useAuthStore } from '../store';
 import TaskCard from './TaskCard';
+
+const listVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05, delayChildren: 0.02 },
+  },
+};
 
 type QuickFilter = 'all' | 'my' | 'overdue' | 'due_today';
 
@@ -84,7 +93,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
 
   return (
     <div
-      className="p-4 pb-24 max-w-2xl mx-auto"
+      className="p-3 sm:p-4 max-w-2xl mx-auto w-full min-w-0"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -147,7 +156,12 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
             <p className="text-slate-400 dark:text-slate-500 text-sm">כל הכבוד! סיימת הכל 🎉</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <motion.div
+            className="space-y-3"
+            variants={listVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {[...pendingTasks].sort(sortTasks).map((task) => (
               <TaskCard
                 key={task.id}
@@ -157,7 +171,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
                 onEdit={() => onEditTask ? onEditTask(task) : onTaskSelect(task)}
               />
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
 

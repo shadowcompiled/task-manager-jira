@@ -29,7 +29,7 @@ export default function UsersNotificationStatusModal({ onClose }: { onClose: () 
     axios
       .get<Response>(`${API_BASE}/push/users-status`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setData(res.data))
-      .catch((err) => setError(err.response?.data?.error || 'Failed to load'))
+      .catch((err) => setError(err.response?.data?.error || 'הטעינה נכשלה'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -38,7 +38,7 @@ export default function UsersNotificationStatusModal({ onClose }: { onClose: () 
       <div className="bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col border border-teal-500/30" onClick={(e) => e.stopPropagation()}>
         <div className="p-4 border-b border-slate-600 flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">משתמשים והתראות</h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-lg" aria-label="Close">✕</button>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-lg" aria-label="סגור">✕</button>
         </div>
         <div className="p-4 overflow-auto flex-1">
           {loading && <p className="text-teal-400 text-center py-8">טוען...</p>}

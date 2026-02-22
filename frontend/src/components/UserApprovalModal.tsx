@@ -40,7 +40,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
       });
       setPendingUsers(response.data.pendingUsers);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to fetch pending users');
+      setError(err.response?.data?.error || 'טעינת המשתמשים הממתינים נכשלה');
       console.error('Error fetching pending users:', err);
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
       setPendingUsers(pendingUsers.filter(u => u.id !== userId));
       setError('');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to approve user');
+      setError(err.response?.data?.error || 'אישור המשתמש נכשל');
       console.error('Error approving user:', err);
     } finally {
       setApproving(null);
@@ -77,7 +77,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
       setShowDenyReason(null);
       setError('');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to deny user');
+      setError(err.response?.data?.error || 'דחיית המשתמש נכשלה');
       console.error('Error denying user:', err);
     } finally {
       setDenying(null);
@@ -92,10 +92,12 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-700 to-slate-600 px-6 py-4 border-b border-teal-500/30 rounded-t-lg">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-white">👥 Pending Users</h2>
+            <h2 className="text-xl font-bold text-white">👥 ממתינים לאישור</h2>
             <button
+              type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-white transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white transition-colors rounded-full"
+              aria-label="סגור"
             >
               ✕
             </button>
@@ -113,12 +115,12 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
           {loading ? (
             <div className="text-center py-8">
               <div className="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-slate-400 mt-3">Loading pending users...</p>
+              <p className="text-slate-400 mt-3">טוען משתמשים...</p>
             </div>
           ) : pendingUsers.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-slate-400">✓ No pending users</p>
-              <p className="text-slate-500 text-sm mt-2">All registrations have been approved</p>
+              <p className="text-slate-400">✓ אין משתמשים ממתינים</p>
+              <p className="text-slate-500 text-sm mt-2">כל ההרשמות אושרו</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -132,7 +134,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
                       <p className="font-semibold text-white">{user.name}</p>
                       <p className="text-sm text-slate-400">{user.email}</p>
                       <p className="text-xs text-slate-500 mt-1">
-                        Registered: {new Date(user.created_at).toLocaleDateString()}
+                        נרשם: {new Date(user.created_at).toLocaleDateString('he-IL')}
                       </p>
                     </div>
                   </div>
@@ -142,7 +144,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
                       <textarea
                         value={denyReason}
                         onChange={(e) => setDenyReason(e.target.value)}
-                        placeholder="Reason for denial (optional)..."
+                        placeholder="סיבת הדחייה (אופציונלי)..."
                         className="w-full px-3 py-2 bg-slate-600 border border-slate-500 text-white rounded text-sm focus:outline-none focus:border-red-500"
                         rows={2}
                       />
@@ -152,7 +154,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
                           disabled={denying === user.id}
                           className="flex-1 px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold rounded transition-all duration-200 text-sm"
                         >
-                          {denying === user.id ? '⏳ Denying...' : '✕ Deny'}
+                          {denying === user.id ? '⏳ דוחה...' : '✕ דחייה'}
                         </button>
                         <button
                           onClick={() => {
@@ -161,7 +163,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
                           }}
                           className="flex-1 px-3 py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded transition-all duration-200 text-sm"
                         >
-                          Cancel
+                          ביטול
                         </button>
                       </div>
                     </div>
@@ -172,7 +174,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
                         disabled={approving === user.id}
                         className="flex-1 px-3 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold rounded transition-all duration-200 text-sm"
                       >
-                        {approving === user.id ? '⏳ Approving...' : '✓ Approve'}
+                        {approving === user.id ? '⏳ מאשר...' : '✓ אשר'}
                       </button>
                       <button
                         onClick={() => setShowDenyReason(user.id)}
@@ -193,7 +195,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
               onClick={fetchPendingUsers}
               className="w-full mt-4 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white font-semibold rounded transition-all duration-200 text-sm"
             >
-              🔄 Refresh
+              🔄 רענן
             </button>
           )}
         </div>
@@ -204,7 +206,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
             onClick={onClose}
             className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded transition-all duration-200"
           >
-            Close
+            סגירה
           </button>
         </div>
       </div>

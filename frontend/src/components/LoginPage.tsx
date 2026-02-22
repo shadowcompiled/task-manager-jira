@@ -25,52 +25,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 relative overflow-hidden safe-area-padding">
       <div className="absolute top-10 left-10 w-40 h-40 bg-teal-500/10 rounded-full animate-pulse" />
       <div className="absolute bottom-10 right-10 w-32 h-32 bg-teal-500/10 rounded-full animate-pulse delay-1000" />
       
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur rounded-2xl shadow-2xl w-full max-w-md p-8 relative z-10 border border-teal-500/30 animate-fadeIn transform hover:scale-105 transition-transform duration-500">
-        <div className="text-center mb-8 animate-slideDown">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent mb-2">🍽️ Mission Tracker</h1>
-          <p className="text-teal-300/80 text-lg">Restaurant Operations Control</p>
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative z-10 border border-teal-500/30 animate-fadeIn">
+        <div className="text-center mb-6 sm:mb-8 animate-slideDown">
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent mb-2">🍽️ מעקב משימות</h1>
+          <p className="text-teal-300/80 text-base sm:text-lg">ניהול משימות במסעדה</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="animate-slideUp" style={{animationDelay: '0.1s'}}>
-            <label className="block text-sm font-semibold text-transparent bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text mb-2">Email</label>
+            <label className="block text-sm font-semibold text-teal-300 mb-2">דוא״ל</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-teal-500/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 hover:border-teal-500 bg-slate-700/50 text-white placeholder-slate-400"
-              placeholder="Enter email"
+              className="w-full px-4 py-3.5 text-base border-2 border-teal-500/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 bg-slate-700/50 text-white placeholder-slate-400"
+              placeholder="הכנס דוא״ל"
               required
+              dir="ltr"
+              autoComplete="email"
             />
           </div>
 
           <div className="animate-slideUp" style={{animationDelay: '0.2s'}}>
-            <label className="block text-sm font-semibold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-2">סיסמה</label>
+            <label className="block text-sm font-semibold text-teal-300 mb-2">סיסמה</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 hover:border-purple-400 bg-gray-50/50"
+              className="w-full px-4 py-3.5 text-base border-2 border-teal-500/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 bg-slate-700/50 text-white placeholder-slate-400"
               placeholder="הכנס סיסמה"
               required
+              dir="ltr"
+              autoComplete="current-password"
             />
           </div>
 
-          <div className="flex items-center animate-slideUp" style={{animationDelay: '0.3s'}}>
+          <div className="flex items-center gap-2 animate-slideUp" style={{animationDelay: '0.3s'}}>
             <input
               type="checkbox"
               id="rememberMe"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-5 h-5 text-purple-600 border-2 border-purple-300 rounded focus:ring-2 focus:ring-purple-500 cursor-pointer transition-all duration-300 hover:border-purple-500"
+              className="w-5 h-5 min-w-[20px] min-h-[20px] text-teal-500 border-2 border-teal-400 rounded focus:ring-2 focus:ring-teal-400 cursor-pointer"
             />
-            <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700 cursor-pointer font-medium hover:text-purple-600 transition-colors duration-300">
-              זכור אותי בפעם הבאה
+            <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer font-medium">
+              זכור אותי
             </label>
           </div>
 
@@ -83,29 +86,21 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-purple-500/50 disabled:opacity-50 transition-all duration-300 transform hover:scale-105 active:scale-95 animate-slideUp"
+            className="w-full min-h-[48px] bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-3.5 rounded-xl font-bold hover:shadow-lg hover:shadow-teal-500/40 disabled:opacity-50 transition-all duration-300 active:scale-[0.98] animate-slideUp"
             style={{animationDelay: '0.4s'}}
           >
-            {loading ? '⏳ טוען...' : '🔓 התחברות'}
+            {loading ? '⏳ מתחבר...' : '🔓 התחבר'}
           </button>
         </form>
 
-        <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 animate-slideUp" style={{animationDelay: '0.5s'}}>
-          <p className="text-sm font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-3">📋 פרטי כניסה לדוגמה:</p>
-          <div className="space-y-2">
-            <p className="text-sm text-gray-700 bg-white/50 p-2 rounded-lg hover:bg-white/80 transition-colors duration-300">
-              <span className="font-semibold">👑 מנהל:</span> <span className="font-mono text-xs">admin@restaurant.com</span> / <span className="font-mono text-xs">password123</span>
-            </p>
-            <p className="text-sm text-gray-700 bg-white/50 p-2 rounded-lg hover:bg-white/80 transition-colors duration-300">
-              <span className="font-semibold">👨‍💼 מנהל:</span> <span className="font-mono text-xs">manager@restaurant.com</span> / <span className="font-mono text-xs">password123</span>
-            </p>
-            <p className="text-sm text-gray-700 bg-white/50 p-2 rounded-lg hover:bg-white/80 transition-colors duration-300">
-              <span className="font-semibold">👤 עובד:</span> <span className="font-mono text-xs">john@restaurant.com</span> / <span className="font-mono text-xs">password123</span>
-            </p>
+        <div className="mt-6 p-4 bg-slate-700/40 rounded-xl border border-teal-500/20 animate-slideUp" style={{animationDelay: '0.5s'}}>
+          <p className="text-sm font-bold text-teal-300 mb-3">📋 כניסה לדוגמה</p>
+          <div className="space-y-2 text-sm text-slate-300">
+            <p className="bg-slate-800/60 p-2 rounded-lg"><span className="font-semibold">👑 מנהל:</span> <span className="font-mono text-xs" dir="ltr">admin@restaurant.com</span> / <span className="font-mono text-xs" dir="ltr">password123</span></p>
+            <p className="bg-slate-800/60 p-2 rounded-lg"><span className="font-semibold">👨‍💼 מנהל צוות:</span> <span className="font-mono text-xs" dir="ltr">manager@restaurant.com</span> / <span className="font-mono text-xs" dir="ltr">password123</span></p>
+            <p className="bg-slate-800/60 p-2 rounded-lg"><span className="font-semibold">👤 עובד:</span> <span className="font-mono text-xs" dir="ltr">john@restaurant.com</span> / <span className="font-mono text-xs" dir="ltr">password123</span></p>
           </div>
-          <p className="text-xs text-gray-600 mt-3 text-center bg-blue-100/50 p-2 rounded font-semibold">
-            ⚙️ רק מנהלי מערכת יכולים ליצור משתמשים חדשים
-          </p>
+          <p className="text-xs text-slate-500 mt-3 text-center">רק מנהלים יכולים ליצור משתמשים</p>
         </div>
       </div>
 

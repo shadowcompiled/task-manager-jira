@@ -53,14 +53,14 @@ export default function TagManagementModal({ onClose }: any) {
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create tag');
+      setError(err.response?.data?.error || 'יצירת התגית נכשלה');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteTag = async (tagId: number) => {
-    if (!window.confirm('?האם אתה בטוח שברצונך למחוק את התגיה')) return;
+    if (!window.confirm('למחוק את התגית?')) return;
 
     try {
       await axios.delete(`${API_BASE}/tags/${tagId}`, {
@@ -76,89 +76,85 @@ export default function TagManagementModal({ onClose }: any) {
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to delete tag');
+      setError(err.response?.data?.error || 'מחיקת התגית נכשלה');
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-2xl max-w-md w-full">
-        <div className="p-6 border-b flex justify-between items-center bg-gradient-to-r from-yellow-400 to-orange-400">
-          <h2 className="text-2xl font-bold text-white">🏷️ ניהול תגיות</h2>
+    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 safe-area-padding">
+      <div className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-slate-600 sm:border-teal-500/30">
+        <div className="p-4 sm:p-6 border-b border-slate-600 flex justify-between items-center shrink-0">
+          <h2 className="text-xl font-bold text-white">🏷️ ניהול תגיות</h2>
           <button
+            type="button"
             onClick={onClose}
-            className="text-white hover:text-gray-200 text-2xl font-bold"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-full text-xl"
+            aria-label="סגור"
           >
             ✕
           </button>
         </div>
 
-        <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
-          {/* Add New Tag Form */}
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">➕ יצירת תגיה חדשה</h3>
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+          <div className="bg-slate-700/50 border border-slate-600 rounded-xl p-4">
+            <h3 className="text-lg font-bold text-white mb-3">➕ יצירת תגיה חדשה</h3>
             <form onSubmit={handleAddTag} className="space-y-3">
-              <div>
-                <input
-                  type="text"
-                  placeholder="שם התגיה"
-                  value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                />
-              </div>
-
-              <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                placeholder="שם התגיה"
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                className="w-full px-4 py-3 border border-slate-600 rounded-xl bg-slate-700 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:outline-none min-h-[44px]"
+              />
+              <div className="flex gap-2 items-center flex-wrap">
                 <input
                   type="color"
                   value={newTagColor}
                   onChange={(e) => setNewTagColor(e.target.value)}
-                  className="w-12 h-10 rounded cursor-pointer border-2 border-yellow-300"
+                  className="w-12 h-10 rounded-xl cursor-pointer border border-slate-600 bg-slate-700"
                   title="בחר צבע לתגיה"
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-bold transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                  className="flex-1 min-h-[48px] px-4 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold disabled:opacity-50"
                 >
                   {loading ? '⏳ יוצר...' : '✓ צור תגיה'}
                 </button>
               </div>
-
               {error && (
-                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm font-semibold">
+                <div className="bg-red-500/20 text-red-300 p-3 rounded-xl text-sm border border-red-500/30">
                   ⚠️ {error}
                 </div>
               )}
-
               {success && (
-                <div className="bg-green-100 text-green-700 p-3 rounded-lg text-sm font-semibold">
+                <div className="bg-teal-500/20 text-teal-300 p-3 rounded-xl text-sm border border-teal-500/30">
                   {success}
                 </div>
               )}
             </form>
           </div>
 
-          {/* Existing Tags List */}
           <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-3">📋 תגיות קיימות</h3>
+            <h3 className="text-lg font-bold text-white mb-3">📋 תגיות קיימות</h3>
             {tags && tags.length > 0 ? (
               <div className="space-y-2">
                 {tags.map((tag) => (
                   <div
                     key={tag.id}
-                    className="flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 bg-gray-50 hover:bg-gray-100 transition"
+                    className="flex items-center justify-between p-3 rounded-xl border border-slate-600 bg-slate-700/50"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className="w-6 h-6 rounded-full border-2 border-gray-300"
+                        className="w-6 h-6 rounded-full border-2 border-slate-500 shrink-0"
                         style={{ backgroundColor: tag.color }}
                       />
-                      <span className="font-semibold text-gray-800">{tag.name}</span>
+                      <span className="font-semibold text-white truncate">{tag.name}</span>
                     </div>
                     <button
+                      type="button"
                       onClick={() => handleDeleteTag(tag.id)}
-                      className="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold transition-all duration-300 transform hover:scale-110 active:scale-95"
+                      className="min-h-[44px] px-3 py-2 text-sm bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold shrink-0"
                     >
                       ✕ מחק
                     </button>
@@ -166,16 +162,16 @@ export default function TagManagementModal({ onClose }: any) {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-gray-500 py-6 font-semibold">אין תגיות עדיין</p>
+              <p className="text-center text-slate-400 py-6 font-semibold">אין תגיות עדיין</p>
             )}
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t bg-gray-50 flex justify-center">
+        <div className="p-4 border-t border-slate-600 flex justify-center pb-[env(safe-area-inset-bottom)] sm:pb-4">
           <button
+            type="button"
             onClick={onClose}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-all duration-300 transform hover:scale-105 active:scale-95"
+            className="min-h-[48px] px-6 py-3 bg-slate-600 hover:bg-slate-500 text-white rounded-xl font-bold"
           >
             סגור
           </button>
