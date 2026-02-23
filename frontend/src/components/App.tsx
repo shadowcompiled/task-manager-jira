@@ -98,8 +98,8 @@ export default function App() {
                 {showHeaderMenu && (
                   <>
                     <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
-                    {/* Mobile: right-aligned menu panel */}
-                    <div dir="rtl" className="md:hidden fixed right-0 bottom-0 top-auto z-50 w-72 min-w-[16rem] max-w-[85vw] max-h-[70vh] rounded-tl-2xl rounded-bl-2xl bg-slate-800 border border-b-0 border-l border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden">
+                    {/* Mobile: full-width bottom sheet, text right-aligned */}
+                    <div dir="rtl" className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden">
                       <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5" dir="rtl">
                         {user.role === 'admin' && (
                           <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
