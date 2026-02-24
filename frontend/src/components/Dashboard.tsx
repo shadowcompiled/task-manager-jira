@@ -178,7 +178,11 @@ export default function Dashboard() {
         setStats(statsRes.data);
         setStaffPerformance(staffRes.data);
         setTasksByPriority(priorityRes.data);
-        setTasksByStatus(statusRes.data);
+        const statusData = (statusRes.data || []).filter((i: TaskByStatus) => i.status !== 'verified');
+        const verifiedItem = (statusRes.data || []).find((i: TaskByStatus) => i.status === 'verified');
+        const completedItem = statusData.find((i: TaskByStatus) => i.status === 'completed');
+        if (completedItem && verifiedItem) completedItem.count += verifiedItem.count;
+        setTasksByStatus(statusData);
         setTodayStats(todayRes.data);
         setWeeklyStats(weeklyRes.data);
         setRecurringStats(recurringRes.data);
@@ -294,7 +298,7 @@ export default function Dashboard() {
     in_progress: 'בביצוע',
     waiting: 'ממתין',
     completed: 'הושלם',
-    verified: 'אומת',
+    verified: 'הושלם',
   };
 
   const statusColors: Record<string, string> = {
@@ -318,11 +322,9 @@ export default function Dashboard() {
     worker: 'עובד',
   };
 
-  const EmptySection = ({ title, description }: { title: string; description: string }) => (
-    <div className="rounded-2xl p-4 border border-slate-600 bg-slate-800/50 text-center min-h-0">
-      <p className="font-bold text-slate-400 text-sm mb-0.5">{title}</p>
-      <p className="text-slate-500 text-xs max-w-xs mx-auto leading-tight">{description}</p>
-      <p className="text-slate-500 text-xs mt-1">אין נתונים להצגה כרגע</p>
+  const EmptySection = ({ title }: { title: string; description?: string }) => (
+    <div className="rounded-none p-3 border-0 border-t border-slate-600 bg-slate-800/30 text-center min-h-0">
+      <p className="font-semibold text-slate-500 text-xs">אין נתונים</p>
     </div>
   );
 
@@ -351,78 +353,63 @@ export default function Dashboard() {
                       </div>
                       <div className="p-0">
               {sectionId === 'today' && (todayStats ? (
-        <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-none p-5 text-white shadow-lg">
+        <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-none p-5 text-white shadow-lg min-h-0">
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
             <span>📅</span>
             <span>היום</span>
           </h2>
-          <div className="grid grid-cols-4 gap-2 text-center">
-            <div>
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
+            <div className="flex-shrink-0 w-20 snap-center text-center">
               <p className="text-2xl font-bold">{todayStats.completed_today}</p>
               <p className="text-xs opacity-80">הושלמו</p>
             </div>
-            <div>
+            <div className="flex-shrink-0 w-20 snap-center text-center">
               <p className="text-2xl font-bold">{todayStats.due_today}</p>
               <p className="text-xs opacity-80">ליום זה</p>
             </div>
-            <div>
+            <div className="flex-shrink-0 w-20 snap-center text-center">
               <p className="text-2xl font-bold">{todayStats.created_today}</p>
               <p className="text-xs opacity-80">נוצרו</p>
             </div>
-            <div>
+            <div className="flex-shrink-0 w-20 snap-center text-center">
               <p className="text-2xl font-bold text-yellow-300">{todayStats.due_soon}</p>
               <p className="text-xs opacity-80">ב-24 שעות</p>
             </div>
           </div>
         </div>
-              ) : <EmptySection title="📅 היום" description="משימות שהושלמו היום, עם תאריך יעד היום, שנוצרו היום או שמועדן ב-24 השעות הקרובות" />)}
+              ) : <EmptySection title="📅 היום" description="" />)}
               {sectionId === 'mainStats' && (stats ? (
-        <div className="grid grid-cols-2 gap-3 p-4">
-          {/* Total Tasks */}
-          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xl">
-                📋
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">סה"כ משימות</p>
+        <div className="flex gap-3 p-4 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-h-0">
+          <div className="flex-shrink-0 w-36 snap-center bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-lg">📋</div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">סה"כ משימות</p>
             </div>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">{stats.total_tasks}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total_tasks}</p>
           </div>
-
-          {/* Completed */}
-          <div className="bg-emerald-50 dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-emerald-200 dark:border-slate-700">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-xl">
-                ✅
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">הושלמו</p>
+          <div className="flex-shrink-0 w-36 snap-center bg-emerald-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-emerald-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-lg">✅</div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">הושלמו</p>
             </div>
-            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{stats.completed_tasks}</p>
+            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.completed_tasks}</p>
           </div>
-
-          {/* Pending */}
-          <div className="bg-blue-50 dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-blue-200 dark:border-slate-700">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xl">
-                ⏳
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">ממתינות</p>
+          <div className="flex-shrink-0 w-36 snap-center bg-blue-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-blue-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-lg">⏳</div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">ממתינות</p>
             </div>
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.pending_tasks}</p>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.pending_tasks}</p>
           </div>
-
-          {/* Overdue */}
-          <div className="bg-red-50 dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-red-200 dark:border-slate-700">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-xl">
-                ⚠️
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">באיחור</p>
+          <div className="flex-shrink-0 w-36 snap-center bg-red-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-red-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-lg">⚠️</div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">באיחור</p>
             </div>
-            <p className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.overdue_tasks}</p>
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue_tasks}</p>
           </div>
         </div>
-              ) : <EmptySection title="נתונים כלליים" description="סה״כ משימות, הושלמו, ממתינות ובאיחור במערכת" />)}
+              ) : <EmptySection title="נתונים כלליים" description="" />)}
               {sectionId === 'completion' && (stats ? (
         <div className="bg-teal-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <div className="flex items-center justify-between mb-3">
@@ -439,7 +426,7 @@ export default function Dashboard() {
             />
           </div>
         </div>
-              ) : <EmptySection title="אחוז השלמה" description="אחוז המשימות שהושלמו מתוך סה״כ המשימות" />)}
+              ) : <EmptySection title="אחוז השלמה" />)}
               {sectionId === 'weekly' && (weeklyStats ? (
         <div className="bg-purple-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -473,93 +460,78 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-              ) : <EmptySection title="📈 סיכום שבועי" description="משימות שהושלמו ונוצרו בשבעת הימים האחרונים, עם פירוט יומי" />)}
+              ) : <EmptySection title="📈 סיכום שבועי" />)}
               {sectionId === 'byStatus' && (tasksByStatus.length > 0 ? (
-        <div className="bg-indigo-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
+        <div className="bg-indigo-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>📌</span>
             <span>משימות לפי סטטוס</span>
           </h2>
-          <div className="space-y-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
             {tasksByStatus.map((item) => {
               const total = tasksByStatus.reduce((sum, i) => sum + i.count, 0);
               const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
               return (
-                <div key={item.status}>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-3 h-3 rounded-full ${statusColors[item.status] || 'bg-slate-500'}`} />
-                      <span className="text-sm text-slate-600 dark:text-slate-300">
-                        {statusLabels[item.status] || item.status}
-                      </span>
-                    </div>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">{item.count}</span>
+                <div key={item.status} className="flex-shrink-0 w-28 snap-center bg-white dark:bg-slate-700 rounded-xl p-3 border border-slate-200 dark:border-slate-600">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${statusColors[item.status] || 'bg-slate-500'}`} />
+                    <span className="text-xs text-slate-600 dark:text-slate-300 truncate">{statusLabels[item.status] || item.status}</span>
                   </div>
-                  <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-500 ${statusColors[item.status] || 'bg-slate-500'}`}
-                      style={{ width: `${percentage}%` }}
-                    />
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">{item.count}</p>
+                  <div className="h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mt-1">
+                    <div className={`h-full rounded-full transition-all duration-500 ${statusColors[item.status] || 'bg-slate-500'}`} style={{ width: `${percentage}%` }} />
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
-              ) : <EmptySection title="📌 לפי סטטוס" description="כמה משימות בכל סטטוס: מתוכנן, הוקצה, בביצוע, הושלם ועוד" />)}
+              ) : <EmptySection title="📌 לפי סטטוס" description="" />)}
               {sectionId === 'byPriority' && (tasksByPriority.length > 0 ? (
-        <div className="bg-amber-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
+        <div className="bg-amber-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>🎯</span>
             <span>משימות לפי עדיפות</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על עדיפות לצפייה במשימות</p>
-          <div className="space-y-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
             {tasksByPriority.map((item) => (
               <div 
                 key={item.priority} 
                 onClick={() => fetchPriorityTasks(item)}
                 role="button"
                 tabIndex={0}
-                className="bg-white dark:bg-slate-700 rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-amber-300 dark:hover:border-amber-600 border border-transparent active:scale-[0.99] transition-all"
+                className="flex-shrink-0 w-40 snap-center bg-white dark:bg-slate-700 rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-amber-300 dark:hover:border-amber-600 border border-transparent active:scale-[0.99] transition-all"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className={`w-3 h-3 rounded-full ${priorityColors[item.priority] || 'bg-slate-500'}`} />
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                      {priorityLabels[item.priority] || item.priority}
-                    </span>
+                    <span className={`w-2.5 h-2.5 rounded-full ${priorityColors[item.priority] || 'bg-slate-500'}`} />
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{priorityLabels[item.priority] || item.priority}</span>
                   </div>
                   <span className="text-lg font-bold text-slate-900 dark:text-white">{item.count}</span>
                 </div>
-                <div className="flex gap-2 text-xs">
-                  <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded">
-                    ✓ {item.completed || 0} הושלמו
-                  </span>
-                  <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded">
-                    🔄 {item.in_progress || 0} בביצוע
-                  </span>
+                <div className="flex flex-wrap gap-1 text-xs">
+                  <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded">✓ {item.completed || 0}</span>
+                  <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded">🔄 {item.in_progress || 0}</span>
                   {(item.overdue || 0) > 0 && (
-                    <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded">
-                      ⚠️ {item.overdue} באיחור
-                    </span>
+                    <span className="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded">⚠️ {item.overdue}</span>
                   )}
                 </div>
               </div>
             ))}
           </div>
         </div>
-              ) : <EmptySection title="🎯 לפי עדיפות" description="משימות לפי דחיפות: נמוכה, בינונית, גבוהה, קריטית. לחץ לצפייה ברשימה" />)}
+              ) : <EmptySection title="🎯 לפי עדיפות" description="" />)}
               {sectionId === 'recurring' && (recurringStats && recurringStats.total_recurring > 0 ? (
-        <div className="bg-cyan-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
+        <div className="bg-cyan-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>🔄</span>
             <span>משימות חוזרות</span>
             <span className="text-sm font-normal text-slate-500">({recurringStats.total_recurring})</span>
           </h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
             {recurringStats.by_type.map((item) => (
-              <div key={item.recurrence} className="text-center p-3 bg-white dark:bg-slate-700 rounded-xl">
+              <div key={item.recurrence} className="flex-shrink-0 w-24 snap-center text-center p-3 bg-white dark:bg-slate-700 rounded-xl">
                 <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">{item.count}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{recurrenceLabels[item.recurrence] || item.recurrence}</p>
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400">✓ {item.completed}</p>
@@ -567,22 +539,22 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-              ) : <EmptySection title="🔄 משימות חוזרות" description="משימות עם חזרתיות יומית, שבועית או חודשית" />)}
+              ) : <EmptySection title="🔄 משימות חוזרות" />)}
               {sectionId === 'tags' && (tagStats.length > 0 ? (
-        <div className="bg-pink-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
+        <div className="bg-pink-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>🏷️</span>
             <span>שימוש בתגיות</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על תגית לצפייה במשימות</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
             {tagStats.map((tag) => (
               <div
                 key={tag.id}
                 onClick={() => fetchTagTasks(tag)}
                 role="button"
                 tabIndex={0}
-                className="flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-md select-none"
+                className="flex-shrink-0 snap-center flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-md select-none"
                 style={{ 
                   background: tag.color2 
                     ? `linear-gradient(135deg, ${tag.color} 0%, ${tag.color2} 100%)`
@@ -595,7 +567,7 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-              ) : <EmptySection title="🏷️ תגיות" description="שימוש בתגיות במשימות. לחץ על תגית כדי לראות משימות" />)}
+              ) : <EmptySection title="🏷️ תגיות" />)}
               {sectionId === 'staff' && (
       <div className="p-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -604,19 +576,18 @@ export default function Dashboard() {
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על עובד לצפייה במשימות שלו</p>
         {staffPerformance.length === 0 ? (
-          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 text-center shadow-sm border border-slate-200 dark:border-slate-700 min-h-0">
-            <p className="text-slate-400 text-sm">אין נתונים להצגה</p>
-            <p className="text-xs text-slate-500 mt-0.5">הקצה משימות לעובדים כדי לראות סטטיסטיקות</p>
+          <div className="rounded-none p-3 border-0 border-t border-slate-600 bg-slate-800/30 text-center min-h-0">
+            <p className="font-semibold text-slate-500 text-xs">אין נתונים</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-h-0">
             {staffPerformance.map((staff, index) => (
               <div 
                 key={staff.user_id} 
                 onClick={() => fetchWorkerTasks(staff)}
                 role="button"
                 tabIndex={0}
-                className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md hover:border-teal-300 dark:hover:border-teal-600 active:scale-[0.99] transition-all"
+                className="flex-shrink-0 w-52 snap-center bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md hover:border-teal-300 dark:hover:border-teal-600 active:scale-[0.99] transition-all"
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${

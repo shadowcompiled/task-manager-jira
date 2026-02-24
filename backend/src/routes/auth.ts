@@ -115,8 +115,8 @@ router.get('/pending-users', async (req: Request, res: Response) => {
     } catch {
       return res.status(401).json({ error: 'Unauthorized - invalid token' });
     }
-    if (!['admin', 'maintainer'].includes(currentUser.role)) {
-      return res.status(403).json({ error: 'Only admins and maintainers can view pending users' });
+    if (!['admin', 'maintainer', 'manager'].includes(currentUser.role)) {
+      return res.status(403).json({ error: 'Only admins, maintainers and managers can view pending users' });
     }
     const { rows } = await sql`
       SELECT id, email, name, role, status, created_at FROM users
@@ -141,8 +141,8 @@ router.put('/approve-user/:userId', async (req: Request, res: Response) => {
     } catch {
       return res.status(401).json({ error: 'Unauthorized - invalid token' });
     }
-    if (!['admin', 'maintainer'].includes(currentUser.role)) {
-      return res.status(403).json({ error: 'Only admins and maintainers can approve users' });
+    if (!['admin', 'maintainer', 'manager'].includes(currentUser.role)) {
+      return res.status(403).json({ error: 'Only admins, maintainers and managers can approve users' });
     }
     const userRows = await sql`SELECT * FROM users WHERE id = ${userId} AND restaurant_id = ${currentUser.restaurantId}`;
     const userToApprove = userRows.rows[0] as any;
@@ -172,8 +172,8 @@ router.put('/deny-user/:userId', async (req: Request, res: Response) => {
     } catch {
       return res.status(401).json({ error: 'Unauthorized - invalid token' });
     }
-    if (!['admin', 'maintainer'].includes(currentUser.role)) {
-      return res.status(403).json({ error: 'Only admins and maintainers can deny users' });
+    if (!['admin', 'maintainer', 'manager'].includes(currentUser.role)) {
+      return res.status(403).json({ error: 'Only admins, maintainers and managers can deny users' });
     }
     const userRows = await sql`SELECT * FROM users WHERE id = ${userId} AND restaurant_id = ${currentUser.restaurantId}`;
     const userToDeny = userRows.rows[0] as any;

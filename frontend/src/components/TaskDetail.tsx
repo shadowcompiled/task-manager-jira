@@ -176,21 +176,21 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
                   onChange={(e) => setEditData({ ...editData, status: e.target.value })}
                   className="w-full px-3 py-2.5 border border-slate-600 rounded-xl bg-slate-700 text-white min-h-[44px]"
                 >
-                  {['planned', 'assigned', 'in_progress', 'waiting', 'completed', 'verified'].map((s) => {
+                  {['planned', 'assigned', 'in_progress', 'waiting', 'completed'].map((s) => {
                     const labels: Record<string, string> = {
                       planned: 'מתוכנן',
                       assigned: 'הוקצה',
                       in_progress: 'בתהליך',
                       waiting: 'בהמתנה',
                       completed: 'הושלם',
-                      verified: 'אומת'
+                      verified: 'הושלם'
                     };
                     return <option key={s} value={s}>{labels[s]}</option>;
                   })}
                 </select>
               ) : (
                 <span className={`inline-block px-4 py-2 rounded-lg font-semibold ${statusColors[currentTask.status as keyof typeof statusColors]}`}>
-                  {currentTask.status === 'planned' ? 'מתוכנן' : currentTask.status === 'assigned' ? 'הוקצה' : currentTask.status === 'in_progress' ? 'בתהליך' : currentTask.status === 'waiting' ? 'בהמתנה' : currentTask.status === 'completed' ? 'הושלם' : currentTask.status === 'verified' ? 'אומת' : currentTask.status}
+                  {currentTask.status === 'planned' ? 'מתוכנן' : currentTask.status === 'assigned' ? 'הוקצה' : currentTask.status === 'in_progress' ? 'בתהליך' : currentTask.status === 'waiting' ? 'בהמתנה' : currentTask.status === 'completed' || currentTask.status === 'verified' ? 'הושלם' : currentTask.status}
                 </span>
               )}
             </div>

@@ -43,7 +43,6 @@ export default function KanbanDashboard() {
     { id: 'in_progress', name: 'in_progress', displayName: '⚙️ בתהליך', color: '#8b5cf6' },
     { id: 'waiting', name: 'waiting', displayName: '⏸️ מחכה', color: '#f59e0b' },
     { id: 'completed', name: 'completed', displayName: '✓ הושלם', color: '#10b981' },
-    { id: 'verified', name: 'verified', displayName: '✓✓ אומת', color: '#059669' },
     { id: 'overdue', name: 'overdue', displayName: '🔴 בפיגור', color: '#ef4444' },
   ];
 
@@ -57,10 +56,12 @@ export default function KanbanDashboard() {
 
       const tasks: TaskWithAssignee[] = response.data;
       
-      // Initialize columns
+      // Initialize columns (verified tasks shown in completed column)
       const newColumns: StatusColumn[] = DEFAULT_STATUSES.map(status => ({
         ...status,
-        tasks: tasks.filter(task => task.status === status.name),
+        tasks: tasks.filter(task =>
+          task.status === status.name || (status.name === 'completed' && task.status === 'verified')
+        ),
       }));
 
       setColumns(newColumns);
@@ -108,9 +109,9 @@ export default function KanbanDashboard() {
   const handleDrop = async (statusName: string) => {
     if (!draggedTask) return;
 
-    const validStatuses = ['planned', 'assigned', 'in_progress', 'waiting', 'completed', 'verified', 'overdue'];
+    const validStatuses = ['planned', 'assigned', 'in_progress', 'waiting', 'completed', 'overdue'];
     const status = validStatuses.includes(statusName) 
-      ? (statusName as 'planned' | 'assigned' | 'in_progress' | 'waiting' | 'completed' | 'verified' | 'overdue')
+      ? (statusName as 'planned' | 'assigned' | 'in_progress' | 'waiting' | 'completed' | 'overdue')
       : 'planned';
 
     try {
@@ -176,15 +177,15 @@ export default function KanbanDashboard() {
   if (!user?.role || !['manager', 'admin'].includes(user.role)) {
     return (
       <div className="p-6">
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
-          <p className="text-gray-700 text-lg">לוח בקרה זמין לבעלי משימות בלבד</p>
+        <div className="bg-blue-50 dark:bg-slate-800 border-2 border-blue-200 dark:border-slate-600 rounded-lg p-6 text-center">
+          <p className="text-gray-700 dark:text-slate-300 text-lg">לוח בקרה זמין לבעלי משימות בלבד</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 min-h-screen">
+    <div className="p-4 md:p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 min-h-screen">
       <style>{`
         @keyframes slideIn {
           from {
@@ -210,7 +211,7 @@ export default function KanbanDashboard() {
         <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
           📊 לוח משימות
         </h1>
-        <p className="text-gray-600 font-semibold text-sm md:text-base">
+        <p className="text-gray-600 dark:text-slate-300 font-semibold text-sm md:text-base">
           גרור ושחרר משימות לשינוי סטטוס
         </p>
       </div>
@@ -255,7 +256,7 @@ export default function KanbanDashboard() {
 
       {/* Kanban Board */}
       {loading ? (
-        <div className="text-center text-gray-600 py-12 font-bold">⏳ טוען משימות...</div>
+        <div className="text-center text-gray-600 dark:text-slate-300 py-12 font-bold">⏳ טוען משימות...</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 overflow-x-hidden md:overflow-x-auto pb-6 min-w-0 w-full">
           {columns.map((column) => (
@@ -263,7 +264,7 @@ export default function KanbanDashboard() {
               key={column.id}
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(column.name)}
-              className="kanban-column bg-white rounded-lg shadow-lg border-2 border-gray-200 p-3 flex flex-col animate-slideIn hover:shadow-xl transition-shadow"
+              className="kanban-column bg-white dark:bg-slate-800 rounded-lg shadow-lg border-2 border-gray-200 dark:border-slate-600 p-3 flex flex-col animate-slideIn hover:shadow-xl transition-shadow"
               style={{ borderTopColor: column.color }}
             >
               {/* Column Header */}
@@ -274,7 +275,7 @@ export default function KanbanDashboard() {
                 >
                   {column.displayName}
                 </h2>
-                <p className="text-xs text-gray-500 text-center mt-2 font-bold">
+                <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-2 font-bold">
                   {column.tasks.length} משימות
                 </p>
               </div>
@@ -287,10 +288,10 @@ export default function KanbanDashboard() {
                       key={task.id}
                       draggable
                       onDragStart={() => handleDragStart(task)}
-                      className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 rounded-lg p-2.5 cursor-move hover:shadow-lg hover:border-blue-400 transition-all duration-200 ease-out transform hover:scale-[1.02] active:scale-[0.98]"
+                      className="bg-gradient-to-br from-white to-gray-50 dark:from-slate-700 dark:to-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded-lg p-2.5 cursor-move hover:shadow-lg hover:border-blue-400 dark:hover:border-teal-500 transition-all duration-200 ease-out transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                       {/* Task Title */}
-                      <h3 className="font-bold text-gray-800 text-sm mb-2 line-clamp-2">
+                      <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm mb-2 line-clamp-2">
                         {task.title}
                       </h3>
 
@@ -305,7 +306,7 @@ export default function KanbanDashboard() {
                       </div>
 
                       {/* Assigned User & Estimated Time */}
-                      <div className="space-y-1 text-xs text-gray-600 mb-2">
+                      <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300 mb-2">
                         {task.assigned_to_name && (
                           <p className="font-semibold">👤 {task.assigned_to_name}</p>
                         )}
@@ -319,11 +320,11 @@ export default function KanbanDashboard() {
 
                       {/* Description */}
                       {task.description && (
-                        <p className="text-xs text-gray-600 line-clamp-2 mb-2">{task.description}</p>
+                        <p className="text-xs text-gray-600 dark:text-slate-400 line-clamp-2 mb-2">{task.description}</p>
                       )}
 
                       {/* Status shortcuts */}
-                      <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-200" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-200 dark:border-slate-600" onClick={(e) => e.stopPropagation()}>
                         {DEFAULT_STATUSES.filter((s) => s.name !== task.status).slice(0, 4).map((s) => (
                           <button
                             key={s.name}
@@ -336,7 +337,7 @@ export default function KanbanDashboard() {
                                 console.error('Failed to update status', err);
                               }
                             }}
-                            className="px-2 py-0.5 rounded text-[10px] font-bold border bg-white/80 text-gray-700 hover:opacity-90 transition-opacity"
+                            className="px-2 py-0.5 rounded text-[10px] font-bold border bg-white/80 dark:bg-slate-700/80 text-gray-700 dark:text-slate-200 hover:opacity-90 transition-opacity"
                             style={{ borderColor: s.color, color: s.color }}
                           >
                             {s.displayName}
@@ -346,7 +347,7 @@ export default function KanbanDashboard() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-gray-400 py-3 text-xs font-semibold">
+                  <p className="text-center text-gray-400 dark:text-slate-500 py-3 text-xs font-semibold">
                     אין משימות
                   </p>
                 )}
@@ -357,8 +358,8 @@ export default function KanbanDashboard() {
       )}
 
       {/* Mobile-friendly footer tip */}
-      <div className="mt-6 lg:hidden bg-blue-50 border-2 border-blue-200 rounded-lg p-4 text-center">
-        <p className="text-sm text-gray-700 font-semibold">
+      <div className="mt-6 lg:hidden bg-blue-50 dark:bg-slate-800 border-2 border-blue-200 dark:border-slate-600 rounded-lg p-4 text-center">
+        <p className="text-sm text-gray-700 dark:text-slate-300 font-semibold">
           💡 גרור משימות לשינוי סטטוס. גלול אופקיים לראות יותר עמודות
         </p>
       </div>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
+
 interface PendingUser {
   id: number;
   email: string;
@@ -35,7 +37,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
     setLoading(true);
     setError('');
     try {
-      const response = await axios.get('/api/auth/pending-users', {
+      const response = await axios.get(`${API_BASE}/auth/pending-users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPendingUsers(response.data.pendingUsers);
@@ -50,7 +52,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
   const approveUser = async (userId: number) => {
     setApproving(userId);
     try {
-      await axios.put(`/api/auth/approve-user/${userId}`, {}, {
+      await axios.put(`${API_BASE}/auth/approve-user/${userId}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Remove user from list and show success
@@ -67,7 +69,7 @@ export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, on
   const denyUser = async (userId: number) => {
     setDenying(userId);
     try {
-      await axios.put(`/api/auth/deny-user/${userId}`, 
+await axios.put(`${API_BASE}/auth/deny-user/${userId}`,
         { reason: denyReason },
         { headers: { Authorization: `Bearer ${token}` } }
       );

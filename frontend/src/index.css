@@ -326,12 +326,12 @@ input[type="checkbox"] {
    ======================================== */
 
 html.light-mode {
-  --color-bg: #faf8f5;           /* Warm cream */
+  --color-bg: #fdfcfa;           /* Lighter warm cream */
   --color-surface: #ffffff;
   --color-text: #2c2420;         /* Warm dark brown */
   --color-text-muted: #5c534a;   /* Warm brown */
-  --color-border: #e2ddd4;       /* Warm beige border */
-  --color-border-light: #f0ede8;  /* Light cream */
+  --color-border: #e8e4dc;       /* Warm beige border */
+  --color-border-light: #faf9f7;  /* Lighter cream */
   --light-primary: #0d9488;      /* teal-600 */
   --light-surface: #ffffff;
   --light-text: #2c2420;
@@ -342,28 +342,28 @@ html.light-mode body {
   color: var(--color-text);
 }
 
-/* App shell, header and bottom bar - warm cream, no grey */
+/* App shell, header and bottom bar - lighter warm cream, no grey */
 html.light-mode .app-shell {
-  background: linear-gradient(to bottom right, #f0ede8 0%, #faf8f5 50%, #f0ede8 100%) !important;
+  background: linear-gradient(to bottom right, #faf9f7 0%, #fdfcfa 50%, #faf9f7 100%) !important;
 }
 html.light-mode .app-header {
-  background: linear-gradient(to right, #ffffff 0%, #f5f2ed 50%, #ffffff 100%) !important;
-  border-color: #e2ddd4;
+  background: linear-gradient(to right, #ffffff 0%, #faf9f7 50%, #ffffff 100%) !important;
+  border-color: #e8e4dc;
 }
 html.light-mode .app-bottom-bar {
-  background: linear-gradient(to right, #ffffff 0%, #f5f2ed 50%, #ffffff 100%) !important;
-  border-color: #e2ddd4;
+  background: linear-gradient(to right, #ffffff 0%, #faf9f7 50%, #ffffff 100%) !important;
+  border-color: #e8e4dc;
 }
 html.light-mode .create-btn-float {
-  border-color: #f0ede8 !important;
+  border-color: #faf9f7 !important;
 }
 html.light-mode .kanban-page {
-  background: linear-gradient(to bottom right, #f0ede8 0%, #faf8f5 50%, #f0ede8 100%) !important;
+  background: linear-gradient(to bottom right, #faf9f7 0%, #fdfcfa 50%, #faf9f7 100%) !important;
 }
 
-/* Scrollbar - warm beige */
+/* Scrollbar - lighter warm cream */
 html.light-mode ::-webkit-scrollbar-track {
-  background: #f0ede8;
+  background: #faf9f7;
 }
 
 html.light-mode ::-webkit-scrollbar-thumb {
@@ -374,9 +374,9 @@ html.light-mode ::-webkit-scrollbar-thumb:hover {
   background: #0d9488;
 }
 
-/* Background colors - cream/white, no grey */
+/* Background colors - lighter cream/white, no grey */
 html.light-mode .bg-slate-900 {
-  background-color: #faf8f5;
+  background-color: #fdfcfa;
 }
 
 html.light-mode .bg-slate-800 {
@@ -388,17 +388,17 @@ html.light-mode .bg-slate-800\/50 {
 }
 
 html.light-mode .bg-slate-700 {
-  background-color: #f5f2ed;
+  background-color: #faf9f7;
 }
 
 html.light-mode .bg-slate-700\/50,
 html.light-mode .bg-slate-700\/30,
 html.light-mode .bg-slate-700\/70 {
-  background-color: #f0ede8;
+  background-color: #faf9f7;
 }
 
 html.light-mode .bg-slate-50 {
-  background-color: #fdfbf8;
+  background-color: #fdfcfa;
 }
 
 /* Text colors - warm brown, no grey */
@@ -422,17 +422,17 @@ html.light-mode .text-slate-900 {
   color: #2c2420;
 }
 
-/* Border colors - warm beige */
+/* Border colors - warm beige, no dark grey */
 html.light-mode .border-slate-100,
 html.light-mode .border-slate-200 {
-  border-color: #e2ddd4;
+  border-color: #e8e4dc;
 }
 
 html.light-mode .border-slate-600,
 html.light-mode .border-slate-700,
 html.light-mode .border-slate-700\/50,
 html.light-mode .border-slate-600\/50 {
-  border-color: #d6d1c9;
+  border-color: #e2ddd4;
 }
 
 /* Form elements - warm borders */
@@ -480,16 +480,16 @@ html.light-mode nav {
 
 /* Buttons - warm cream/beige, no grey */
 html.light-mode .bg-slate-700:hover {
-  background-color: #e8e4dc;
+  background-color: #f0ede8;
 }
 
 html.light-mode button.bg-slate-700 {
-  background-color: #f0ede8;
+  background-color: #faf9f7;
   color: #4a423a;
 }
 
 html.light-mode button.bg-slate-700:hover {
-  background-color: #e8e4dc;
+  background-color: #f0ede8;
 }
 
 /* Task cards */
@@ -502,11 +502,11 @@ html.light-mode .hover\:bg-white:hover {
 }
 
 html.light-mode .hover\:bg-slate-600:hover {
-  background-color: #f0ede8;
+  background-color: #faf9f7;
 }
 
 html.light-mode .hover\:bg-slate-600\/70:hover {
-  background-color: #e8e4dc;
+  background-color: #f0ede8;
 }
 
 /* Modal overlays - warm dark */
@@ -544,13 +544,13 @@ html.light-mode .bg-teal-50 {
   background-color: #f0fdfa;
 }
 
-/* Progress bars - warm cream/beige */
+/* Progress bars - lighter warm cream */
 html.light-mode .bg-slate-100 {
-  background-color: #f0ede8;
+  background-color: #faf9f7;
 }
 
 html.light-mode .bg-slate-200 {
-  background-color: #e2ddd4;
+  background-color: #e8e4dc;
 }
 
 /* Active/Selected states */
@@ -567,9 +567,9 @@ html.light-mode .shadow-xl {
   box-shadow: 0 4px 20px rgba(44, 36, 32, 0.08), 0 2px 8px rgba(44, 36, 32, 0.04);
 }
 
-/* Status indicators - warm beige/teal tint */
+/* Status indicators - warm beige, no dark grey */
 html.light-mode .bg-slate-600 {
-  background-color: #b8b0a4;
+  background-color: #c9c2b5;
 }
 
 /* Dashboard card backgrounds - subtle colored tints */
@@ -666,13 +666,13 @@ html.light-mode .hover\:bg-red-50:hover {
   background-color: #fff5f5;
 }
 
-/* Light mode: warm cream gradients */
+/* Light mode: lighter warm cream gradients */
 html.light-mode .from-slate-950,
 html.light-mode .via-slate-900,
 html.light-mode .to-slate-950 {
-  --tw-gradient-from: #faf8f5;
-  --tw-gradient-to: rgba(250, 248, 245, 0);
-  --tw-gradient-stops: var(--tw-gradient-from), #f0ede8, var(--tw-gradient-to);
+  --tw-gradient-from: #fdfcfa;
+  --tw-gradient-to: rgba(253, 252, 250, 0);
+  --tw-gradient-stops: var(--tw-gradient-from), #faf9f7, var(--tw-gradient-to);
 }
 html.light-mode .border-teal-500\/40 {
   border-color: rgba(13, 148, 136, 0.35);

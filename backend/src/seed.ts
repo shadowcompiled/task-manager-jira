@@ -13,7 +13,6 @@ export async function seedDatabase() {
     { name: 'in_progress', displayName: 'בתהליך', color: '#8b5cf6', order: 2 },
     { name: 'waiting', displayName: 'בהמתנה', color: '#f59e0b', order: 3 },
     { name: 'completed', displayName: 'הושלם', color: '#10b981', order: 4 },
-    { name: 'verified', displayName: 'אומת', color: '#059669', order: 5 }
   ];
   for (const s of defaultStatuses) {
     await sql`INSERT INTO statuses (restaurant_id, name, display_name, color, order_index, is_default) VALUES (${restaurant1Id}, ${s.name}, ${s.displayName}, ${s.color}, ${s.order}, true)`;

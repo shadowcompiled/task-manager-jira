@@ -13,7 +13,7 @@ const statusLabels = {
   in_progress: 'בתהליך',
   waiting: 'בהמתנה',
   completed: 'הושלם',
-  verified: 'אומת',
+  verified: 'הושלם',
   overdue: 'בפיגור',
 };
 

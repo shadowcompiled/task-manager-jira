@@ -28,7 +28,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
         const res = await axios.get(`${API_BASE}/statuses/restaurant/${user.restaurant_id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setStatuses(res.data);
+        setStatuses((res.data as Status[]).filter((s) => s.name !== 'verified'));
       } catch (error) {
         console.error('Failed to fetch statuses:', error);
       } finally {
@@ -47,8 +47,9 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
     statuses.forEach((s) => { byStatus[s.name] = []; });
     const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
     tasks.forEach((t) => {
-      if (byStatus[t.status]) {
-        byStatus[t.status].push(t);
+      const status = t.status === 'verified' ? 'completed' : t.status;
+      if (byStatus[status]) {
+        byStatus[status].push(t);
       }
     });
     Object.keys(byStatus).forEach((status) => {
@@ -142,7 +143,6 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
                                 ...provided.draggableProps.style,
                                 ...(snapshot.isDragging
                                   ? {
-                                      transform: `${provided.draggableProps.style?.transform ?? ''} translateY(-56px)`,
                                       opacity: 1,
                                       boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
                                       borderRadius: '12px',

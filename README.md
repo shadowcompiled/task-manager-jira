@@ -39,6 +39,10 @@ npm run dev
 3. Set environment variables: `POSTGRES_URL`, `JWT_SECRET`, `CRON_SECRET`, and optionally `SENDGRID_API_KEY`, `EMAIL_FROM`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`.
 4. Deploy. The `vercel.json` build runs backend + frontend; `/api/*` is served by the serverless API. Cron jobs hit `/api/cron/daily-notifications` (hourly) and `/api/cron/push-scheduled` (every minute; Pro plan).
 
+## Cron & auto-cleanup
+
+The **daily-notifications** cron (`GET /api/cron/daily-notifications`) runs notifications and **auto-cleanup**: tasks that have been in "הושלם" (Completed) or verified for more than 3 days are deleted. Ensure `CRON_SECRET` is set in the environment and that your deployment invokes this endpoint (e.g. Vercel Cron with `schedule: "0 * * * *"` for hourly). Requests must include `Authorization: Bearer <CRON_SECRET>` or `x-cron-secret: <CRON_SECRET>`.
+
 ## Default Login
 
 ```
