@@ -289,7 +289,7 @@ export default function Dashboard() {
     low: 'bg-emerald-500',
     medium: 'bg-amber-500',
     high: 'bg-orange-500',
-    critical: 'bg-red-500',
+    critical: 'bg-red-600',
   };
 
   const statusLabels: Record<string, string> = {
@@ -329,7 +329,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-2xl mx-auto w-full min-w-0">
+    <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-2xl mx-auto w-full min-w-0 overflow-x-hidden">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">סטטיסטיקה</h1>
@@ -358,8 +358,8 @@ export default function Dashboard() {
             <span>📅</span>
             <span>היום</span>
           </h2>
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
-            <div className="flex-shrink-0 w-20 snap-center text-center">
+<div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
+          <div className="flex-shrink-0 w-20 snap-center text-center">
               <p className="text-2xl font-bold">{todayStats.completed_today}</p>
               <p className="text-xs opacity-80">הושלמו</p>
             </div>
@@ -379,7 +379,7 @@ export default function Dashboard() {
         </div>
               ) : <EmptySection title="📅 היום" description="" />)}
               {sectionId === 'mainStats' && (stats ? (
-        <div className="flex gap-3 p-4 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-h-0">
+        <div className="flex gap-3 p-4 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-h-0 min-w-0">
           <div className="flex-shrink-0 w-36 snap-center bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-lg">📋</div>
@@ -467,7 +467,7 @@ export default function Dashboard() {
             <span>📌</span>
             <span>משימות לפי סטטוס</span>
           </h2>
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
             {tasksByStatus.map((item) => {
               const total = tasksByStatus.reduce((sum, i) => sum + i.count, 0);
               const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
@@ -494,7 +494,7 @@ export default function Dashboard() {
             <span>משימות לפי עדיפות</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על עדיפות לצפייה במשימות</p>
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
             {tasksByPriority.map((item) => (
               <div 
                 key={item.priority} 
@@ -529,7 +529,7 @@ export default function Dashboard() {
             <span>משימות חוזרות</span>
             <span className="text-sm font-normal text-slate-500">({recurringStats.total_recurring})</span>
           </h2>
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
             {recurringStats.by_type.map((item) => (
               <div key={item.recurrence} className="flex-shrink-0 w-24 snap-center text-center p-3 bg-white dark:bg-slate-700 rounded-xl">
                 <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">{item.count}</p>
@@ -547,7 +547,7 @@ export default function Dashboard() {
             <span>שימוש בתגיות</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על תגית לצפייה במשימות</p>
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
             {tagStats.map((tag) => (
               <div
                 key={tag.id}
@@ -580,7 +580,7 @@ export default function Dashboard() {
             <p className="font-semibold text-slate-500 text-xs">אין נתונים</p>
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-h-0">
+          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-h-0 min-w-0">
             {staffPerformance.map((staff, index) => (
               <div 
                 key={staff.user_id} 
@@ -914,7 +914,7 @@ export default function Dashboard() {
               className="p-5 border-b border-slate-200 dark:border-slate-700 rounded-t-3xl"
               style={{ 
                 background: selectedPriority.priority === 'critical' 
-                  ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                  ? 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'
                   : selectedPriority.priority === 'high'
                   ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
                   : selectedPriority.priority === 'medium'

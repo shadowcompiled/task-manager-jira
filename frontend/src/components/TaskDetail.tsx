@@ -112,10 +112,10 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
   };
 
   const priorityColors = {
-    critical: 'text-red-600 bg-red-50',
-    high: 'text-orange-600 bg-orange-50',
-    medium: 'text-yellow-600 bg-yellow-50',
-    low: 'text-green-600 bg-green-50',
+    critical: 'text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-200',
+    high: 'text-orange-700 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-200',
+    medium: 'text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-200',
+    low: 'text-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-200',
   };
 
   const statusColors = {

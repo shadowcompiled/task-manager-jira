@@ -55,14 +55,14 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit }: any)
               ✏️
             </motion.button>
           )}
-        <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-1 md:ml-2 shadow-md ${
+        <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-1 md:ml-2 shadow-md text-white ${
           task.priority === 'critical'
-            ? 'bg-gradient-to-r from-red-500 to-orange-600 text-white'
+            ? 'bg-red-600'
             : task.priority === 'high'
-            ? 'bg-gradient-to-r from-orange-500 to-yellow-600 text-white'
+            ? 'bg-orange-500'
             : task.priority === 'medium'
-            ? 'bg-gradient-to-r from-yellow-500 to-green-600 text-white'
-            : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+            ? 'bg-amber-500'
+            : 'bg-emerald-500'
         }`}>
           {priorityEmojis[task.priority as keyof typeof priorityEmojis]} {priorityLabels[task.priority as keyof typeof priorityLabels]}
         </span>

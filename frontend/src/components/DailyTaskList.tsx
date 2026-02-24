@@ -151,9 +151,8 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
         </h2>
         
         {pendingTasks.length === 0 ? (
-          <div className="p-8 bg-white dark:bg-slate-800 rounded-2xl text-center border border-slate-200 dark:border-slate-700 shadow-sm">
-            <p className="text-slate-600 dark:text-slate-400 text-lg mb-2">אין משימות פעילות</p>
-            <p className="text-slate-400 dark:text-slate-500 text-sm">כל הכבוד! סיימת הכל 🎉</p>
+          <div className="rounded-xl p-3 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/50 text-center min-h-0">
+            <p className="font-semibold text-slate-500 dark:text-slate-400 text-sm">משימות פעילות (0) — אין משימות</p>
           </div>
         ) : (
           <motion.div
