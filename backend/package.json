@@ -10,10 +10,16 @@
     "seed": "ts-node src/seed.ts",
     "vercel-build": "tsc"
   },
-  "keywords": ["restaurant", "tasks", "management"],
+  "keywords": [
+    "restaurant",
+    "tasks",
+    "management"
+  ],
   "author": "",
   "license": "MIT",
-  "engines": { "node": ">=18.x" },
+  "engines": {
+    "node": ">=18.x"
+  },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
     "@vercel/postgres": "^0.10.0",
@@ -23,6 +29,7 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.10.1",
+    "pg": "^8.18.0",
     "resend": "^6.8.0",
     "web-push": "^3.6.7"
   },
