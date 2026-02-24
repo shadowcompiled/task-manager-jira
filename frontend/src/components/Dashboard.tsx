@@ -324,7 +324,7 @@ export default function Dashboard() {
 
   const EmptySection = ({ title }: { title: string; description?: string }) => (
     <div className="rounded-none p-3 border-0 border-t border-slate-600 bg-slate-800/30 text-center min-h-0">
-      <p className="font-semibold text-slate-500 text-xs">אין נתונים</p>
+      <p className="font-semibold text-slate-500 text-xs">{title} — אין נתונים</p>
     </div>
   );
 
