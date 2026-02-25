@@ -2,6 +2,7 @@ import express, { Response } from 'express';
 import { sql } from '../database';
 import { AuthRequest, authenticateToken, authorize } from '../middleware';
 import { sendAssignmentNotification } from '../services/emailService';
+import { sendNotificationToUser } from '../services/pushService';
 
 const router = express.Router();
 
@@ -83,6 +84,27 @@ router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (r
     const task = result.rows[0] as any;
     if (assigned_to) {
       await sql`INSERT INTO task_assignments (task_id, user_id) VALUES (${task.id}, ${assigned_to}) ON CONFLICT (task_id, user_id) DO NOTHING`;
+
+      const [assigneeRows, creatorRows, restaurantRows] = await Promise.all([
+        sql`SELECT name, email FROM users WHERE id = ${assigned_to}`,
+        sql`SELECT name FROM users WHERE id = ${createdBy}`,
+        sql`SELECT name FROM restaurants WHERE id = ${restaurantId}`,
+      ]);
+      const assigneeName = (assigneeRows.rows[0] as any)?.name || '';
+      const creatorName = (creatorRows.rows[0] as any)?.name || '';
+      const restaurantName = (restaurantRows.rows[0] as any)?.name || '';
+      const assigneeEmail = (assigneeRows.rows[0] as any)?.email;
+
+      sendNotificationToUser(
+        assigned_to,
+        '📋 משימה חדשה הוקצתה לך',
+        `${title} — מאת ${creatorName}`
+      ).catch((err: any) => console.error('Push notification failed:', err));
+
+      if (assigneeEmail) {
+        sendAssignmentNotification(assigneeEmail, title, creatorName, restaurantName)
+          .catch((err: any) => console.error('Email notification failed:', err));
+      }
     }
     res.status(201).json(task);
   } catch (error) {
@@ -139,14 +161,24 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       }
     }
 
-    if (assignedUser?.email) {
+    if (assignedUser) {
       const [restaurantRows, creatorRows] = await Promise.all([
         sql`SELECT name FROM restaurants WHERE id = ${restaurantId}`,
         sql`SELECT name FROM users WHERE id = ${req.user?.id}`
       ]);
       const restaurantName = (restaurantRows.rows[0] as any)?.name || 'Restaurant';
       const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
-      sendAssignmentNotification(assignedUser.email, title || task.title, createdByName, restaurantName).catch((err: any) => console.error('Failed to send email:', err));
+
+      sendNotificationToUser(
+        assignedUser.id,
+        '📋 משימה הוקצתה לך',
+        `${title || task.title} — מאת ${createdByName}`
+      ).catch((err: any) => console.error('Push notification failed:', err));
+
+      if (assignedUser.email) {
+        sendAssignmentNotification(assignedUser.email, title || task.title, createdByName, restaurantName)
+          .catch((err: any) => console.error('Failed to send email:', err));
+      }
     }
 
     if (tags && Array.isArray(tags)) {
