@@ -18,7 +18,16 @@ const statusLabels = {
   overdue: 'בפיגור',
 };
 
-export default function TaskCard({ task, onClick, showEditButton, onEdit }: any) {
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
+export default function TaskCard({ task, onClick, showEditButton, onEdit, isAssignedToMe, showDeleteButton, onDelete }: any) {
   const reducedMotion = useReducedMotion();
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !['completed', 'verified'].includes(task.status);
 
@@ -37,15 +46,30 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit }: any)
       transition={getTransition(reducedMotion, quickTransition)}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
-      className={`p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 min-h-[72px] ${
+      className={`p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 min-h-[72px] ${isAssignedToMe ? 'task-card-assigned-to-me ' : ''}${
         isOverdue
-          ? 'border-red-400/80 bg-slate-800/80 shadow-md'
-          : 'border-teal-500/30 bg-slate-800/60 hover:border-teal-400/50 shadow-md'
+          ? isAssignedToMe
+            ? 'border-red-400/80 bg-red-50 dark:bg-slate-700/60 shadow-md'
+            : 'border-red-400/80 bg-slate-800/80 shadow-md'
+          : isAssignedToMe
+            ? 'border-teal-500/40 bg-slate-200 dark:bg-slate-700/50 hover:border-teal-400/50 shadow-md'
+            : 'border-teal-500/30 bg-slate-800/60 hover:border-teal-400/50 shadow-md'
       }`}
     >
       <div className="flex justify-between items-start mb-2 gap-2">
-        <h3 className="font-bold text-base text-white flex-1 line-clamp-2">{task.title}</h3>
+        <h3 className={`font-bold text-base flex-1 line-clamp-2 ${isAssignedToMe ? 'text-slate-900 dark:text-white' : 'text-white'}`}>{task.title}</h3>
         <div className="flex items-center gap-1 shrink-0">
+          {showDeleteButton && onDelete && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.92 }}
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); onDelete(); }}
+              className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-slate-600 hover:bg-red-500/90 text-white text-sm"
+              aria-label="מחיקה"
+            >
+              <TrashIcon />
+            </motion.button>
+          )}
           {showEditButton && onEdit && (
             <motion.button
               type="button"
@@ -72,7 +96,7 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit }: any)
       </div>
 
       {task.description && (
-        <p className="text-xs sm:text-sm text-slate-400 mb-2 line-clamp-2 leading-relaxed">{task.description}</p>
+        <p className={`text-xs sm:text-sm mb-2 line-clamp-2 leading-relaxed ${isAssignedToMe ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400'}`}>{task.description}</p>
       )}
 
       <div className="flex flex-wrap justify-between items-start gap-1 md:gap-2 mb-2 md:mb-3">
@@ -103,7 +127,7 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit }: any)
       </div>
 
       {(task.due_date || task.estimated_time || task.assigned_to_name) && (
-        <div className="mt-2 pt-2 border-t border-slate-600 text-xs text-slate-400 space-y-1">
+        <div className={`mt-2 pt-2 border-t text-xs space-y-1 ${isAssignedToMe ? 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400' : 'border-slate-600 text-slate-400'}`}>
           {task.due_date && (
             <div className="flex items-center gap-2 font-semibold">
               <span>📅</span>

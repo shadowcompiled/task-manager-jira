@@ -421,6 +421,11 @@ html.light-mode .bg-slate-50 {
   background-color: #faf8f5;
 }
 
+/* Task card assigned to me - warm cream (no grey) in light mode */
+html.light-mode .task-card-assigned-to-me {
+  background-color: #f5f2ed;
+}
+
 /* Text colors - warm brown */
 html.light-mode .text-white {
   color: #2c2420;
@@ -453,6 +458,19 @@ html.light-mode .border-slate-700,
 html.light-mode .border-slate-700\/50,
 html.light-mode .border-slate-600\/50 {
   border-color: #e2ddd4;
+}
+
+html.light-mode .border-slate-300 {
+  border-color: #e2ddd4;
+}
+
+/* Text - additional slate to warm brown */
+html.light-mode .text-slate-600 {
+  color: #5c534a;
+}
+
+html.light-mode .text-slate-700 {
+  color: #4a423a;
 }
 
 /* Form elements - warm borders */
@@ -590,6 +608,32 @@ html.light-mode .shadow-xl {
 /* Status indicators - warm beige */
 html.light-mode .bg-slate-600 {
   background-color: #d6d1c9;
+}
+
+html.light-mode .bg-slate-600\/30,
+html.light-mode .bg-slate-600\/40 {
+  background-color: rgba(214, 209, 201, 0.5);
+}
+
+html.light-mode .bg-slate-500 {
+  background-color: #c4bdb4;
+}
+
+html.light-mode .bg-slate-400 {
+  background-color: #c4bdb4;
+}
+
+html.light-mode .bg-slate-300 {
+  background-color: #e2ddd4;
+}
+
+html.light-mode .bg-slate-800\/30,
+html.light-mode .bg-slate-800\/40 {
+  background-color: #f5f2ed;
+}
+
+html.light-mode .hover\:bg-slate-300:hover {
+  background-color: #e2ddd4;
 }
 
 /* Dashboard card backgrounds - subtle colored tints */

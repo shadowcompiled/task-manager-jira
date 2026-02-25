@@ -15,7 +15,7 @@ const listVariants = {
 type QuickFilter = 'all' | 'my' | 'overdue' | 'due_today';
 
 export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }: { onTaskSelect: (task: any) => void; onEditTask?: (task: any) => void; onCreateTask?: () => void }) {
-  const { tasks, fetchTasks, loading } = useTaskStore();
+  const { tasks, fetchTasks, loading, deleteTask } = useTaskStore();
   const { user } = useAuthStore();
   const [showCompleted, setShowCompleted] = useState(false);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
@@ -194,6 +194,13 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
                 onClick={() => onTaskSelect(task)}
                 showEditButton={user?.role !== 'worker'}
                 onEdit={() => onEditTask ? onEditTask(task) : onTaskSelect(task)}
+                isAssignedToMe={task.assigned_to === user?.id}
+                showDeleteButton={user?.role === 'admin' || user?.role === 'maintainer'}
+                onDelete={user?.role === 'admin' || user?.role === 'maintainer' ? () => {
+                  if (window.confirm('למחוק את המשימה?')) {
+                    deleteTask(task.id).then(() => fetchTasks());
+                  }
+                } : undefined}
               />
             ))}
           </motion.div>
@@ -222,6 +229,13 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
                   key={task.id}
                   task={task}
                   onClick={() => onTaskSelect(task)}
+                  isAssignedToMe={task.assigned_to === user?.id}
+                  showDeleteButton={user?.role === 'admin' || user?.role === 'maintainer'}
+                  onDelete={user?.role === 'admin' || user?.role === 'maintainer' ? () => {
+                    if (window.confirm('למחוק את המשימה?')) {
+                      deleteTask(task.id).then(() => fetchTasks());
+                    }
+                  } : undefined}
                 />
               ))}
             </div>

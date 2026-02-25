@@ -44,15 +44,16 @@ export async function removeSubscription(endpoint: string): Promise<boolean> {
   }
 }
 
-export async function sendNotificationToUser(userId: number, title: string, body: string, icon?: string): Promise<{ successCount: number; failCount: number }> {
-  const { rows: subscriptions } = await sql`SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ${userId}`;
+export async function sendNotificationToUser(userId: number, title: string, body: string, icon?: string, tag?: string): Promise<{ successCount: number; failCount: number }> {
+  const uid = Number(userId);
+  const { rows: subscriptions } = await sql`SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ${uid}`;
 
   const payload = JSON.stringify({
     title,
     body,
     icon: icon || '/favicon.svg',
     badge: '/favicon.svg',
-    tag: 'task-reminder',
+    tag: tag || 'task-reminder',
     requireInteraction: true
   });
 
@@ -68,6 +69,9 @@ export async function sendNotificationToUser(userId: number, title: string, body
       console.error(`Push notification failed for endpoint ${sub.endpoint}:`, error.message);
       if (error.statusCode === 404 || error.statusCode === 410) await removeSubscription(sub.endpoint);
     }
+  }
+  if (tag === 'mission-assigned') {
+    console.log(`📲 Assignment push: user ${uid}, subscriptions: ${(subscriptions as any[]).length}, sent: ${successCount}, failed: ${failCount}`);
   }
   return { successCount, failCount };
 }

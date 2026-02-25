@@ -2,6 +2,7 @@ import express, { Response } from 'express';
 import { sql } from '../database';
 import { AuthRequest, authenticateToken, authorize } from '../middleware';
 import { sendAssignmentNotification } from '../services/emailService';
+import { sendNotificationToUser } from '../services/pushService';
 
 const router = express.Router();
 
@@ -83,6 +84,21 @@ router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (r
     const task = result.rows[0] as any;
     if (assigned_to) {
       await sql`INSERT INTO task_assignments (task_id, user_id) VALUES (${task.id}, ${assigned_to}) ON CONFLICT (task_id, user_id) DO NOTHING`;
+      const [assigneeRows, orgRows, creatorRows] = await Promise.all([
+        sql`SELECT id, email, name FROM users WHERE id = ${assigned_to}`,
+        sql`SELECT name FROM organizations WHERE id = ${organizationId}`,
+        sql`SELECT name FROM users WHERE id = ${createdBy}`
+      ]);
+      const assignee = (assigneeRows.rows[0] as any) || null;
+      const organizationName = (orgRows.rows[0] as any)?.name || 'Organization';
+      const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
+      if (assignee?.email) {
+        sendAssignmentNotification(assignee.email, task.title, createdByName, organizationName).catch((err: any) => console.error('Failed to send email:', err));
+      }
+      const assigneeId = Number(assigned_to);
+      sendNotificationToUser(assigneeId, 'משימה חדשה', task.title, undefined, 'mission-assigned').then((r) => {
+        if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${assigneeId}; enable notifications on the device to receive assignment alerts.`);
+      }).catch((err: any) => console.error('Push assignment:', err));
     }
     res.status(201).json(task);
   } catch (error) {
@@ -153,7 +169,12 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       ]);
       const organizationName = (orgRows.rows[0] as any)?.name || 'Organization';
       const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
-      sendAssignmentNotification(assignedUser.email, title || task.title, createdByName, organizationName).catch((err: any) => console.error('Failed to send email:', err));
+      const taskTitle = title || task.title;
+      sendAssignmentNotification(assignedUser.email, taskTitle, createdByName, organizationName).catch((err: any) => console.error('Failed to send email:', err));
+      const assigneeId = Number(assignedUser.id);
+      sendNotificationToUser(assigneeId, 'משימה חדשה', taskTitle, undefined, 'mission-assigned').then((r) => {
+        if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${assigneeId}; enable notifications on the device to receive assignment alerts.`);
+      }).catch((err: any) => console.error('Push assignment:', err));
     }
 
     if (tags && Array.isArray(tags)) {

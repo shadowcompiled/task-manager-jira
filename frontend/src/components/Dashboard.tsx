@@ -1,13 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided, DraggableStateSnapshot } from 'react-beautiful-dnd';
 import axios from 'axios';
 import { useAuthStore } from '../store';
 import { quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 import { DashboardSectionSkeleton } from './skeletons';
 
-const DASHBOARD_SECTION_ORDER_KEY = 'dashboard-section-order';
-const DEFAULT_SECTION_ORDER = [
+const SECTION_ORDER = [
   'today',
   'mainStats',
   'completion',
@@ -18,22 +16,7 @@ const DEFAULT_SECTION_ORDER = [
   'tags',
   'staff',
 ] as const;
-type SectionId = (typeof DEFAULT_SECTION_ORDER)[number];
-
-function getStoredSectionOrder(): SectionId[] {
-  try {
-    const raw = localStorage.getItem(DASHBOARD_SECTION_ORDER_KEY);
-    if (!raw) return [...DEFAULT_SECTION_ORDER];
-    const parsed = JSON.parse(raw) as string[];
-    const valid = new Set(DEFAULT_SECTION_ORDER);
-    return parsed.filter((id): id is SectionId => valid.has(id as SectionId));
-  } catch {
-    return [...DEFAULT_SECTION_ORDER];
-  }
-}
-function persistSectionOrder(order: SectionId[]) {
-  localStorage.setItem(DASHBOARD_SECTION_ORDER_KEY, JSON.stringify(order));
-}
+type SectionId = (typeof SECTION_ORDER)[number];
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -134,18 +117,6 @@ export default function Dashboard() {
   const [selectedPriority, setSelectedPriority] = useState<TaskByPriority | null>(null);
   const [priorityTasks, setPriorityTasks] = useState<any[]>([]);
   const [loadingPriorityTasks, setLoadingPriorityTasks] = useState(false);
-
-  // Vertical drag-and-drop section order (persisted)
-  const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => getStoredSectionOrder());
-
-  const handleDragEnd = useCallback((result: DropResult) => {
-    if (!result.destination || result.destination.index === result.source.index) return;
-    const next = Array.from(sectionOrder);
-    const [removed] = next.splice(result.source.index, 1);
-    next.splice(result.destination.index, 0, removed);
-    setSectionOrder(next);
-    persistSectionOrder(next);
-  }, [sectionOrder]);
 
   useEffect(() => {
     if (user?.role !== 'admin' && user?.role !== 'maintainer') return;
@@ -279,7 +250,7 @@ export default function Dashboard() {
           <div className="h-4 w-64 bg-slate-600/30 rounded animate-pulse" />
         </div>
         <div className="space-y-4">
-          {sectionOrder.map((id) => (
+          {SECTION_ORDER.map((id) => (
             <DashboardSectionSkeleton key={id} />
           ))}
         </div>
@@ -345,25 +316,16 @@ export default function Dashboard() {
         <p className="text-sm text-slate-500 dark:text-slate-400">סקירה כללית של ביצועי המשימות</p>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="dashboard-sections" direction="vertical">
-          {(provided: DroppableProvided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-4">
-              {sectionOrder.map((sectionId, index) => (
-                <Draggable key={sectionId} draggableId={sectionId} index={index}>
-                  {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
-                    <motion.div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={reducedMotion ? { duration: 0.01 } : { ...getTransition(false, quickTransition), delay: index * 0.05 }}
-                      className={`rounded-2xl overflow-hidden border border-slate-600 bg-slate-800/40 transition-shadow duration-200 transition-transform duration-200 ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-teal-500' : ''}`}
-                    >
-                      <div {...provided.dragHandleProps} className="flex items-center justify-center min-h-[44px] py-3 bg-slate-700/60 border-b border-slate-600 cursor-grab active:cursor-grabbing text-slate-400 hover:text-teal-400 touch-manipulation select-none">
-                        <span className="text-lg">⋮⋮</span>
-                      </div>
-                      <div className="p-0">
+      <div className="space-y-4">
+        {SECTION_ORDER.map((sectionId, index) => (
+          <motion.div
+            key={sectionId}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={reducedMotion ? { duration: 0.01 } : { ...getTransition(false, quickTransition), delay: index * 0.05 }}
+            className="rounded-2xl overflow-hidden border border-slate-600 bg-slate-800/40"
+          >
+            <div className="p-0">
               {sectionId === 'today' && (todayStats ? (
         <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-none p-5 text-white shadow-lg min-h-0">
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
@@ -649,16 +611,10 @@ export default function Dashboard() {
       </div>
               )}
 
-                      </div>
-                    </motion.div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
             </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+          </motion.div>
+        ))}
+      </div>
 
       {/* Tag Tasks Modal */}
       {selectedTag && (
