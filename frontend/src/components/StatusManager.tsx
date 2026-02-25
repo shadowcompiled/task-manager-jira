@@ -26,6 +26,7 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
     color: '#808080',
   });
   const [error, setError] = useState('');
+  const [deleteError, setDeleteError] = useState<{ id: number; message: string } | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ name: '', displayName: '', color: '#808080' });
 
@@ -121,13 +122,15 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
 
     try {
       setLoading(true);
+      setDeleteError(null);
       await axios.delete(`${API_BASE}/statuses/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       await fetchStatuses();
       onStatusesChanged();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'מחיקת הסטטוס נכשלה');
+      const message = err.response?.data?.error || 'מחיקת הסטטוס נכשלה';
+      setDeleteError({ id, message });
     } finally {
       setLoading(false);
     }
@@ -283,33 +286,40 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className="w-6 h-6 rounded border-2 border-slate-500 shrink-0"
-                          style={{ backgroundColor: status.color }}
-                        />
-                        <div className="min-w-0">
-                          <p className="font-semibold text-white truncate">{status.display_name}</p>
-                          <p className="text-xs text-slate-400 truncate">{status.name}</p>
+                    <div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className="w-6 h-6 rounded border-2 border-slate-500 shrink-0"
+                            style={{ backgroundColor: status.color }}
+                          />
+                          <div className="min-w-0">
+                            <p className="font-semibold text-white truncate">{status.display_name}</p>
+                            <p className="text-xs text-slate-400 truncate">{status.name}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => startEdit(status)}
+                            disabled={loading}
+                            className="min-h-[44px] px-3 py-2 bg-teal-600/80 text-white hover:bg-teal-500 rounded-xl text-sm font-medium disabled:opacity-50 transition"
+                          >
+                            עריכה
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStatus(status.id)}
+                            disabled={loading}
+                            className="min-h-[44px] px-3 py-2 bg-red-600/80 text-white hover:bg-red-500 rounded-xl text-sm font-medium disabled:opacity-50 transition"
+                          >
+                            מחק
+                          </button>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => startEdit(status)}
-                          disabled={loading}
-                          className="min-h-[44px] px-3 py-2 bg-teal-600/80 text-white hover:bg-teal-500 rounded-xl text-sm font-medium disabled:opacity-50 transition"
-                        >
-                          עריכה
-                        </button>
-                        <button
-                          onClick={() => handleDeleteStatus(status.id)}
-                          disabled={loading}
-                          className="min-h-[44px] px-3 py-2 bg-red-600/80 text-white hover:bg-red-500 rounded-xl text-sm font-medium disabled:opacity-50 transition"
-                        >
-                          מחק
-                        </button>
-                      </div>
+                      {deleteError?.id === status.id && (
+                        <div className="mt-2 bg-red-500/20 text-red-300 p-2.5 rounded-xl text-sm border border-red-500/30">
+                          {deleteError.message}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
