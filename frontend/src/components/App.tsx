@@ -101,8 +101,8 @@ export default function App() {
                   <>
                     <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
                     {/* Mobile: full-width bottom sheet, text right-aligned */}
-                    <div dir="rtl" className="md:hidden fixed inset-x-0 bottom-[72px] z-50 max-h-[60vh] rounded-2xl mx-3 bg-slate-800 border border-teal-500/40 shadow-2xl flex flex-col overflow-hidden">
-                      <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5 flex flex-col gap-0" dir="rtl" style={{ direction: 'rtl' }}>
+                    <div dir="rtl" className="md:hidden fixed inset-x-0 bottom-[76px] z-50 rounded-2xl mx-3 bg-slate-800 border border-teal-500/40 shadow-2xl">
+                      <div className="py-3 px-2 flex flex-col gap-0" dir="rtl" style={{ direction: 'rtl' }}>
                         {user.role === 'admin' && (
                           <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                             <span>משתמשים</span><span>👤</span>
