@@ -239,31 +239,31 @@ export default function App() {
         </nav>
 
       {/* Bottom Navigation for Mobile - create button half above footer, 4 nav items centered */}
-      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-4 px-4 sm:px-5">
-        <div className="flex items-end justify-center gap-0 w-full max-w-md mx-auto relative min-h-[56px]">
+      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 pb-[env(safe-area-inset-bottom)] pt-4 px-2 sm:px-4">
+        <div className="flex items-end justify-center gap-0 w-full relative min-h-[56px]">
           {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
             <>
               {/* Left pair: יומי, לוח */}
-              <div className="flex flex-1 justify-end gap-1 min-w-0">
+              <div className="flex flex-1 justify-evenly gap-0 min-w-0">
                 <button
                   onClick={() => setCurrentView('daily')}
-                  className={`flex-1 min-w-[4rem] min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                  className={`flex-1 min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
                     currentView === 'daily'
                       ? 'text-teal-300 bg-slate-700/50'
                       : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
                   }`}
                 >
-                  <span className="whitespace-nowrap overflow-hidden text-inherit" style={{ textOverflow: 'ellipsis', maxWidth: '100%' }}>📋 יומי</span>
+                  <span className="whitespace-nowrap">📋 יומי</span>
                 </button>
                 <button
                   onClick={() => setCurrentView('kanban')}
-                  className={`flex-1 min-w-[4rem] min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                  className={`flex-1 min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
                     currentView === 'kanban'
                       ? 'text-teal-300 bg-slate-700/50'
                       : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
                   }`}
                 >
-                  <span className="whitespace-nowrap overflow-hidden text-inherit" style={{ textOverflow: 'ellipsis', maxWidth: '100%' }}>🧱 לוח</span>
+                  <span className="whitespace-nowrap">🧱 לוח</span>
                 </button>
               </div>
               {/* Floating Add Mission - half above footer, half overlapping */}
@@ -277,20 +277,20 @@ export default function App() {
                 <span className="text-2xl sm:text-3xl leading-none">➕</span>
               </motion.button>
               {/* Right pair: משימות, סטטיסטיקה */}
-              <div className="flex flex-1 justify-start gap-1 min-w-0">
+              <div className="flex flex-1 justify-evenly gap-0 min-w-0">
                 <button
                   onClick={() => setCurrentView('kanban-dash')}
-                  className={`flex-1 min-w-[4rem] min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                  className={`flex-1 min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
                     currentView === 'kanban-dash'
                       ? 'text-teal-300 bg-slate-700/50'
                       : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
                   }`}
                 >
-                  <span className="whitespace-nowrap overflow-hidden text-inherit" style={{ textOverflow: 'ellipsis', maxWidth: '100%' }}>🎯 משימות</span>
+                  <span className="whitespace-nowrap">🎯 משימות</span>
                 </button>
                 <button
                   onClick={() => setCurrentView('dashboard')}
-                  className={`flex-1 min-w-0 min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                  className={`flex-1 min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
                     currentView === 'dashboard'
                       ? 'text-teal-300 bg-slate-700/50'
                       : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
