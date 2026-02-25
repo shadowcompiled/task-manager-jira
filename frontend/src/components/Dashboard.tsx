@@ -16,7 +16,6 @@ const SECTION_ORDER = [
   'tags',
   'staff',
 ] as const;
-type SectionId = (typeof SECTION_ORDER)[number];
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -304,7 +303,7 @@ export default function Dashboard() {
 
   const EmptySection = ({ title }: { title: string; description?: string }) => (
     <div className="rounded-none p-3 border-0 border-t border-slate-600 bg-slate-800/30 text-center min-h-0">
-      <p className="font-semibold text-slate-500 text-xs">{title} — אין נתונים</p>
+      <p className="font-semibold text-slate-500 text-xs emoji-icon">{title} — אין נתונים</p>
     </div>
   );
 
@@ -329,7 +328,7 @@ export default function Dashboard() {
               {sectionId === 'today' && (todayStats ? (
         <div className="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-none p-5 text-white shadow-lg min-h-0">
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-            <span>📅</span>
+            <span className="emoji-icon">📅</span>
             <span>היום</span>
           </h2>
 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -356,28 +355,28 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4">
           <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-lg">📋</div>
+              <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-lg emoji-icon">📋</div>
               <p className="text-xs text-slate-500 dark:text-slate-400">סה"כ משימות</p>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total_tasks}</p>
           </div>
           <div className="bg-emerald-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-emerald-200 dark:border-slate-700 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-lg">✅</div>
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-lg emoji-icon">✅</div>
               <p className="text-xs text-slate-500 dark:text-slate-400">הושלמו</p>
             </div>
             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.completed_tasks}</p>
           </div>
           <div className="bg-blue-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-blue-200 dark:border-slate-700 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-lg">⏳</div>
+              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-lg emoji-icon">⏳</div>
               <p className="text-xs text-slate-500 dark:text-slate-400">ממתינות</p>
             </div>
             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.pending_tasks}</p>
           </div>
           <div className="bg-red-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-red-200 dark:border-slate-700 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-lg">⚠️</div>
+              <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-lg emoji-icon">⚠️</div>
               <p className="text-xs text-slate-500 dark:text-slate-400">באיחור</p>
             </div>
             <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue_tasks}</p>
@@ -388,7 +387,7 @@ export default function Dashboard() {
         <div className="bg-teal-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-xl">📊</span>
+              <span className="text-xl emoji-icon">📊</span>
               <p className="text-sm font-medium text-slate-600 dark:text-slate-400">אחוז השלמה כולל</p>
             </div>
             <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{stats.completion_rate}%</p>
@@ -404,7 +403,7 @@ export default function Dashboard() {
               {sectionId === 'weekly' && (weeklyStats ? (
         <div className="bg-purple-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <span>📈</span>
+            <span className="emoji-icon">📈</span>
             <span>סיכום שבועי</span>
           </h2>
           <div className="grid grid-cols-2 gap-3 mb-4">
@@ -438,7 +437,7 @@ export default function Dashboard() {
               {sectionId === 'byStatus' && (tasksByStatus.length > 0 ? (
         <div className="bg-indigo-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <span>📌</span>
+            <span className="emoji-icon">📌</span>
             <span>משימות לפי סטטוס</span>
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -464,7 +463,7 @@ export default function Dashboard() {
               {sectionId === 'byPriority' && (tasksByPriority.length > 0 ? (
         <div className="bg-amber-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <span>🎯</span>
+            <span className="emoji-icon">🎯</span>
             <span>משימות לפי עדיפות</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על עדיפות לצפייה במשימות</p>
@@ -499,7 +498,7 @@ export default function Dashboard() {
               {sectionId === 'recurring' && (recurringStats && recurringStats.total_recurring > 0 ? (
         <div className="bg-cyan-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <span>🔄</span>
+            <span className="emoji-icon">🔄</span>
             <span>משימות חוזרות</span>
             <span className="text-sm font-normal text-slate-500">({recurringStats.total_recurring})</span>
           </h2>
@@ -517,7 +516,7 @@ export default function Dashboard() {
               {sectionId === 'tags' && (tagStats.length > 0 ? (
         <div className="bg-pink-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <span>🏷️</span>
+            <span className="emoji-icon">🏷️</span>
             <span>שימוש בתגיות</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על תגית לצפייה במשימות</p>
@@ -545,7 +544,7 @@ export default function Dashboard() {
               {sectionId === 'staff' && (
       <div className="p-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <span>👥</span>
+          <span className="emoji-icon">👥</span>
           <span>ביצועי צוות</span>
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על עובד לצפייה במשימות שלו</p>
@@ -638,7 +637,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div className="text-white">
                   <h3 className="text-xl font-bold flex items-center gap-2">
-                    <span>🏷️</span>
+                    <span className="emoji-icon">🏷️</span>
                     <span>{selectedTag.name}</span>
                   </h3>
                   <p className="text-white/80 text-sm mt-1">{selectedTag.task_count} משימות</p>
@@ -893,7 +892,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div className="text-white">
                   <h3 className="text-xl font-bold flex items-center gap-2">
-                    <span>🎯</span>
+                    <span className="emoji-icon">🎯</span>
                     <span>{priorityLabels[selectedPriority.priority] || selectedPriority.priority}</span>
                   </h3>
                   <p className="text-white/80 text-sm mt-1">{selectedPriority.count} משימות</p>
