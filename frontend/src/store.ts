@@ -323,7 +323,7 @@ export const useTagStore = create<TagStore>((set) => ({
     }
   },
 
-  createTag: async (organizationId: number, name: string, color: string) => {
+  createTag: async (_organizationId: number, name: string, color: string) => {
     try {
       const token = useAuthStore.getState().token;
       const res = await axios.post(
