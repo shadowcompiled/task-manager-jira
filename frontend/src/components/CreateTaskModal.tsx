@@ -161,7 +161,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 pb-10 sm:pb-12 space-y-4 overflow-y-auto flex-1">
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-1">כותרת משימה *</label>
               <input
@@ -294,7 +294,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
             </div>
           )}
 
-          <div className="flex gap-3 pt-4 pb-[env(safe-area-inset-bottom)] sm:pb-0">
+          <div className="flex gap-3 pt-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-0">
             <motion.button
               type="button"
               onClick={onClose}

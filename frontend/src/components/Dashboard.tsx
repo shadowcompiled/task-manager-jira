@@ -341,7 +341,7 @@ export default function Dashboard() {
     <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-6xl mx-auto w-full min-w-0 overflow-x-hidden">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">סטטיסטיקה</h1>
+        <h1 className="text-[1.75rem] sm:text-2xl font-bold text-slate-900 dark:text-white mb-1">סטטיסטיקה</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">סקירה כללית של ביצועי המשימות</p>
       </div>
 

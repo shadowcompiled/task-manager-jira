@@ -220,7 +220,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 pb-10 sm:pb-12 space-y-6 overflow-y-auto flex-1">
           {/* Status & Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -378,7 +378,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
         </div>
 
         {/* Actions */}
-        <div className="p-4 sm:p-6 border-t border-slate-600 flex gap-3 justify-end flex-wrap pb-[env(safe-area-inset-bottom)] sm:pb-6">
+        <div className="p-4 sm:p-6 pt-5 border-t border-slate-600 flex gap-3 justify-end flex-wrap pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-6">
           {isEditing ? (
             <>
               <motion.button

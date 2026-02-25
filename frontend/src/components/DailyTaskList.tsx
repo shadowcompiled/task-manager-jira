@@ -113,7 +113,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
       )}
       {/* Header + Summary */}
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">המשימות שלי</h1>
+        <h1 className="text-[1.75rem] sm:text-2xl font-bold text-slate-900 dark:text-white mb-1">המשימות שלי</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {pendingTasks.length} משימות פעילות
           {dueTodayCount > 0 || overdueCount > 0 ? ` · ${dueTodayCount} להיום · ${overdueCount} באיחור` : ''}
