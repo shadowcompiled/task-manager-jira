@@ -9,9 +9,9 @@ export async function checkForExpiringTasks() {
     const now = new Date();
     const oneDayMs = 24 * 60 * 60 * 1000;
     const { rows: tasks } = await sql`
-      SELECT t.id, t.title, t.due_date, t.status, t.created_at, r.name as restaurant_name
+      SELECT t.id, t.title, t.due_date, t.status, t.created_at, r.name as organization_name
       FROM tasks t
-      LEFT JOIN restaurants r ON t.restaurant_id = r.id
+      LEFT JOIN organizations r ON t.organization_id = r.id
       WHERE t.due_date IS NOT NULL AND t.status NOT IN ('completed', 'verified')
     `;
     for (const task of tasks as any[]) {
@@ -39,7 +39,7 @@ export async function checkForExpiringTasks() {
                 taskId: task.id,
                 dueDate: task.due_date,
                 assignedTo: assignee.name || 'User',
-                restaurantName: task.restaurant_name || 'Restaurant',
+                organizationName: task.organization_name || 'Organization',
               });
               const urgency = isOverdue ? 'OVERDUE' : '2/3 TIME PASSED';
               console.log(`Sent reminder for task "${task.title}" (ID: ${task.id}) to ${assignee.email} [${urgency}]`);
@@ -89,8 +89,8 @@ async function processRecurrenceType(recurrenceType: string, periodKey: string) 
       try {
         const newDueDate = calculateNewDueDate(recurrenceType, task.due_date);
         const result = await sql`
-          INSERT INTO tasks (title, description, priority, restaurant_id, created_by, status, due_date, recurrence, estimated_time)
-          VALUES (${task.title}, ${task.description}, ${task.priority}, ${task.restaurant_id}, ${task.created_by}, 'planned', ${newDueDate}, ${task.recurrence}, ${task.estimated_time})
+          INSERT INTO tasks (title, description, priority, organization_id, created_by, status, due_date, recurrence, estimated_time)
+          VALUES (${task.title}, ${task.description}, ${task.priority}, ${task.organization_id}, ${task.created_by}, 'planned', ${newDueDate}, ${task.recurrence}, ${task.estimated_time})
           RETURNING id
         `;
         const newTaskId = (result.rows[0] as any).id;
@@ -138,33 +138,35 @@ export async function processRecurringTasks() {
   }
 }
 
-/** Delete tasks that have been in completed/verified status for more than 3 days. */
+/** Delete tasks that have been in the last status (completed/verified) for more than 3 days. */
 export async function cleanupOldCompletedTasks() {
   try {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     const threeDaysAgoStr = threeDaysAgo.toISOString();
+    // Use completed_at, verified_at, or updated_at so we catch tasks that entered last status via any path
     const { rows: tasksToDelete } = await sql`
       SELECT id, title FROM tasks
       WHERE status IN ('completed', 'verified')
-        AND COALESCE(completed_at, verified_at) IS NOT NULL
-        AND COALESCE(completed_at, verified_at) < ${threeDaysAgoStr}
+        AND (
+          (status = 'completed' AND COALESCE(completed_at, updated_at) < ${threeDaysAgoStr})
+          OR (status = 'verified' AND COALESCE(verified_at, completed_at, updated_at) < ${threeDaysAgoStr})
+        )
     `;
     if (tasksToDelete.length > 0) {
-      for (const task of tasksToDelete as any[]) {
-        await sql`DELETE FROM task_tags WHERE task_id = ${task.id}`;
-        await sql`DELETE FROM task_checklists WHERE task_id = ${task.id}`;
-        await sql`DELETE FROM comments WHERE task_id = ${task.id}`;
-        await sql`DELETE FROM photos WHERE task_id = ${task.id}`;
-        await sql`DELETE FROM task_status_history WHERE task_id = ${task.id}`;
+      const ids = (tasksToDelete as any[]).map((t) => t.id);
+      for (const id of ids) {
+        await sql`DELETE FROM task_tags WHERE task_id = ${id}`;
+        await sql`DELETE FROM task_checklists WHERE task_id = ${id}`;
+        await sql`DELETE FROM comments WHERE task_id = ${id}`;
+        await sql`DELETE FROM photos WHERE task_id = ${id}`;
+        await sql`DELETE FROM task_assignments WHERE task_id = ${id}`;
+        await sql`DELETE FROM task_status_history WHERE task_id = ${id}`;
       }
-      await sql`
-        DELETE FROM tasks
-        WHERE status IN ('completed', 'verified')
-          AND COALESCE(completed_at, verified_at) IS NOT NULL
-          AND COALESCE(completed_at, verified_at) < ${threeDaysAgoStr}
-      `;
-      console.log(`Cleaned up ${tasksToDelete.length} old completed tasks (completed > 3 days ago)`);
+      for (const id of ids) {
+        await sql`DELETE FROM tasks WHERE id = ${id}`;
+      }
+      console.log(`Cleaned up ${tasksToDelete.length} old completed/verified tasks (in last status > 3 days ago)`);
     }
   } catch (error: any) {
     console.error('Error cleaning up old tasks:', error.message);

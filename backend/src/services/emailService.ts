@@ -18,7 +18,7 @@ export interface EmailNotification {
   taskId: number;
   dueDate: string;
   assignedTo: string;
-  restaurantName: string;
+  organizationName: string;
 }
 
 export async function sendExpirationNotification(
@@ -51,7 +51,7 @@ export async function sendExpirationNotification(
           <p><strong>שם המשימה:</strong> ${notification.taskTitle}</p>
           <p><strong>תאריך סיום:</strong> ${dueDate.toLocaleDateString('he-IL')}</p>
           <p><strong>ימים נותרים:</strong> <span style="color: #d32f2f; font-weight: bold;">${daysRemaining}</span></p>
-          <p><strong>מסעדה:</strong> ${notification.restaurantName}</p>
+          <p><strong>ארגון:</strong> ${notification.organizationName}</p>
         </div>
 
         <p>אנא עדכן את סטטוס המשימה כדי שנוכל לעקוב אחר ההתקדמות.</p>
@@ -79,7 +79,7 @@ export async function sendAssignmentNotification(
   recipientEmail: string,
   taskTitle: string,
   assignedByName: string,
-  restaurantName: string
+  orgName: string
 ): Promise<boolean> {
   if (!process.env.EMAIL_USER) {
     console.log(
@@ -101,7 +101,7 @@ export async function sendAssignmentNotification(
         <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
           <p><strong>שם המשימה:</strong> ${taskTitle}</p>
           <p><strong>הוקצתה על ידי:</strong> ${assignedByName}</p>
-          <p><strong>מסעדה:</strong> ${restaurantName}</p>
+          <p><strong>ארגון:</strong> ${orgName}</p>
         </div>
 
         <p>אנא בדוק את פרטי המשימה ותחל בביצוע שלה.</p>

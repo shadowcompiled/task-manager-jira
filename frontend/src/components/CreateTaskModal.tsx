@@ -1,14 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTaskStore, useTagStore, useAuthStore } from '../store';
 import axios from 'axios';
+import { modalTransition, quickTransition, getTransition, useReducedMotion, useIsMobile } from '../utils/motion';
+import { useToast } from '../contexts/ToastContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
   const { user, token } = useAuthStore();
   const { createTask, fetchTasks } = useTaskStore();
   const { tags, fetchTags } = useTagStore();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+  const toast = useToast();
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: '',
@@ -25,12 +32,39 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (user?.restaurant_id) {
-      fetchTags(user.restaurant_id);
-      // Fetch team members
+    const orgId = user?.organization_id ?? user?.restaurant_id;
+    if (orgId) {
+      fetchTags(orgId);
       fetchTeamMembers();
     }
-  }, [user?.restaurant_id, fetchTags]);
+  }, [user?.organization_id, user?.restaurant_id, fetchTags]);
+
+  // Focus trap: focus first input when modal opens
+  useEffect(() => {
+    if (!panelRef.current) return;
+    const el = panelRef.current;
+    const focusables = el.querySelectorAll<HTMLElement>(FOCUSABLE);
+    const first = focusables[0];
+    if (first) first.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const list = Array.from(focusables).filter((n) => n.tabIndex !== -1 && !n.hasAttribute('disabled'));
+      if (list.length === 0) return;
+      const i = list.indexOf(document.activeElement as HTMLElement);
+      if (e.shiftKey) {
+        e.preventDefault();
+        const next = i <= 0 ? list[list.length - 1] : list[i - 1];
+        next?.focus();
+      } else {
+        if (i === list.length - 1) {
+          e.preventDefault();
+          list[0]?.focus();
+        }
+      }
+    };
+    el.addEventListener('keydown', onKeyDown);
+    return () => el.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const fetchTeamMembers = async () => {
     try {
@@ -77,27 +111,41 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
       setSuccess(true);
       setTimeout(() => onTaskCreated(), 600);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'יצירת המשימה נכשלה');
+      const msg = err.response?.data?.error || 'יצירת המשימה נכשלה';
+      setError(msg);
+      toast?.showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
   };
+
+  const backdropTransition = getTransition(reducedMotion, quickTransition);
+  const panelTransition = getTransition(reducedMotion, modalTransition);
+  const panelY = isMobile ? '100%' : 40;
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={backdropTransition}
       className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 safe-area-padding"
       onClick={onClose}
     >
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        ref={panelRef}
+        initial={{ opacity: 0, y: panelY }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 40 }}
-        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+        exit={{ opacity: 0, y: panelY }}
+        transition={panelTransition}
+        drag={isMobile ? 'y' : false}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0.2, bottom: 0.5 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.y > 80 || info.velocity.y > 300) onClose();
+        }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-teal-500/20"
+        className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-teal-500/20 touch-pan-y"
       >
           <div className="p-4 sm:p-6 border-b border-slate-600 flex justify-between items-center shrink-0">
             <h2 className={`text-xl font-bold ${success ? 'text-teal-400 animate-success-pulse' : 'text-white'}`}>

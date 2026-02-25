@@ -4,6 +4,7 @@ import { useTaskStore, useAuthStore } from '../store';
 import TaskCard from './TaskCard';
 import axios from 'axios';
 import { API_BASE } from '../store';
+import { KanbanColumnSkeleton } from './skeletons';
 
 interface Status {
   id: number;
@@ -13,7 +14,7 @@ interface Status {
   order_index: number;
 }
 
-export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect: (task: any) => void; onEditTask?: (task: any) => void }) {
+export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: { onTaskSelect: (task: any) => void; onEditTask?: (task: any) => void; onCreateTask?: () => void }) {
   const { tasks, fetchTasks, updateTask } = useTaskStore();
   const { user, token } = useAuthStore();
   const [tasksByStatus, setTasksByStatus] = useState<Record<string, any[]>>({});
@@ -25,7 +26,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
     const fetchStatuses = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${API_BASE}/statuses/restaurant/${user.restaurant_id}`, {
+        const orgId = user?.organization_id ?? user?.restaurant_id;
+        const res = await axios.get(`${API_BASE}/statuses/restaurant/${orgId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setStatuses((res.data as Status[]).filter((s) => s.name !== 'verified'));
@@ -76,7 +78,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
   };
 
   return (
-    <div className="kanban-page p-4 sm:p-4 md:p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 min-h-full w-full min-w-0">
+    <div className="kanban-page min-h-full w-full min-w-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-4 md:px-6 py-4 md:py-6">
       <style>{`
         @keyframes slideDown {
           from { opacity: 0; transform: translateY(-20px); }
@@ -92,12 +95,28 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
         )}
       </div>
 
-      {loading && (
-        <div className="bg-slate-800 border border-teal-500/40 rounded-xl p-4 mb-4 sm:mb-6 text-center">
-          <p className="text-teal-400 font-bold">⏳ טוען...</p>
+      {loading && statuses.length === 0 ? (
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {[1, 2, 3, 4].map((i) => (
+            <KanbanColumnSkeleton key={i} />
+          ))}
         </div>
-      )}
-
+      ) : tasks.length === 0 && statuses.length > 0 ? (
+        <div className="rounded-2xl p-8 border-2 border-dashed border-slate-600 bg-slate-800/50 text-center">
+          <p className="text-4xl mb-3" aria-hidden="true">🧱</p>
+          <p className="font-bold text-slate-200 text-lg mb-1">אין משימות בלוח</p>
+          <p className="text-sm text-slate-400 mb-4">צור משימה ראשונה או גרור משימות מהרשימה</p>
+          {onCreateTask && (
+            <button
+              type="button"
+              onClick={onCreateTask}
+              className="min-h-[48px] px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors"
+            >
+              ➕ צור משימה
+            </button>
+          )}
+        </div>
+      ) : (
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0">
           <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-3 w-full md:min-w-fit px-3 md:px-0">
@@ -108,7 +127,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`w-full flex-shrink-0 md:w-full rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
+                    className={`animate-slideDown w-full flex-shrink-0 md:w-full rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'
@@ -175,6 +194,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
           </div>
         </div>
       </DragDropContext>
+      )}
+      </div>
     </div>
   );
 }

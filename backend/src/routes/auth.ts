@@ -30,28 +30,28 @@ router.post('/login', async (req: Request, res: Response) => {
 
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { email, name, password, restaurantId } = req.body;
+    const { email, name, password, organizationId: bodyOrgId, restaurantId } = req.body;
     if (!email || !name || !password) {
       return res.status(400).json({ error: 'Missing required fields: email, name, password' });
     }
     const hashedPassword = bcrypt.hashSync(password, 10);
     const role = 'worker';
-    let finalRestaurantId = restaurantId ?? 1;
+    let finalOrganizationId = bodyOrgId ?? restaurantId ?? 1;
 
-    if (!restaurantId) {
-      const checkRestaurant = await sql`SELECT id FROM restaurants LIMIT 1`;
-      if (checkRestaurant.rows.length > 0) {
-        finalRestaurantId = (checkRestaurant.rows[0] as any).id;
+    if (finalOrganizationId == null || finalOrganizationId === '') {
+      const checkOrg = await sql`SELECT id FROM organizations LIMIT 1`;
+      if (checkOrg.rows.length > 0) {
+        finalOrganizationId = (checkOrg.rows[0] as any).id;
       } else {
-        const ins = await sql`INSERT INTO restaurants (name, location) VALUES (${'Restaurant - ' + Date.now()}, 'Not specified') RETURNING id`;
-        finalRestaurantId = (ins.rows[0] as any).id;
+        const ins = await sql`INSERT INTO organizations (name, location) VALUES (${'Organization - ' + Date.now()}, 'Not specified') RETURNING id`;
+        finalOrganizationId = (ins.rows[0] as any).id;
       }
     }
 
     try {
       const result = await sql`
-        INSERT INTO users (email, name, password, role, status, restaurant_id)
-        VALUES (${email}, ${name}, ${hashedPassword}, ${role}, 'pending', ${finalRestaurantId})
+        INSERT INTO users (email, name, password, role, status, organization_id)
+        VALUES (${email}, ${name}, ${hashedPassword}, ${role}, 'pending', ${finalOrganizationId})
         RETURNING *
       `;
       const created = result.rows[0] as any;
@@ -89,10 +89,10 @@ router.post('/promote', async (req: Request, res: Response) => {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
-    const userRows = await sql`SELECT * FROM users WHERE id = ${userId} AND restaurant_id = ${currentUser.restaurantId}`;
+    const userRows = await sql`SELECT * FROM users WHERE id = ${userId} AND organization_id = ${currentUser.organizationId}`;
     const userToPromote = userRows.rows[0] as any;
     if (!userToPromote) {
-      return res.status(404).json({ error: 'User not found or belongs to different restaurant' });
+      return res.status(404).json({ error: 'User not found or belongs to different organization' });
     }
 
     await sql`UPDATE users SET role = 'admin' WHERE id = ${userId}`;
@@ -120,7 +120,7 @@ router.get('/pending-users', async (req: Request, res: Response) => {
     }
     const { rows } = await sql`
       SELECT id, email, name, role, status, created_at FROM users
-      WHERE restaurant_id = ${currentUser.restaurantId} AND status = 'pending'
+      WHERE organization_id = ${currentUser.organizationId} AND status = 'pending'
       ORDER BY created_at DESC
     `;
     res.json({ pendingUsers: rows });
@@ -144,10 +144,10 @@ router.put('/approve-user/:userId', async (req: Request, res: Response) => {
     if (!['admin', 'maintainer', 'manager'].includes(currentUser.role)) {
       return res.status(403).json({ error: 'Only admins, maintainers and managers can approve users' });
     }
-    const userRows = await sql`SELECT * FROM users WHERE id = ${userId} AND restaurant_id = ${currentUser.restaurantId}`;
+    const userRows = await sql`SELECT * FROM users WHERE id = ${userId} AND organization_id = ${currentUser.organizationId}`;
     const userToApprove = userRows.rows[0] as any;
     if (!userToApprove) {
-      return res.status(404).json({ error: 'User not found or belongs to different restaurant' });
+      return res.status(404).json({ error: 'User not found or belongs to different organization' });
     }
     await sql`UPDATE users SET status = 'approved' WHERE id = ${userId}`;
     const updatedRows = await sql`SELECT * FROM users WHERE id = ${userId}`;
@@ -175,10 +175,10 @@ router.put('/deny-user/:userId', async (req: Request, res: Response) => {
     if (!['admin', 'maintainer', 'manager'].includes(currentUser.role)) {
       return res.status(403).json({ error: 'Only admins, maintainers and managers can deny users' });
     }
-    const userRows = await sql`SELECT * FROM users WHERE id = ${userId} AND restaurant_id = ${currentUser.restaurantId}`;
+    const userRows = await sql`SELECT * FROM users WHERE id = ${userId} AND organization_id = ${currentUser.organizationId}`;
     const userToDeny = userRows.rows[0] as any;
     if (!userToDeny) {
-      return res.status(404).json({ error: 'User not found or belongs to different restaurant' });
+      return res.status(404).json({ error: 'User not found or belongs to different organization' });
     }
     await sql`DELETE FROM users WHERE id = ${userId}`;
     await sendUserDenialEmail(userToDeny.email, userToDeny.name, reason || '');

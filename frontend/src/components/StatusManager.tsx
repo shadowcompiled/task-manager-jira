@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useAuthStore } from '../store';
+import { modalTransition, quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 
 interface Status {
   id: number;
@@ -12,12 +14,13 @@ interface Status {
 
 interface StatusManagerProps {
   onClose: () => void;
-  restaurantId: number;
+  organizationId: number;
   onStatusesChanged: () => void;
 }
 
-export default function StatusManager({ onClose, restaurantId, onStatusesChanged }: StatusManagerProps) {
+export default function StatusManager({ onClose, organizationId, onStatusesChanged }: StatusManagerProps) {
   const { user } = useAuthStore();
+  const reducedMotion = useReducedMotion();
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [loading, setLoading] = useState(false);
   const [newStatus, setNewStatus] = useState({
@@ -38,7 +41,7 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
   const fetchStatuses = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE}/statuses/restaurant/${restaurantId}`, {
+      const response = await axios.get(`${API_BASE}/statuses/restaurant/${organizationId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStatuses(response.data);
@@ -59,7 +62,6 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
       await axios.post(
         `${API_BASE}/statuses`,
         {
-          restaurantId,
           name: newStatus.name.toLowerCase().replace(/\s+/g, '_'),
           displayName: newStatus.displayName,
           color: newStatus.color,
@@ -150,8 +152,22 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 safe-area-padding">
-      <div className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-slate-600 sm:border-teal-500/30">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={getTransition(reducedMotion, quickTransition)}
+      className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 safe-area-padding"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        transition={getTransition(reducedMotion, modalTransition)}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-slate-600 sm:border-teal-500/30"
+      >
         <div className="p-4 sm:p-6 border-b border-slate-600 flex justify-between items-center shrink-0">
           <h2 className="text-xl font-bold text-white">⚙️ ניהול סטטוסים</h2>
           <button
@@ -326,7 +342,7 @@ export default function StatusManager({ onClose, restaurantId, onStatusesChanged
             סגור
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

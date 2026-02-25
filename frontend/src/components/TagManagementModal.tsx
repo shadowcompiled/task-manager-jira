@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useTagStore, useAuthStore } from '../store';
 import axios from 'axios';
+import { modalTransition, quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export default function TagManagementModal({ onClose }: any) {
   const { user, token } = useAuthStore();
+  const reducedMotion = useReducedMotion();
   const { tags, fetchTags } = useTagStore();
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#3b82f6');
@@ -14,10 +17,11 @@ export default function TagManagementModal({ onClose }: any) {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (user?.restaurant_id) {
-      fetchTags(user.restaurant_id);
+    const orgId = user?.organization_id ?? user?.restaurant_id;
+    if (orgId) {
+      fetchTags(orgId);
     }
-  }, [user?.restaurant_id, fetchTags]);
+  }, [user?.organization_id, user?.restaurant_id, fetchTags]);
 
   const handleAddTag = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +38,7 @@ export default function TagManagementModal({ onClose }: any) {
       await axios.post(
         `${API_BASE}/tags`,
         {
-          restaurantId: user?.restaurant_id,
+          organizationId: user?.organization_id ?? user?.restaurant_id,
           name: newTagName.trim(),
           color: newTagColor,
         },
@@ -46,8 +50,9 @@ export default function TagManagementModal({ onClose }: any) {
       setNewTagColor('#3b82f6');
       
       // Refresh tags list
-      if (user?.restaurant_id) {
-        fetchTags(user.restaurant_id);
+      const orgId = user?.organization_id ?? user?.restaurant_id;
+      if (orgId) {
+        fetchTags(orgId);
       }
 
       // Clear success message after 3 seconds
@@ -70,8 +75,9 @@ export default function TagManagementModal({ onClose }: any) {
       setSuccess('✓ התגיה נמחקה בהצלחה!');
       
       // Refresh tags list
-      if (user?.restaurant_id) {
-        fetchTags(user.restaurant_id);
+      const orgId = user?.organization_id ?? user?.restaurant_id;
+      if (orgId) {
+        fetchTags(orgId);
       }
 
       setTimeout(() => setSuccess(''), 3000);
@@ -81,8 +87,22 @@ export default function TagManagementModal({ onClose }: any) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 safe-area-padding">
-      <div className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-slate-600 sm:border-teal-500/30">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={getTransition(reducedMotion, quickTransition)}
+      className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 safe-area-padding"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        transition={getTransition(reducedMotion, modalTransition)}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full max-h-[92dvh] sm:max-h-[90vh] flex flex-col border border-slate-600 sm:border-teal-500/30"
+      >
         <div className="p-4 sm:p-6 border-b border-slate-600 flex justify-between items-center shrink-0">
           <h2 className="text-xl font-bold text-white">🏷️ ניהול תגיות</h2>
           <button
@@ -176,7 +196,7 @@ export default function TagManagementModal({ onClose }: any) {
             סגור
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

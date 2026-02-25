@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.get('/team/members', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const restaurantId = req.user?.restaurantId;
-    const { rows } = await sql`SELECT id, name, email, role FROM users WHERE restaurant_id = ${restaurantId} ORDER BY name ASC`;
+    const organizationId = req.user?.organizationId;
+    const { rows } = await sql`SELECT id, name, email, role FROM users WHERE organization_id = ${organizationId} ORDER BY name ASC`;
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch team members' });
@@ -17,7 +17,7 @@ router.get('/team/members', authenticateToken, async (req: AuthRequest, res: Res
 
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const restaurantId = req.user?.restaurantId;
+    const organizationId = req.user?.organizationId;
     const status = req.query.status as string;
     const assigned = req.query.assigned_to as string;
 
@@ -26,7 +26,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       FROM tasks t
       LEFT JOIN users u ON t.assigned_to = u.id
       LEFT JOIN users creator ON t.created_by = creator.id
-      WHERE t.restaurant_id = ${restaurantId}
+      WHERE t.organization_id = ${organizationId}
       ORDER BY t.due_date ASC NULLS LAST
     `;
     let tasks = rows as any[];
@@ -41,13 +41,13 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
 router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const taskId = req.params.id;
-    const restaurantId = req.user?.restaurantId;
+    const organizationId = req.user?.organizationId;
     const taskRows = await sql`
       SELECT t.*, u.name as assigned_to_name, creator.name as created_by_name
       FROM tasks t
       LEFT JOIN users u ON t.assigned_to = u.id
       LEFT JOIN users creator ON t.created_by = creator.id
-      WHERE t.id = ${taskId} AND t.restaurant_id = ${restaurantId}
+      WHERE t.id = ${taskId} AND t.organization_id = ${organizationId}
     `;
     const task = taskRows.rows[0] as any;
     if (!task) return res.status(404).json({ error: 'Task not found' });
@@ -71,13 +71,13 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (req: AuthRequest, res: Response) => {
   try {
     const { title, description, assigned_to, priority, due_date, recurrence } = req.body;
-    const restaurantId = req.user?.restaurantId;
+    const organizationId = req.user?.organizationId;
     const createdBy = req.user?.id;
     const status = assigned_to ? 'assigned' : 'planned';
 
     const result = await sql`
-      INSERT INTO tasks (title, description, assigned_to, restaurant_id, priority, status, due_date, recurrence, created_by)
-      VALUES (${title}, ${description ?? null}, ${assigned_to ?? null}, ${restaurantId}, ${priority || 'medium'}, ${status}, ${due_date ?? null}, ${recurrence || 'once'}, ${createdBy})
+      INSERT INTO tasks (title, description, assigned_to, organization_id, priority, status, due_date, recurrence, created_by)
+      VALUES (${title}, ${description ?? null}, ${assigned_to ?? null}, ${organizationId}, ${priority || 'medium'}, ${status}, ${due_date ?? null}, ${recurrence || 'once'}, ${createdBy})
       RETURNING *
     `;
     const task = result.rows[0] as any;
@@ -94,9 +94,9 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
   try {
     const taskId = req.params.id;
     const { title, description, assigned_to, priority, status, due_date, estimated_time, tags } = req.body;
-    const restaurantId = req.user?.restaurantId;
+    const organizationId = req.user?.organizationId;
 
-    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND restaurant_id = ${restaurantId}`;
+    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND organization_id = ${organizationId}`;
     const task = taskRows.rows[0] as any;
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
@@ -132,6 +132,13 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       WHERE id = ${taskId}
     `;
 
+    // When moving to last status, set completed_at/verified_at so 3-day auto-cleanup can delete them after 3 days
+    if (newStatus === 'completed' && !task.completed_at) {
+      await sql`UPDATE tasks SET completed_at = CURRENT_TIMESTAMP WHERE id = ${taskId}`;
+    } else if (newStatus === 'verified' && !task.verified_at) {
+      await sql`UPDATE tasks SET verified_at = CURRENT_TIMESTAMP, verified_by = ${req.user?.id} WHERE id = ${taskId}`;
+    }
+
     if (assigned_to !== undefined) {
       await sql`DELETE FROM task_assignments WHERE task_id = ${taskId}`;
       if (assigned_to) {
@@ -140,13 +147,13 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
     }
 
     if (assignedUser?.email) {
-      const [restaurantRows, creatorRows] = await Promise.all([
-        sql`SELECT name FROM restaurants WHERE id = ${restaurantId}`,
+      const [orgRows, creatorRows] = await Promise.all([
+        sql`SELECT name FROM organizations WHERE id = ${organizationId}`,
         sql`SELECT name FROM users WHERE id = ${req.user?.id}`
       ]);
-      const restaurantName = (restaurantRows.rows[0] as any)?.name || 'Restaurant';
+      const organizationName = (orgRows.rows[0] as any)?.name || 'Organization';
       const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
-      sendAssignmentNotification(assignedUser.email, title || task.title, createdByName, restaurantName).catch((err: any) => console.error('Failed to send email:', err));
+      sendAssignmentNotification(assignedUser.email, title || task.title, createdByName, organizationName).catch((err: any) => console.error('Failed to send email:', err));
     }
 
     if (tags && Array.isArray(tags)) {
@@ -183,9 +190,9 @@ router.put('/:id/verify', authenticateToken, authorize(['maintainer', 'admin']),
   try {
     const taskId = req.params.id;
     const { comment } = req.body;
-    const restaurantId = req.user?.restaurantId;
+    const organizationId = req.user?.organizationId;
 
-    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND restaurant_id = ${restaurantId}`;
+    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND organization_id = ${organizationId}`;
     const task = taskRows.rows[0];
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
@@ -203,8 +210,8 @@ router.put('/:id/verify', authenticateToken, authorize(['maintainer', 'admin']),
 router.delete('/:id', authenticateToken, authorize(['admin', 'maintainer']), async (req: AuthRequest, res: Response) => {
   try {
     const taskId = req.params.id;
-    const restaurantId = req.user?.restaurantId;
-    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND restaurant_id = ${restaurantId}`;
+    const organizationId = req.user?.organizationId;
+    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND organization_id = ${organizationId}`;
     const task = taskRows.rows[0];
     if (!task) return res.status(404).json({ error: 'Task not found' });
     await sql`DELETE FROM tasks WHERE id = ${taskId}`;

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '../store';
 import axios from 'axios';
+import { modalTransition, quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 
 export default function AdminPanel({ onClose }: { onClose: () => void }) {
   const { user, token } = useAuthStore();
+  const reducedMotion = useReducedMotion();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,7 +29,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
           email,
           password,
           role,
-          restaurantId: user?.restaurant_id,
+          organizationId: user?.organization_id ?? user?.restaurant_id,
         },
         {
           headers: {
@@ -58,8 +61,22 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={getTransition(reducedMotion, quickTransition)}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={getTransition(reducedMotion, modalTransition)}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8"
+      >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             👤 יצירת משתמש חדש
@@ -151,7 +168,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

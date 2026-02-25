@@ -41,11 +41,11 @@ router.post('/test', authenticateToken, async (req: AuthRequest, res: Response) 
 router.get('/users-status', authenticateToken, async (req: AuthRequest, res: Response) => {
   if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
   try {
-    const restaurantId = req.user?.restaurantId;
+    const organizationId = req.user?.organizationId;
     const { rows: users } = await sql`
       SELECT u.id, u.name, u.email, u.role, u.status,
         (SELECT COUNT(*)::int FROM push_subscriptions ps WHERE ps.user_id = u.id) as subscription_count
-      FROM users u WHERE u.restaurant_id = ${restaurantId} ORDER BY u.name
+      FROM users u WHERE u.organization_id = ${organizationId} ORDER BY u.name
     `;
     const result = (users as any[]).map(user => ({
       id: user.id,

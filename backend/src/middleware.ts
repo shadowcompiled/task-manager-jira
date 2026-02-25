@@ -6,7 +6,7 @@ export interface AuthRequest extends Request {
     id: number;
     email: string;
     role: string;
-    restaurantId: number;
+    organizationId: number;
   };
 }
 
@@ -28,7 +28,7 @@ export function authenticateToken(
       id: decoded.id,
       email: decoded.email,
       role: decoded.role,
-      restaurantId: decoded.restaurantId,
+      organizationId: decoded.organizationId ?? decoded.restaurantId,
     };
     next();
   } catch (error) {
@@ -51,7 +51,7 @@ export function generateToken(user: any) {
       id: user.id,
       email: user.email,
       role: user.role,
-      restaurantId: user.restaurant_id,
+      organizationId: user.organization_id ?? user.restaurant_id,
     },
     process.env.JWT_SECRET || 'secret',
     { expiresIn: '7d' }

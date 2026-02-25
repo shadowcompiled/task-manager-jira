@@ -169,10 +169,11 @@ export default function KanbanDashboard() {
   };
 
   useEffect(() => {
-    if (user?.restaurant_id && token) {
+    const orgId = user?.organization_id ?? user?.restaurant_id;
+    if (orgId && token) {
       loadTasks();
     }
-  }, [user?.restaurant_id, token]);
+  }, [user?.organization_id, user?.restaurant_id, token]);
 
   if (!user?.role || !['manager', 'admin'].includes(user.role)) {
     return (
@@ -185,7 +186,8 @@ export default function KanbanDashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 min-h-screen">
+    <div className="min-h-screen w-full min-w-0 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="max-w-6xl mx-auto w-full px-4 md:px-6 py-4 md:py-6">
       <style>{`
         @keyframes slideIn {
           from {
@@ -362,6 +364,7 @@ export default function KanbanDashboard() {
         <p className="text-sm text-gray-700 dark:text-slate-300 font-semibold">
           💡 גרור משימות לשינוי סטטוס. גלול אופקיים לראות יותר עמודות
         </p>
+      </div>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import statusRoutes from './routes/statuses';
 import tagsRoutes from './routes/tags';
 import pushRoutes from './routes/push';
 import cronRoutes from './routes/cron';
+import organizationsRoutes from './routes/organizations';
 import { verifyEmailConfig } from './services/emailService';
 import { startNotificationService } from './services/notificationService';
 
@@ -27,6 +28,7 @@ app.use('/api/statuses', statusRoutes);
 app.use('/api/tags', tagsRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/cron', cronRoutes);
+app.use('/api/organizations', organizationsRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

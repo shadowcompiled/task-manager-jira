@@ -1,8 +1,9 @@
 -- PostgreSQL schema for mission-tracking (Vercel Postgres)
 -- Run once via Vercel Postgres or: psql $POSTGRES_URL -f schema.sql
+-- For existing DBs using "restaurants", run migrations/001_rename_restaurant_to_organization.sql first or instead.
 
--- Restaurants (no FK deps)
-CREATE TABLE IF NOT EXISTS restaurants (
+-- Organizations (tenant / no FK deps)
+CREATE TABLE IF NOT EXISTS organizations (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   location TEXT,
@@ -17,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
   password TEXT NOT NULL,
   role TEXT CHECK (role IN ('admin', 'maintainer', 'worker')) NOT NULL,
   status TEXT CHECK (status IN ('pending', 'approved')) DEFAULT 'approved',
-  restaurant_id INTEGER REFERENCES restaurants(id),
+  organization_id INTEGER REFERENCES organizations(id),
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -27,7 +28,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   title TEXT NOT NULL,
   description TEXT,
   assigned_to INTEGER REFERENCES users(id),
-  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
+  organization_id INTEGER NOT NULL REFERENCES organizations(id),
   priority TEXT CHECK (priority IN ('low', 'medium', 'high', 'critical')) DEFAULT 'medium',
   status TEXT CHECK (status IN ('planned', 'assigned', 'in_progress', 'waiting', 'completed', 'verified', 'overdue')) DEFAULT 'planned',
   due_date TIMESTAMPTZ,
@@ -79,26 +80,26 @@ CREATE TABLE IF NOT EXISTS photos (
 -- Custom statuses
 CREATE TABLE IF NOT EXISTS statuses (
   id SERIAL PRIMARY KEY,
-  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
+  organization_id INTEGER NOT NULL REFERENCES organizations(id),
   name TEXT NOT NULL,
   display_name TEXT NOT NULL,
   color TEXT DEFAULT '#808080',
   order_index INTEGER DEFAULT 0,
   is_default BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(restaurant_id, name)
+  UNIQUE(organization_id, name)
 );
 
 -- Tags (with optional color2 for gradients)
 CREATE TABLE IF NOT EXISTS tags (
   id SERIAL PRIMARY KEY,
-  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
+  organization_id INTEGER NOT NULL REFERENCES organizations(id),
   name TEXT NOT NULL,
   color TEXT DEFAULT '#808080',
   color2 TEXT,
   created_by INTEGER NOT NULL REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(restaurant_id, name)
+  UNIQUE(organization_id, name)
 );
 
 -- Task-Tags junction
@@ -130,7 +131,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 );
 
 -- Indexes for common queries
-CREATE INDEX IF NOT EXISTS idx_tasks_restaurant_id ON tasks(restaurant_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_organization_id ON tasks(organization_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
 CREATE INDEX IF NOT EXISTS idx_task_assignments_user_id ON task_assignments(user_id);

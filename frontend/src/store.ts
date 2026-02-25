@@ -17,7 +17,8 @@ export interface User {
   email: string;
   name: string;
   role: 'admin' | 'manager' | 'maintainer' | 'worker' | 'staff';
-  restaurant_id: number;
+  organization_id: number;
+  restaurant_id?: number;
 }
 
 export interface Task {
@@ -92,8 +93,8 @@ interface DashboardStore {
 interface TagStore {
   tags: Tag[];
   loading: boolean;
-  fetchTags: (restaurantId: number) => Promise<void>;
-  createTag: (restaurantId: number, name: string, color: string) => Promise<void>;
+  fetchTags: (organizationId: number) => Promise<void>;
+  createTag: (organizationId: number, name: string, color: string) => Promise<void>;
   updateTag: (tagId: number, name: string, color: string) => Promise<void>;
   deleteTag: (tagId: number) => Promise<void>;
   addTagToTask: (tagId: number, taskId: number) => Promise<void>;
@@ -307,11 +308,11 @@ export const useTagStore = create<TagStore>((set) => ({
   tags: [],
   loading: false,
 
-  fetchTags: async (restaurantId: number) => {
+  fetchTags: async (organizationId: number) => {
     try {
       set({ loading: true });
       const token = useAuthStore.getState().token;
-      const res = await axios.get(`${API_BASE}/tags/restaurant/${restaurantId}`, {
+      const res = await axios.get(`${API_BASE}/tags/restaurant/${organizationId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       set({ tags: res.data });
@@ -322,12 +323,12 @@ export const useTagStore = create<TagStore>((set) => ({
     }
   },
 
-  createTag: async (restaurantId: number, name: string, color: string) => {
+  createTag: async (organizationId: number, name: string, color: string) => {
     try {
       const token = useAuthStore.getState().token;
       const res = await axios.post(
         `${API_BASE}/tags`,
-        { restaurantId, name, color },
+        { name, color },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       set((state) => ({ tags: [...state.tags, res.data] }));

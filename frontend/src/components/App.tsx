@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { modalTransition, quickTransition, pageTransition, getTransition, useReducedMotion } from '../utils/motion';
 import { useAuthStore } from '../store';
 import LoginPage from './LoginPage';
 import DailyTaskList from './DailyTaskList';
@@ -14,6 +15,8 @@ import AdminPanel from './AdminPanel';
 import UserManagementModal from './UserManagementModal';
 import { UserApprovalModal } from './UserApprovalModal';
 import UsersNotificationStatusModal from './UsersNotificationStatusModal';
+import { ToastProvider } from '../contexts/ToastContext';
+import Toast from './Toast';
 
 type ViewType = 'daily' | 'kanban' | 'dashboard' | 'kanban-dash';
 
@@ -22,6 +25,7 @@ const THEME_KEY = 'mission-tracker-theme';
 
 export default function App() {
   const { user, logout, token } = useAuthStore();
+  const reducedMotion = useReducedMotion();
   const [currentView, setCurrentView] = useState<ViewType>('daily');
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [openTaskInEditMode, setOpenTaskInEditMode] = useState(false);
@@ -60,6 +64,7 @@ export default function App() {
   }
 
   return (
+    <ToastProvider>
     <div className="app-shell min-h-[100dvh] h-[100dvh] max-h-[100dvh] max-w-[100vw] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden min-w-0">
       {/* Header - safe area top for notch; compact on phone */}
       <header className="app-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top)]">
@@ -95,11 +100,29 @@ export default function App() {
                 >
                   ⋯
                 </button>
-                {showHeaderMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
-                    {/* Mobile: full-width bottom sheet, text right-aligned */}
-                    <div dir="rtl" className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden">
+                <AnimatePresence>
+                  {showHeaderMenu && (
+                    <motion.div
+                      key="header-menu-overlay"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={getTransition(reducedMotion, quickTransition)}
+                      className="fixed inset-0 z-40 bg-black/50"
+                      onClick={() => setShowHeaderMenu(false)}
+                      aria-hidden="true"
+                    />
+                  )}
+                  {showHeaderMenu && (
+                    <motion.div
+                      key="header-menu-sheet"
+                      dir="rtl"
+                      initial={{ y: '100%' }}
+                      animate={{ y: 0 }}
+                      exit={{ y: '100%' }}
+                      transition={getTransition(reducedMotion, modalTransition)}
+                      className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden"
+                    >
                       <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5 flex flex-col gap-0" dir="rtl" style={{ direction: 'rtl' }}>
                         {user.role === 'admin' && (
                           <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
@@ -124,7 +147,11 @@ export default function App() {
                           <span>צוות</span><span>👥</span>
                         </button>
                       </div>
-                    </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {showHeaderMenu && (
+                  <>
                     {/* Desktop: dropdown */}
                     <div dir="rtl" className="hidden md:block absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50 flex flex-col" style={{ direction: 'rtl' }}>
                       {user.role === 'admin' && (
@@ -239,7 +266,7 @@ export default function App() {
         </nav>
 
       {/* Bottom Navigation for Mobile - create button half above footer, 4 nav items centered */}
-      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-2xl z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-4 px-4 sm:px-5">
+      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-4 px-4 sm:px-5">
         <div className="flex items-end justify-center gap-0 w-full max-w-md mx-auto relative min-h-[56px]">
           {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
             <>
@@ -328,26 +355,26 @@ export default function App() {
         </div>
       </div>
 
-        {/* Main Content - scrollable; phone: padding so footer never overlays content */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(7rem,calc(6.5rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
+        {/* Main Content - scrollable; mobile: bottom padding so footer never overlays content when fully scrolled */}
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(8.5rem,calc(8rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
           <AnimatePresence mode="wait">
             {currentView === 'daily' && (
-              <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
-                <DailyTaskList onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); }} />
+              <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
+                <DailyTaskList onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); }} onCreateTask={(user?.role === 'manager' || user?.role === 'admin' || user?.role === 'maintainer') ? () => setShowCreateTask(true) : undefined} />
               </motion.div>
             )}
             {currentView === 'kanban' && (
-              <motion.div key="kanban" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
-                <KanbanBoard onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); setOpenTaskInEditMode(true); }} />
+              <motion.div key="kanban" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
+                <KanbanBoard onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); setOpenTaskInEditMode(true); }} onCreateTask={(user?.role === 'manager' || user?.role === 'admin' || user?.role === 'maintainer') ? () => setShowCreateTask(true) : undefined} />
               </motion.div>
             )}
             {currentView === 'kanban-dash' && (
-              <motion.div key="kanban-dash" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
+              <motion.div key="kanban-dash" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
                 <KanbanDashboard />
               </motion.div>
             )}
             {currentView === 'dashboard' && (
-              <motion.div key="dashboard" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">
+              <motion.div key="dashboard" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
                 <Dashboard />
               </motion.div>
             )}
@@ -380,46 +407,58 @@ export default function App() {
       </AnimatePresence>
 
       {/* Status Manager Modal */}
-      {showStatusManager && (
-        <StatusManager
-          restaurantId={user.restaurant_id}
-          onClose={() => setShowStatusManager(false)}
-          onStatusesChanged={() => {
-            // Refresh kanban board statuses
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {showStatusManager && (
+          <StatusManager
+            key="status-manager"
+            organizationId={user.organization_id ?? user.restaurant_id ?? 0}
+            onClose={() => setShowStatusManager(false)}
+            onStatusesChanged={() => {}}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Tag Manager Modal */}
-      {showTagManager && (
-        <TagManagementModal
-          onClose={() => setShowTagManager(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showTagManager && (
+          <TagManagementModal key="tag-manager" onClose={() => setShowTagManager(false)} />
+        )}
+      </AnimatePresence>
 
       {/* Admin Panel Modal */}
-      {showAdminPanel && (
-        <AdminPanel onClose={() => setShowAdminPanel(false)} />
-      )}
+      <AnimatePresence>
+        {showAdminPanel && (
+          <AdminPanel key="admin-panel" onClose={() => setShowAdminPanel(false)} />
+        )}
+      </AnimatePresence>
 
       {/* User Management Modal */}
-      {showUserManagement && (
-        <UserManagementModal isOpen={showUserManagement} onClose={() => setShowUserManagement(false)} />
-      )}
+      <AnimatePresence>
+        {showUserManagement && (
+          <UserManagementModal key="user-management" isOpen={showUserManagement} onClose={() => setShowUserManagement(false)} />
+        )}
+      </AnimatePresence>
 
       {/* User Approval Modal */}
-      {showUserApproval && (
-        <UserApprovalModal 
-          isOpen={showUserApproval} 
-          onClose={() => setShowUserApproval(false)}
-          token={token || ''}
-        />
-      )}
+      <AnimatePresence>
+        {showUserApproval && (
+          <UserApprovalModal
+            key="user-approval"
+            isOpen={showUserApproval}
+            onClose={() => setShowUserApproval(false)}
+            token={token || ''}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Users & Notifications Status (admin only) */}
-      {showUsersNotificationStatus && user?.role === 'admin' && (
-        <UsersNotificationStatusModal onClose={() => setShowUsersNotificationStatus(false)} />
-      )}
+      <AnimatePresence>
+        {showUsersNotificationStatus && user?.role === 'admin' && (
+          <UsersNotificationStatusModal key="users-notification-status" onClose={() => setShowUsersNotificationStatus(false)} />
+        )}
+      </AnimatePresence>
+      <Toast />
     </div>
+    </ToastProvider>
   );
 }
