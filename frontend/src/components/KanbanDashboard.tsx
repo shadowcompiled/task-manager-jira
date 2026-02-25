@@ -258,14 +258,14 @@ export default function KanbanDashboard() {
       {loading ? (
         <div className="text-center text-gray-600 dark:text-slate-300 py-12 font-bold">⏳ טוען משימות...</div>
       ) : (
-        <div style={{ overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', whiteSpace: 'nowrap' }} className="pb-6 w-full">
+        <div className="kanban-hscroll pb-6 w-full">
           {columns.map((column) => (
             <div
               key={column.id}
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(column.name)}
-              className="kanban-column bg-white dark:bg-slate-800 rounded-lg shadow-lg border-2 border-gray-200 dark:border-slate-600 p-3 flex flex-col animate-slideIn hover:shadow-xl transition-shadow"
-              style={{ width: '75vw', maxWidth: '300px', flexShrink: 0, display: 'inline-flex', flexDirection: 'column', verticalAlign: 'top', whiteSpace: 'normal', borderTopColor: column.color }}
+              className="kanban-column-card kanban-column bg-white dark:bg-slate-800 rounded-lg shadow-lg border-2 border-gray-200 dark:border-slate-600 p-3 flex flex-col animate-slideIn hover:shadow-xl transition-shadow"
+              style={{ borderTopColor: column.color, whiteSpace: 'normal', display: 'inline-flex', flexDirection: 'column', verticalAlign: 'top' }}
             >
               {/* Column Header */}
               <div className="mb-2 pb-2 border-b-2" style={{ borderBottomColor: column.color }}>

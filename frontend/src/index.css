@@ -68,10 +68,34 @@ html, body {
   width: 100%;
 }
 
-/* Allow horizontal scroll inside kanban containers */
-.kanban-page [class*="overflow-x-auto"],
-.kanban-page .overflow-x-auto {
+/* Horizontal scroll container for kanban columns */
+.kanban-hscroll {
   overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: auto;
+  scrollbar-color: #14b8a6 #0f172a;
+}
+.kanban-hscroll-inner {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  gap: 0.75rem;
+  min-width: max-content !important;
+}
+.kanban-column-card {
+  width: 75vw !important;
+  max-width: 300px;
+  flex-shrink: 0 !important;
+}
+@media (min-width: 640px) {
+  .kanban-column-card {
+    width: 280px !important;
+  }
+}
+@media (min-width: 768px) {
+  .kanban-column-card {
+    width: 300px !important;
+  }
 }
 #root {
   min-height: 100dvh;

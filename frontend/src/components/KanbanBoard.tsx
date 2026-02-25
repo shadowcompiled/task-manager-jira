@@ -99,8 +99,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div style={{ overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch' }} className="-mx-3 md:mx-0 pb-2">
-          <div style={{ display: 'inline-flex', gap: '0.75rem', paddingLeft: '0.75rem', paddingRight: '0.75rem' }}>
+        <div className="kanban-hscroll pb-2 px-1">
+          <div className="kanban-hscroll-inner">
             {statuses.map((status, idx) => (
               <Droppable key={status.name} droppableId={status.name}>
                 {/* @ts-ignore - react-beautiful-dnd types */}
@@ -108,7 +108,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`w-[75vw] sm:w-[280px] md:w-[300px] flex-shrink-0 rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
+                    className={`kanban-column-card rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'
