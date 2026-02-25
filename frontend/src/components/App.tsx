@@ -329,7 +329,7 @@ export default function App() {
       </div>
 
         {/* Main Content - scrollable; phone: padding so footer never overlays content */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(7rem,calc(6.5rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
+        <main className="flex-1 min-h-0 overflow-auto main-scroll pb-[max(7rem,calc(6.5rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
           <AnimatePresence mode="wait">
             {currentView === 'daily' && (
               <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="h-full min-w-0 w-full">

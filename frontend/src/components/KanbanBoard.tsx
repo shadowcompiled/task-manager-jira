@@ -99,8 +99,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="overflow-x-auto -mx-3 md:mx-0 min-w-0 pb-2">
-          <div className="flex gap-3 w-max px-3 md:px-0">
+        <div style={{ overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch' }} className="-mx-3 md:mx-0 pb-2">
+          <div style={{ display: 'inline-flex', gap: '0.75rem', paddingLeft: '0.75rem', paddingRight: '0.75rem' }}>
             {statuses.map((status, idx) => (
               <Droppable key={status.name} droppableId={status.name}>
                 {/* @ts-ignore - react-beautiful-dnd types */}
