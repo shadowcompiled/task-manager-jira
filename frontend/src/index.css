@@ -148,14 +148,14 @@ html.light-mode .kanban-scroll::-webkit-scrollbar {
 }
 
 html.light-mode .kanban-scroll::-webkit-scrollbar-track {
-  background: #f5f4f2;
-  border: 3px solid #f0eeeb;
+  background: #f0ede8;
+  border: 3px solid #e8e4df;
   box-shadow: inset 0 0 6px rgba(44, 36, 32, 0.04);
 }
 
 html.light-mode .kanban-scroll::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #14b8a6 0%, #0d9488 50%, #0f766e 100%);
-  border: 3px solid #f5f4f2;
+  border: 3px solid #f0ede8;
 }
 
 html.light-mode .kanban-scroll::-webkit-scrollbar-thumb:hover {
@@ -340,7 +340,7 @@ input[type="checkbox"] {
 }
 
 /* ========================================
-   LIGHT MODE - No grey; warm cream/beige + teal
+   LIGHT MODE - warm cream/beige + teal
    ======================================== */
 
 /* Light mode: default/primary theme; mobile-first layout applies */
@@ -350,8 +350,8 @@ html.light-mode {
   --color-surface: #ffffff;
   --color-text: #2c2420;         /* Warm dark brown */
   --color-text-muted: #5c534a;   /* Warm brown */
-  --color-border: #f0eeeb;       /* Light grey border */
-  --color-border-light: #f5f4f2;  /* Very light grey */
+  --color-border: #e8e4df;       /* Warm beige border */
+  --color-border-light: #f0ede8;  /* Light cream */
   --light-primary: #0d9488;      /* teal-600 */
   --light-surface: #ffffff;
   --light-text: #2c2420;
@@ -362,39 +362,39 @@ html.light-mode body {
   color: var(--color-text);
 }
 
-/* App shell, header and bottom bar - lighter warm cream, no grey */
+/* App shell, header and bottom bar - warm cream/beige */
 html.light-mode .app-shell {
-  background: linear-gradient(to bottom right, #f5f4f2 0%, #fdfcfa 50%, #f5f4f2 100%) !important;
+  background: linear-gradient(to bottom right, #f5f2ed 0%, #fdfcfa 50%, #f5f2ed 100%) !important;
 }
 html.light-mode .app-header {
-  background: linear-gradient(to right, #ffffff 0%, #f5f4f2 50%, #ffffff 100%) !important;
-  border-color: #f0eeeb;
+  background: linear-gradient(to right, #ffffff 0%, #f0ede8 50%, #ffffff 100%) !important;
+  border-color: #e8e4df;
 }
 html.light-mode .app-bottom-bar {
-  background: linear-gradient(to right, #ffffff 0%, #f5f4f2 50%, #ffffff 100%) !important;
-  border-color: #f0eeeb;
+  background: linear-gradient(to right, #ffffff 0%, #f0ede8 50%, #ffffff 100%) !important;
+  border-color: #e8e4df;
 }
 html.light-mode .create-btn-float {
-  border-color: #f5f4f2 !important;
+  border-color: #f0ede8 !important;
 }
 html.light-mode .kanban-page {
-  background: linear-gradient(to bottom right, #f5f4f2 0%, #fdfcfa 50%, #f5f4f2 100%) !important;
+  background: linear-gradient(to bottom right, #f5f2ed 0%, #fdfcfa 50%, #f5f2ed 100%) !important;
 }
 
-/* Scrollbar - light grey */
+/* Scrollbar - warm cream/beige */
 html.light-mode ::-webkit-scrollbar-track {
-  background: #f5f4f2;
+  background: #f0ede8;
 }
 
 html.light-mode ::-webkit-scrollbar-thumb {
-  background: #e5e3df;
+  background: #d6d1c9;
 }
 
 html.light-mode ::-webkit-scrollbar-thumb:hover {
   background: #0d9488;
 }
 
-/* Background colors - lighter cream/white, no grey */
+/* Background colors - warm cream/white */
 html.light-mode .bg-slate-900 {
   background-color: #fdfcfa;
 }
@@ -408,20 +408,20 @@ html.light-mode .bg-slate-800\/50 {
 }
 
 html.light-mode .bg-slate-700 {
-  background-color: #f5f4f2;
+  background-color: #f0ede8;
 }
 
 html.light-mode .bg-slate-700\/50,
 html.light-mode .bg-slate-700\/30,
 html.light-mode .bg-slate-700\/70 {
-  background-color: #f5f4f2;
+  background-color: #f0ede8;
 }
 
 html.light-mode .bg-slate-50 {
-  background-color: #fafaf9;
+  background-color: #faf8f5;
 }
 
-/* Text colors - warm brown, no grey */
+/* Text colors - warm brown */
 html.light-mode .text-white {
   color: #2c2420;
 }
@@ -442,17 +442,17 @@ html.light-mode .text-slate-900 {
   color: #2c2420;
 }
 
-/* Border colors - light grey */
+/* Border colors - warm beige */
 html.light-mode .border-slate-100,
 html.light-mode .border-slate-200 {
-  border-color: #f0eeeb;
+  border-color: #e8e4df;
 }
 
 html.light-mode .border-slate-600,
 html.light-mode .border-slate-700,
 html.light-mode .border-slate-700\/50,
 html.light-mode .border-slate-600\/50 {
-  border-color: #ebe9e6;
+  border-color: #e2ddd4;
 }
 
 /* Form elements - warm borders */
@@ -460,7 +460,7 @@ html.light-mode input,
 html.light-mode select,
 html.light-mode textarea {
   background-color: #ffffff;
-  border-color: #e8e6e3;
+  border-color: #e2ddd4;
   color: #2c2420;
 }
 
@@ -490,31 +490,31 @@ html.light-mode .rounded-2xl {
 /* Header & Navigation */
 html.light-mode header {
   background-color: #ffffff;
-  border-color: #f0eeeb;
+  border-color: #e8e4df;
 }
 
 html.light-mode nav {
   background-color: #ffffff;
-  border-color: #f0eeeb;
+  border-color: #e8e4df;
 }
 
-/* Buttons - light grey */
+/* Buttons - warm cream/beige */
 html.light-mode .bg-slate-700:hover {
-  background-color: #ebe9e6;
+  background-color: #e2ddd4;
 }
 
 html.light-mode button.bg-slate-700 {
-  background-color: #f5f4f2;
+  background-color: #f0ede8;
   color: #4a423a;
 }
 
 html.light-mode button.bg-slate-700:hover {
-  background-color: #ebe9e6;
+  background-color: #e2ddd4;
 }
 
 /* Task cards */
 html.light-mode .bg-slate-50 {
-  background-color: #fafaf9;
+  background-color: #faf8f5;
 }
 
 html.light-mode .hover\:bg-white:hover {
@@ -522,11 +522,11 @@ html.light-mode .hover\:bg-white:hover {
 }
 
 html.light-mode .hover\:bg-slate-600:hover {
-  background-color: #f5f4f2;
+  background-color: #f0ede8;
 }
 
 html.light-mode .hover\:bg-slate-600\/70:hover {
-  background-color: #ebe9e6;
+  background-color: #e2ddd4;
 }
 
 /* Modal overlays - warm dark */
@@ -564,13 +564,13 @@ html.light-mode .bg-teal-50 {
   background-color: #f0fdfa;
 }
 
-/* Progress bars - light grey */
+/* Progress bars - warm cream/beige */
 html.light-mode .bg-slate-100 {
-  background-color: #f5f4f2;
+  background-color: #f0ede8;
 }
 
 html.light-mode .bg-slate-200 {
-  background-color: #f0eeeb;
+  background-color: #e8e4df;
 }
 
 /* Active/Selected states */
@@ -587,9 +587,9 @@ html.light-mode .shadow-xl {
   box-shadow: 0 4px 20px rgba(44, 36, 32, 0.08), 0 2px 8px rgba(44, 36, 32, 0.04);
 }
 
-/* Status indicators - light grey */
+/* Status indicators - warm beige */
 html.light-mode .bg-slate-600 {
-  background-color: #e8e6e3;
+  background-color: #d6d1c9;
 }
 
 /* Dashboard card backgrounds - subtle colored tints */
@@ -641,7 +641,7 @@ html.light-mode .shadow-2xl {
   box-shadow: 0 8px 30px rgba(44, 36, 32, 0.12);
 }
 
-/* Text - warm brown, no grey */
+/* Text - warm brown */
 html.light-mode .text-gray-900 {
   color: #2c2420;
 }
@@ -692,7 +692,7 @@ html.light-mode .via-slate-900,
 html.light-mode .to-slate-950 {
   --tw-gradient-from: #fdfcfa;
   --tw-gradient-to: rgba(253, 252, 250, 0);
-  --tw-gradient-stops: var(--tw-gradient-from), #f5f4f2, var(--tw-gradient-to);
+  --tw-gradient-stops: var(--tw-gradient-from), #f0ede8, var(--tw-gradient-to);
 }
 html.light-mode .border-teal-500\/40 {
   border-color: rgba(13, 148, 136, 0.35);

@@ -265,99 +265,91 @@ export default function App() {
           </div>
         </nav>
 
-      {/* Bottom Navigation for Mobile - create button above bar; nav items even spacing */}
+      {/* Bottom Navigation for Mobile - five equal-width columns */}
       <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-5 px-2 sm:px-4">
-        <div className="flex items-end justify-center w-full max-w-lg mx-auto min-h-[52px]">
-          {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
-            <>
-              {/* Five equal-width slots: 2 tabs | create | 2 tabs */}
-              <div className="flex flex-1 min-w-0 items-end justify-end gap-1">
-                <button
-                  onClick={() => setCurrentView('daily')}
-                  className={`flex-1 min-w-0 min-h-[44px] py-2.5 px-1 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
-                    currentView === 'daily'
-                      ? 'text-teal-300 bg-slate-700/50'
-                      : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-                  }`}
-                >
-                  <span className="whitespace-nowrap overflow-hidden text-inherit truncate w-full max-w-full" style={{ textOverflow: 'ellipsis' }}>📋 יומי</span>
-                </button>
-                <button
-                  onClick={() => setCurrentView('kanban')}
-                  className={`flex-1 min-w-0 min-h-[44px] py-2.5 px-1 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
-                    currentView === 'kanban'
-                      ? 'text-teal-300 bg-slate-700/50'
-                      : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-                  }`}
-                >
-                  <span className="whitespace-nowrap overflow-hidden text-inherit truncate w-full max-w-full" style={{ textOverflow: 'ellipsis' }}>🧱 לוח</span>
-                </button>
-              </div>
-              {/* Create mission - slightly above bar */}
-              <div className="flex flex-1 min-w-0 justify-center items-end shrink-0">
-                <motion.button
-                  onClick={() => setShowCreateTask(true)}
-                  className="create-btn-float w-14 h-14 sm:w-16 sm:h-16 -mt-9 sm:-mt-10 rounded-full text-white bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg border-4 border-slate-800 hover:from-teal-600 hover:to-emerald-700 flex flex-col items-center justify-center touch-manipulation z-10"
-                  title="משימה חדשה"
-                  aria-label="צור משימה"
-                  whileTap={{ scale: 0.92 }}
-                >
-                  <span className="text-2xl sm:text-3xl leading-none">➕</span>
-                </motion.button>
-              </div>
-              <div className="flex flex-1 min-w-0 items-end justify-start gap-1">
-                <button
-                  onClick={() => setCurrentView('kanban-dash')}
-                  className={`flex-1 min-w-0 min-h-[44px] py-2.5 px-1 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
-                    currentView === 'kanban-dash'
-                      ? 'text-teal-300 bg-slate-700/50'
-                      : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-                  }`}
-                >
-                  <span className="whitespace-nowrap overflow-hidden text-inherit truncate w-full max-w-full" style={{ textOverflow: 'ellipsis' }}>🎯 משימות</span>
-                </button>
-                <button
-                  onClick={() => setCurrentView('dashboard')}
-                  className={`flex-1 min-w-0 min-h-[44px] py-2.5 px-1 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
-                    currentView === 'dashboard'
-                      ? 'text-teal-300 bg-slate-700/50'
-                      : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-                  }`}
-                >
-                  <span className="whitespace-nowrap overflow-hidden text-inherit truncate w-full max-w-full" style={{ textOverflow: 'ellipsis' }}>📊 סטטיסטיקה</span>
-                </button>
-              </div>
-            </>
-          )}
-          {!(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
-            <div className="flex justify-around items-end min-h-[48px] w-full gap-1">
-              <button
-                onClick={() => setCurrentView('daily')}
-                className={`flex-1 min-w-0 min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl ${
-                  currentView === 'daily'
-                    ? 'text-teal-300 bg-slate-700/50'
-                    : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-                }`}
+        {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
+          <div className="grid grid-cols-[1fr_1fr_auto_1fr_1fr] w-full max-w-lg mx-auto gap-0 items-end min-h-[52px]">
+            <button
+              onClick={() => setCurrentView('daily')}
+              className={`min-w-0 w-full min-h-[44px] py-2.5 px-1 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                currentView === 'daily'
+                  ? 'text-teal-300 bg-slate-700/50'
+                  : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+              }`}
+            >
+              <span className="whitespace-nowrap overflow-hidden text-inherit truncate w-full max-w-full" style={{ textOverflow: 'ellipsis' }}>📋 יומי</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('kanban')}
+              className={`min-w-0 w-full min-h-[44px] py-2.5 px-1 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                currentView === 'kanban'
+                  ? 'text-teal-300 bg-slate-700/50'
+                  : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+              }`}
+            >
+              <span className="whitespace-nowrap overflow-hidden text-inherit truncate w-full max-w-full" style={{ textOverflow: 'ellipsis' }}>🧱 לוח</span>
+            </button>
+            <div className="flex justify-center items-end min-w-0">
+              <motion.button
+                onClick={() => setShowCreateTask(true)}
+                className="create-btn-float w-14 h-14 sm:w-16 sm:h-16 -mt-9 sm:-mt-10 rounded-full text-white bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg border-4 border-slate-800 hover:from-teal-600 hover:to-emerald-700 flex flex-col items-center justify-center touch-manipulation z-10"
+                title="משימה חדשה"
+                aria-label="צור משימה"
+                whileTap={{ scale: 0.92 }}
               >
-                <span>📋 יומי</span>
-              </button>
-              <button
-                onClick={() => setCurrentView('kanban')}
-                className={`flex-1 min-w-0 min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl ${
-                  currentView === 'kanban'
-                    ? 'text-teal-300 bg-slate-700/50'
-                    : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
-                }`}
-              >
-                <span>🧱 לוח</span>
-              </button>
+                <span className="text-2xl sm:text-3xl leading-none">➕</span>
+              </motion.button>
             </div>
-          )}
-        </div>
+            <button
+              onClick={() => setCurrentView('kanban-dash')}
+              className={`min-w-0 w-full min-h-[44px] py-2.5 px-1 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                currentView === 'kanban-dash'
+                  ? 'text-teal-300 bg-slate-700/50'
+                  : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+              }`}
+            >
+              <span className="whitespace-nowrap overflow-hidden text-inherit truncate w-full max-w-full" style={{ textOverflow: 'ellipsis' }}>🎯 משימות</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className={`min-w-0 w-full min-h-[44px] py-2.5 px-1 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                currentView === 'dashboard'
+                  ? 'text-teal-300 bg-slate-700/50'
+                  : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+              }`}
+            >
+              <span className="whitespace-nowrap overflow-hidden text-inherit truncate w-full max-w-full" style={{ textOverflow: 'ellipsis' }}>📊 סטטיסטיקה</span>
+            </button>
+          </div>
+        )}
+        {!(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
+          <div className="grid grid-cols-2 w-full gap-0 items-end min-h-[48px]">
+            <button
+              onClick={() => setCurrentView('daily')}
+              className={`min-w-0 w-full min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl ${
+                currentView === 'daily'
+                  ? 'text-teal-300 bg-slate-700/50'
+                  : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+              }`}
+            >
+              <span>📋 יומי</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('kanban')}
+              className={`min-w-0 w-full min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl ${
+                currentView === 'kanban'
+                  ? 'text-teal-300 bg-slate-700/50'
+                  : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
+              }`}
+            >
+              <span>🧱 לוח</span>
+            </button>
+          </div>
+        )}
       </div>
 
         {/* Main Content - scrollable; mobile: bottom padding so footer never overlays content when fully scrolled */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(10rem,calc(9.5rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(15rem,calc(14rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
           <AnimatePresence mode="wait">
             {currentView === 'daily' && (
               <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">

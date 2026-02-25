@@ -365,6 +365,7 @@ export default function KanbanDashboard() {
           💡 גרור משימות לשינוי סטטוס. גלול אופקיים לראות יותר עמודות
         </p>
       </div>
+      <div className="min-h-[6rem] sm:min-h-[8rem]" aria-hidden="true" />
       </div>
     </div>
   );

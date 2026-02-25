@@ -195,6 +195,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
         </div>
       </DragDropContext>
       )}
+      <div className="min-h-[6rem] sm:min-h-[8rem]" aria-hidden="true" />
       </div>
     </div>
   );
