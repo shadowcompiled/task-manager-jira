@@ -36,7 +36,7 @@ router.post('/register', async (req: Request, res: Response) => {
     }
     const hashedPassword = bcrypt.hashSync(password, 10);
     const role = 'worker';
-    let finalRestaurantId = restaurantId ?? 1;
+    let finalRestaurantId = restaurantId;
 
     if (!restaurantId) {
       const checkRestaurant = await sql`SELECT id FROM restaurants LIMIT 1`;
@@ -45,6 +45,11 @@ router.post('/register', async (req: Request, res: Response) => {
       } else {
         const ins = await sql`INSERT INTO restaurants (name, location) VALUES (${'Restaurant - ' + Date.now()}, 'Not specified') RETURNING id`;
         finalRestaurantId = (ins.rows[0] as any).id;
+      }
+    } else {
+      const exists = await sql`SELECT id FROM restaurants WHERE id = ${restaurantId}`;
+      if (exists.rows.length === 0) {
+        return res.status(400).json({ error: 'Restaurant not found' });
       }
     }
 
@@ -186,6 +191,43 @@ router.put('/deny-user/:userId', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Denial error:', error);
     res.status(500).json({ error: 'Denial failed: ' + (error.message || 'Unknown error') });
+  }
+});
+
+// --- Restaurant management ---
+
+router.get('/restaurants', async (req: Request, res: Response) => {
+  try {
+    const { rows } = await sql`SELECT id, name, location, created_at FROM restaurants ORDER BY name ASC`;
+    res.json(rows);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch restaurants' });
+  }
+});
+
+router.post('/restaurants', async (req: Request, res: Response) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Unauthorized - token required' });
+    let currentUser: any;
+    try {
+      currentUser = verifyToken(token);
+    } catch {
+      return res.status(401).json({ error: 'Unauthorized - invalid token' });
+    }
+    if (currentUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can create restaurants' });
+    }
+    const { name, location } = req.body;
+    if (!name) return res.status(400).json({ error: 'Restaurant name is required' });
+    const result = await sql`
+      INSERT INTO restaurants (name, location)
+      VALUES (${name}, ${location || null})
+      RETURNING id, name, location, created_at
+    `;
+    res.status(201).json(result.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to create restaurant' });
   }
 });
 

@@ -199,7 +199,8 @@ router.put('/:id/complete', authenticateToken, async (req: AuthRequest, res: Res
   try {
     const taskId = req.params.id;
     const userId = req.user?.id;
-    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND assigned_to = ${userId}`;
+    const restaurantId = req.user?.restaurantId;
+    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND assigned_to = ${userId} AND restaurant_id = ${restaurantId}`;
     const task = taskRows.rows[0];
     if (!task) return res.status(404).json({ error: 'Task not found' });
 

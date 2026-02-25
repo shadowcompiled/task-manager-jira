@@ -7,6 +7,9 @@ const router = express.Router();
 router.get('/restaurant/:restaurantId', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const restaurantId = req.params.restaurantId;
+    if (Number(restaurantId) !== req.user?.restaurantId) {
+      return res.status(403).json({ error: 'Access denied to this restaurant' });
+    }
     const { rows } = await sql`
       SELECT id, name, display_name, color, order_index FROM statuses
       WHERE restaurant_id = ${restaurantId}
@@ -21,6 +24,10 @@ router.get('/restaurant/:restaurantId', authenticateToken, async (req: AuthReque
 router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { restaurantId, name, displayName, color } = req.body;
+    const userRestaurantId = req.user?.restaurantId;
+    if (Number(restaurantId) !== userRestaurantId) {
+      return res.status(403).json({ error: 'Cannot create statuses for another restaurant' });
+    }
     const userRows = await sql`SELECT role FROM users WHERE id = ${req.user?.id}`;
     const user = userRows.rows[0] as any;
     if (!['admin', 'maintainer'].includes(user?.role)) {
@@ -48,12 +55,13 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
   try {
     const id = req.params.id;
     const { displayName, color, name: newName } = req.body;
+    const restaurantId = req.user?.restaurantId;
     const userRows = await sql`SELECT role FROM users WHERE id = ${req.user?.id}`;
     const user = userRows.rows[0] as any;
     if (!['admin', 'maintainer'].includes(user?.role)) {
       return res.status(403).json({ error: 'Only admins and maintainers can update statuses' });
     }
-    const statusRows = await sql`SELECT id, name, display_name, color, restaurant_id FROM statuses WHERE id = ${id}`;
+    const statusRows = await sql`SELECT id, name, display_name, color, restaurant_id FROM statuses WHERE id = ${id} AND restaurant_id = ${restaurantId}`;
     const existing = statusRows.rows[0] as any;
     if (!existing) return res.status(404).json({ error: 'Status not found' });
 
@@ -65,12 +73,12 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
         return res.status(403).json({ error: 'Only admins can change status internal name' });
       }
       const normalizedName = String(newName).toLowerCase().replace(/\s+/g, '_');
-      await sql`UPDATE statuses SET name = ${normalizedName}, display_name = ${display_name}, color = ${color_val} WHERE id = ${id}`;
-      await sql`UPDATE tasks SET status = ${normalizedName} WHERE restaurant_id = ${existing.restaurant_id} AND status = ${existing.name}`;
+      await sql`UPDATE statuses SET name = ${normalizedName}, display_name = ${display_name}, color = ${color_val} WHERE id = ${id} AND restaurant_id = ${restaurantId}`;
+      await sql`UPDATE tasks SET status = ${normalizedName} WHERE restaurant_id = ${restaurantId} AND status = ${existing.name}`;
       return res.json({ success: true, name: normalizedName });
     }
 
-    await sql`UPDATE statuses SET display_name = ${display_name}, color = ${color_val} WHERE id = ${id}`;
+    await sql`UPDATE statuses SET display_name = ${display_name}, color = ${color_val} WHERE id = ${id} AND restaurant_id = ${restaurantId}`;
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -80,17 +88,23 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id;
+    const restaurantId = req.user?.restaurantId;
     const userRows = await sql`SELECT role FROM users WHERE id = ${req.user?.id}`;
     const user = userRows.rows[0] as any;
     if (!['admin', 'maintainer'].includes(user?.role)) {
       return res.status(403).json({ error: 'Only admins and maintainers can delete statuses' });
     }
-    const countRows = await sql`SELECT COUNT(*) as count FROM tasks WHERE status = (SELECT name FROM statuses WHERE id = ${id})`;
+    const statusRows = await sql`SELECT id, name FROM statuses WHERE id = ${id} AND restaurant_id = ${restaurantId}`;
+    if (statusRows.rows.length === 0) {
+      return res.status(404).json({ error: 'Status not found' });
+    }
+    const statusName = (statusRows.rows[0] as any).name;
+    const countRows = await sql`SELECT COUNT(*) as count FROM tasks WHERE status = ${statusName} AND restaurant_id = ${restaurantId}`;
     const count = (countRows.rows[0] as any)?.count ?? 0;
     if (Number(count) > 0) {
       return res.status(400).json({ error: 'Cannot delete status that has tasks' });
     }
-    await sql`DELETE FROM statuses WHERE id = ${id}`;
+    await sql`DELETE FROM statuses WHERE id = ${id} AND restaurant_id = ${restaurantId}`;
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -100,13 +114,14 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response)
 router.post('/reorder', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { statuses } = req.body;
+    const restaurantId = req.user?.restaurantId;
     const userRows = await sql`SELECT role FROM users WHERE id = ${req.user?.id}`;
     const user = userRows.rows[0] as any;
     if (!['admin', 'maintainer'].includes(user?.role)) {
       return res.status(403).json({ error: 'Only admins and maintainers can reorder statuses' });
     }
     for (let i = 0; i < statuses.length; i++) {
-      await sql`UPDATE statuses SET order_index = ${i} WHERE id = ${(statuses[i] as any).id}`;
+      await sql`UPDATE statuses SET order_index = ${i} WHERE id = ${(statuses[i] as any).id} AND restaurant_id = ${restaurantId}`;
     }
     res.json({ success: true });
   } catch (error: any) {
