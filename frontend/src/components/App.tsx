@@ -14,6 +14,7 @@ import AdminPanel from './AdminPanel';
 import UserManagementModal from './UserManagementModal';
 import { UserApprovalModal } from './UserApprovalModal';
 import UsersNotificationStatusModal from './UsersNotificationStatusModal';
+import TaskHistory from './TaskHistory';
 
 type ViewType = 'daily' | 'kanban' | 'dashboard' | 'kanban-dash';
 
@@ -33,6 +34,7 @@ export default function App() {
   const [showUserApproval, setShowUserApproval] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [showUsersNotificationStatus, setShowUsersNotificationStatus] = useState(false);
+  const [showTaskHistory, setShowTaskHistory] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
     return (localStorage.getItem(THEME_KEY) ?? 'light') !== 'light';
   });
@@ -123,6 +125,9 @@ export default function App() {
                         <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                           <span>צוות</span><span>👥</span>
                         </button>
+                        <button onClick={() => { setShowTaskHistory(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                          <span>היסטוריה</span><span>📜</span>
+                        </button>
                       </div>
                     </div>
                     {/* Desktop: dropdown */}
@@ -149,6 +154,9 @@ export default function App() {
                       <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>צוות</span><span>👥</span>
                       </button>
+                      <button onClick={() => { setShowTaskHistory(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                        <span>היסטוריה</span><span>📜</span>
+                      </button>
                     </div>
                   </>
                 )}
@@ -167,6 +175,7 @@ export default function App() {
                 <button onClick={() => setShowStatusManager(true)} className="px-3 py-2 bg-cyan-600/80 hover:bg-cyan-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">⚙️ סטטוסים</button>
                 <button onClick={() => setShowTagManager(true)} className="px-3 py-2 bg-emerald-600/80 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">🏷️ תגיות</button>
                 <button onClick={() => setShowUserManagement(true)} className="px-3 py-2 bg-purple-600/80 hover:bg-purple-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">👥 צוות</button>
+                <button onClick={() => setShowTaskHistory(true)} className="px-3 py-2 bg-slate-600/80 hover:bg-slate-500 text-white rounded-lg text-sm font-bold whitespace-nowrap">📜 היסטוריה</button>
               </div>
             )}
             <motion.button onClick={logout} className="px-3 md:px-4 py-2 bg-red-600/80 hover:bg-red-700 text-white rounded-lg text-sm font-bold min-h-[44px]" whileTap={{ scale: 0.96 }}>
@@ -419,6 +428,11 @@ export default function App() {
       {/* Users & Notifications Status (admin only) */}
       {showUsersNotificationStatus && user?.role === 'admin' && (
         <UsersNotificationStatusModal onClose={() => setShowUsersNotificationStatus(false)} />
+      )}
+
+      {/* Task History Modal */}
+      {showTaskHistory && (
+        <TaskHistory onClose={() => setShowTaskHistory(false)} />
       )}
     </div>
   );

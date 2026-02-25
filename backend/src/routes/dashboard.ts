@@ -255,4 +255,41 @@ router.get('/stats/tasks-by-tag/:tagId', authenticateToken, authorize(['maintain
   }
 });
 
+router.get('/history', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const restaurantId = req.user?.restaurantId;
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const offset = Number(req.query.offset) || 0;
+
+    const { rows } = await sql`
+      SELECT
+        h.id,
+        h.task_id,
+        t.title AS task_title,
+        h.old_status,
+        h.new_status,
+        h.changed_at,
+        u.name AS changed_by_name
+      FROM task_status_history h
+      JOIN tasks t ON h.task_id = t.id
+      LEFT JOIN users u ON h.changed_by = u.id
+      WHERE t.restaurant_id = ${restaurantId}
+      ORDER BY h.changed_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const countRes = await sql`
+      SELECT COUNT(*)::int AS total
+      FROM task_status_history h
+      JOIN tasks t ON h.task_id = t.id
+      WHERE t.restaurant_id = ${restaurantId}
+    `;
+    const total = (countRes.rows[0] as any)?.total || 0;
+
+    res.json({ rows, total });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
