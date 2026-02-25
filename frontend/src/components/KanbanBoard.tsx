@@ -99,8 +99,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0">
-          <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-3 w-full md:min-w-fit px-3 md:px-0">
+        <div className="overflow-x-auto -mx-3 md:mx-0 min-w-0 pb-2">
+          <div className="flex gap-3 w-max px-3 md:px-0">
             {statuses.map((status, idx) => (
               <Droppable key={status.name} droppableId={status.name}>
                 {/* @ts-ignore - react-beautiful-dnd types */}
@@ -108,7 +108,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`w-full flex-shrink-0 md:w-full rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
+                    className={`w-[75vw] sm:w-[280px] md:w-[300px] flex-shrink-0 rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'
@@ -150,8 +150,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask }: { onTaskSelect
                                     }
                                   : {}),
                               }}
-                              className={`transition-transform duration-200 ease-out transition-shadow duration-200 rounded-xl ${
-                                snapshot.isDragging ? 'scale-[1.02] ring-2 ring-teal-400' : 'hover:shadow-lg'
+                              className={`rounded-xl ${
+                                snapshot.isDragging ? 'scale-[1.02] ring-2 ring-teal-400 shadow-2xl' : 'hover:shadow-lg transition-shadow duration-200'
                               }`}
                             >
                               <TaskCard task={task} onClick={() => (onEditTask || onTaskSelect)(task)} />
