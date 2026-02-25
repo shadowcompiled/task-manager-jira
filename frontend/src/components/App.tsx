@@ -265,16 +265,16 @@ export default function App() {
           </div>
         </nav>
 
-      {/* Bottom Navigation for Mobile - create button half above footer, 4 nav items centered */}
-      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-4 px-4 sm:px-5">
-        <div className="flex items-end justify-center gap-0 w-full max-w-md mx-auto relative min-h-[56px]">
+      {/* Bottom Navigation for Mobile - add button half above bar, nav items closer to center */}
+      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-5 px-2 sm:px-4">
+        <div className="flex items-end justify-center gap-2 sm:gap-3 w-full max-w-md mx-auto relative min-h-[52px]">
           {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
             <>
-              {/* Left pair: יומי, לוח */}
-              <div className="flex flex-1 justify-end gap-1 min-w-0">
+              {/* Left pair - closer to center */}
+              <div className="flex justify-end gap-1.5 shrink-0">
                 <button
                   onClick={() => setCurrentView('daily')}
-                  className={`flex-1 min-w-[4rem] min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                  className={`min-w-[3.5rem] sm:min-w-[4rem] min-h-[44px] py-2.5 px-2 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
                     currentView === 'daily'
                       ? 'text-teal-300 bg-slate-700/50'
                       : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
@@ -284,7 +284,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setCurrentView('kanban')}
-                  className={`flex-1 min-w-[4rem] min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                  className={`min-w-[3.5rem] sm:min-w-[4rem] min-h-[44px] py-2.5 px-2 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
                     currentView === 'kanban'
                       ? 'text-teal-300 bg-slate-700/50'
                       : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
@@ -293,21 +293,21 @@ export default function App() {
                   <span className="whitespace-nowrap overflow-hidden text-inherit" style={{ textOverflow: 'ellipsis', maxWidth: '100%' }}>🧱 לוח</span>
                 </button>
               </div>
-              {/* Floating Add Mission - half above footer, half overlapping */}
+              {/* Add Mission - half above bar, half on bar (negative margin = half button height) */}
               <motion.button
                 onClick={() => setShowCreateTask(true)}
-                className="create-btn-float flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 -mt-10 sm:-mt-11 rounded-full text-white bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg border-4 border-slate-800 hover:from-teal-600 hover:to-emerald-700 flex flex-col items-center justify-center touch-manipulation z-10 mx-1"
+                className="create-btn-float flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 -mt-7 sm:-mt-8 rounded-full text-white bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg border-4 border-slate-800 hover:from-teal-600 hover:to-emerald-700 flex flex-col items-center justify-center touch-manipulation z-10"
                 title="משימה חדשה"
                 aria-label="צור משימה"
                 whileTap={{ scale: 0.92 }}
               >
                 <span className="text-2xl sm:text-3xl leading-none">➕</span>
               </motion.button>
-              {/* Right pair: משימות, סטטיסטיקה */}
-              <div className="flex flex-1 justify-start gap-1 min-w-0">
+              {/* Right pair - closer to center */}
+              <div className="flex justify-start gap-1.5 shrink-0">
                 <button
                   onClick={() => setCurrentView('kanban-dash')}
-                  className={`flex-1 min-w-[4rem] min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                  className={`min-w-[3.5rem] sm:min-w-[4rem] min-h-[44px] py-2.5 px-2 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
                     currentView === 'kanban-dash'
                       ? 'text-teal-300 bg-slate-700/50'
                       : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'
@@ -317,7 +317,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setCurrentView('dashboard')}
-                  className={`flex-1 min-w-0 min-h-[48px] py-2.5 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
+                  className={`min-w-[3.5rem] sm:min-w-[4rem] min-h-[44px] py-2.5 px-2 text-center text-xs font-semibold transition-all flex flex-col items-center justify-center touch-manipulation rounded-xl max-[360px]:text-[0.65rem] ${
                     currentView === 'dashboard'
                       ? 'text-teal-300 bg-slate-700/50'
                       : 'text-slate-400 hover:text-teal-300 active:bg-slate-700/30'

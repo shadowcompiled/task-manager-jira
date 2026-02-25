@@ -1,5 +1,23 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '../store';
+import { quickTransition, getTransition, useReducedMotion } from '../utils/motion';
+
+const container = {
+  hidden: { opacity: 0 },
+  visible: (reduced: boolean) => ({
+    opacity: 1,
+    transition: reduced ? { duration: 0.01 } : { staggerChildren: 0.08, delayChildren: 0.05 },
+  }),
+};
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (reduced: boolean) => ({
+    opacity: 1,
+    y: 0,
+    transition: reduced ? { duration: 0.01 } : getTransition(reduced, quickTransition),
+  }),
+};
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -7,7 +25,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-
+  const reducedMotion = useReducedMotion();
   const { login } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,14 +47,31 @@ export default function LoginPage() {
       <div className="absolute top-10 left-10 w-40 h-40 bg-teal-500/10 rounded-full animate-pulse" />
       <div className="absolute bottom-10 right-10 w-32 h-32 bg-teal-500/10 rounded-full animate-pulse delay-1000" />
       
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative z-10 border border-teal-500/30 animate-fadeIn">
-        <div className="text-center mb-6 sm:mb-8 animate-slideDown">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={getTransition(reducedMotion, quickTransition)}
+        className="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative z-10 border border-teal-500/30"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={getTransition(reducedMotion, quickTransition)}
+          className="text-center mb-6 sm:mb-8"
+        >
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent mb-2">🍽️ מעקב משימות</h1>
           <p className="text-teal-300/80 text-base sm:text-lg">ניהול משימות במסעדה</p>
-        </div>
+        </motion.div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="animate-slideUp" style={{animationDelay: '0.1s'}}>
+        <motion.form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          variants={container}
+          initial="hidden"
+          animate="visible"
+          custom={reducedMotion ?? false}
+        >
+          <motion.div variants={item} custom={reducedMotion ?? false}>
             <label className="block text-sm font-semibold text-teal-300 mb-2">דוא״ל</label>
             <input
               type="email"
@@ -48,9 +83,9 @@ export default function LoginPage() {
               dir="ltr"
               autoComplete="email"
             />
-          </div>
+          </motion.div>
 
-          <div className="animate-slideUp" style={{animationDelay: '0.2s'}}>
+          <motion.div variants={item} custom={reducedMotion ?? false}>
             <label className="block text-sm font-semibold text-teal-300 mb-2">סיסמה</label>
             <input
               type="password"
@@ -62,9 +97,9 @@ export default function LoginPage() {
               dir="ltr"
               autoComplete="current-password"
             />
-          </div>
+          </motion.div>
 
-          <div className="flex items-center gap-2 animate-slideUp" style={{animationDelay: '0.3s'}}>
+          <motion.div className="flex items-center gap-2" variants={item} custom={reducedMotion ?? false}>
             <input
               type="checkbox"
               id="rememberMe"
@@ -75,7 +110,7 @@ export default function LoginPage() {
             <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer font-medium">
               זכור אותי
             </label>
-          </div>
+          </motion.div>
 
           {error && (
             <div className="bg-gradient-to-r from-red-400 to-pink-400 text-white p-4 rounded-xl text-sm font-semibold animate-shake">
@@ -83,26 +118,18 @@ export default function LoginPage() {
             </div>
           )}
 
-          <button
+          <motion.button
             type="submit"
             disabled={loading}
-            className="w-full min-h-[48px] bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-3.5 rounded-xl font-bold hover:shadow-lg hover:shadow-teal-500/40 disabled:opacity-50 transition-all duration-300 active:scale-[0.98] animate-slideUp"
-            style={{animationDelay: '0.4s'}}
+            variants={item}
+            custom={reducedMotion ?? false}
+            whileTap={{ scale: 0.98 }}
+            className="w-full min-h-[48px] bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-3.5 rounded-xl font-bold hover:shadow-lg hover:shadow-teal-500/40 disabled:opacity-50 transition-all duration-200"
           >
             {loading ? '⏳ מתחבר...' : '🔓 התחבר'}
-          </button>
-        </form>
-
-        <div className="mt-6 p-4 bg-slate-700/40 rounded-xl border border-teal-500/20 animate-slideUp" style={{animationDelay: '0.5s'}}>
-          <p className="text-sm font-bold text-teal-300 mb-3">📋 כניסה לדוגמה</p>
-          <div className="space-y-2 text-sm text-slate-300">
-            <p className="bg-slate-800/60 p-2 rounded-lg"><span className="font-semibold">👑 מנהל:</span> <span className="font-mono text-xs" dir="ltr">admin@restaurant.com</span> / <span className="font-mono text-xs" dir="ltr">password123</span></p>
-            <p className="bg-slate-800/60 p-2 rounded-lg"><span className="font-semibold">👨‍💼 מנהל צוות:</span> <span className="font-mono text-xs" dir="ltr">manager@restaurant.com</span> / <span className="font-mono text-xs" dir="ltr">password123</span></p>
-            <p className="bg-slate-800/60 p-2 rounded-lg"><span className="font-semibold">👤 עובד:</span> <span className="font-mono text-xs" dir="ltr">john@restaurant.com</span> / <span className="font-mono text-xs" dir="ltr">password123</span></p>
-          </div>
-          <p className="text-xs text-slate-500 mt-3 text-center">רק מנהלים יכולים ליצור משתמשים</p>
-        </div>
-      </div>
+          </motion.button>
+        </motion.form>
+      </motion.div>
 
       <style>{`
         @keyframes fadeIn {

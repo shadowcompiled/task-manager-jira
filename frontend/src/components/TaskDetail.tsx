@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTaskStore, useAuthStore } from '../store';
 import axios from 'axios';
+import { modalTransition, quickTransition, getTransition, useReducedMotion, useIsMobile } from '../utils/motion';
+
+const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditMode }: any) {
   const { currentTask, fetchTask, completeTask, verifyTask, updateTask } = useTaskStore();
@@ -11,6 +14,10 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
   const [editData, setEditData] = useState<any>(null);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (taskId) {
@@ -33,6 +40,33 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
       });
     }
   }, [currentTask, startInEditMode]);
+
+  // Focus trap when modal is open
+  useEffect(() => {
+    if (!currentTask || !panelRef.current) return;
+    const el = panelRef.current;
+    const focusables = el.querySelectorAll<HTMLElement>(FOCUSABLE);
+    const first = focusables[0];
+    if (first) first.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const list = Array.from(focusables).filter((n) => n.tabIndex !== -1 && !n.hasAttribute('disabled'));
+      if (list.length === 0) return;
+      const i = list.indexOf(document.activeElement as HTMLElement);
+      if (e.shiftKey) {
+        e.preventDefault();
+        const next = i <= 0 ? list[list.length - 1] : list[i - 1];
+        next?.focus();
+      } else {
+        if (i === list.length - 1) {
+          e.preventDefault();
+          list[0]?.focus();
+        }
+      }
+    };
+    el.addEventListener('keydown', onKeyDown);
+    return () => el.removeEventListener('keydown', onKeyDown);
+  }, [currentTask]);
 
   const fetchTeamMembers = async () => {
     try {
@@ -84,7 +118,8 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
   const handleComplete = async () => {
     try {
       await completeTask(currentTask.id);
-      onTaskUpdate?.();
+      setSuccessMessage('משימה הושלמה!');
+      setTimeout(() => { setSuccessMessage(null); onTaskUpdate?.(); }, 1500);
     } catch (err) {
       console.error('Failed to complete task');
     }
@@ -94,7 +129,8 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
     try {
       await verifyTask(currentTask.id, comment);
       setComment('');
-      onTaskUpdate?.();
+      setSuccessMessage('אומת!');
+      setTimeout(() => { setSuccessMessage(null); onTaskUpdate?.(); }, 1500);
     } catch (err) {
       console.error('Failed to verify task');
     }
@@ -128,20 +164,39 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
     overdue: 'text-red-600 bg-red-50',
   };
 
+  const backdropTransition = getTransition(reducedMotion, quickTransition);
+  const panelTransition = getTransition(reducedMotion, modalTransition);
+  const panelY = isMobile ? '100%' : 40;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={backdropTransition}
       className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto safe-area-padding"
+      onClick={onClose}
     >
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        ref={panelRef}
+        initial={{ opacity: 0, y: panelY }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 40 }}
-        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-        className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92dvh] sm:max-h-[90vh] my-0 sm:my-8 flex flex-col border border-teal-500/20"
+        exit={{ opacity: 0, y: panelY }}
+        transition={panelTransition}
+        drag={isMobile ? 'y' : false}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0.2, bottom: 0.5 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.y > 80 || info.velocity.y > 300) onClose();
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92dvh] sm:max-h-[90vh] my-0 sm:my-8 flex flex-col border border-teal-500/20 touch-pan-y"
       >
+        {successMessage && (
+          <div className="mx-4 mt-4 py-3 px-4 bg-emerald-600/20 border border-emerald-500/50 rounded-xl text-emerald-300 font-bold text-center animate-success-pulse">
+            {successMessage}
+          </div>
+        )}
         <div className="p-4 sm:p-6 border-b border-slate-600 flex justify-between items-start shrink-0">
           <div className="flex-1 min-w-0">
             {isEditing ? (

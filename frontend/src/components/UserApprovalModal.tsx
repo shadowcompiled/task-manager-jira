@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import axios from 'axios';
+import { modalTransition, quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
@@ -19,6 +21,7 @@ interface UserApprovalModalProps {
 }
 
 export const UserApprovalModal: React.FC<UserApprovalModalProps> = ({ isOpen, onClose, token }) => {
+  const reducedMotion = useReducedMotion();
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -89,8 +92,22 @@ await axios.put(`${API_BASE}/auth/deny-user/${userId}`,
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-lg shadow-2xl max-w-md w-full border border-teal-500/30">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={getTransition(reducedMotion, quickTransition)}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={getTransition(reducedMotion, modalTransition)}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-800 rounded-lg shadow-2xl max-w-md w-full border border-teal-500/30"
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-700 to-slate-600 px-6 py-4 border-b border-teal-500/30 rounded-t-lg">
           <div className="flex justify-between items-center">
@@ -211,7 +228,7 @@ await axios.put(`${API_BASE}/auth/deny-user/${userId}`,
             סגירה
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

@@ -1,7 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable, DropResult, DroppableProvided, DraggableProvided, DraggableStateSnapshot } from 'react-beautiful-dnd';
 import axios from 'axios';
 import { useAuthStore } from '../store';
+import { quickTransition, getTransition, useReducedMotion } from '../utils/motion';
+import { DashboardSectionSkeleton } from './skeletons';
 
 const DASHBOARD_SECTION_ORDER_KEY = 'dashboard-section-order';
 const DEFAULT_SECTION_ORDER = [
@@ -106,6 +109,7 @@ interface TagTask {
 
 export default function Dashboard() {
   const { user, token } = useAuthStore();
+  const reducedMotion = useReducedMotion();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [staffPerformance, setStaffPerformance] = useState<StaffPerformance[]>([]);
   const [tasksByPriority, setTasksByPriority] = useState<TaskByPriority[]>([]);
@@ -269,10 +273,15 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="p-4 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-teal-500">טוען נתונים...</p>
+      <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-6xl mx-auto w-full min-w-0 overflow-x-hidden">
+        <div className="mb-6">
+          <div className="h-8 w-48 bg-slate-600/40 rounded animate-pulse mb-1" />
+          <div className="h-4 w-64 bg-slate-600/30 rounded animate-pulse" />
+        </div>
+        <div className="space-y-4">
+          {sectionOrder.map((id) => (
+            <DashboardSectionSkeleton key={id} />
+          ))}
         </div>
       </div>
     );
@@ -329,7 +338,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-2xl mx-auto w-full min-w-0 overflow-x-hidden">
+    <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-6xl mx-auto w-full min-w-0 overflow-x-hidden">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">סטטיסטיקה</h1>
@@ -343,9 +352,12 @@ export default function Dashboard() {
               {sectionOrder.map((sectionId, index) => (
                 <Draggable key={sectionId} draggableId={sectionId} index={index}>
                   {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
-                    <div
+                    <motion.div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={reducedMotion ? { duration: 0.01 } : { ...getTransition(false, quickTransition), delay: index * 0.05 }}
                       className={`rounded-2xl overflow-hidden border border-slate-600 bg-slate-800/40 transition-shadow duration-200 transition-transform duration-200 ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-teal-500' : ''}`}
                     >
                       <div {...provided.dragHandleProps} className="flex items-center justify-center min-h-[44px] py-3 bg-slate-700/60 border-b border-slate-600 cursor-grab active:cursor-grabbing text-slate-400 hover:text-teal-400 touch-manipulation select-none">
@@ -358,20 +370,20 @@ export default function Dashboard() {
             <span>📅</span>
             <span>היום</span>
           </h2>
-<div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
-          <div className="flex-shrink-0 w-20 snap-center text-center">
+<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="text-center p-2 rounded-lg bg-white/10">
               <p className="text-2xl font-bold">{todayStats.completed_today}</p>
               <p className="text-xs opacity-80">הושלמו</p>
             </div>
-            <div className="flex-shrink-0 w-20 snap-center text-center">
+            <div className="text-center p-2 rounded-lg bg-white/10">
               <p className="text-2xl font-bold">{todayStats.due_today}</p>
               <p className="text-xs opacity-80">ליום זה</p>
             </div>
-            <div className="flex-shrink-0 w-20 snap-center text-center">
+            <div className="text-center p-2 rounded-lg bg-white/10">
               <p className="text-2xl font-bold">{todayStats.created_today}</p>
               <p className="text-xs opacity-80">נוצרו</p>
             </div>
-            <div className="flex-shrink-0 w-20 snap-center text-center">
+            <div className="text-center p-2 rounded-lg bg-white/10">
               <p className="text-2xl font-bold text-yellow-300">{todayStats.due_soon}</p>
               <p className="text-xs opacity-80">ב-24 שעות</p>
             </div>
@@ -379,29 +391,29 @@ export default function Dashboard() {
         </div>
               ) : <EmptySection title="📅 היום" description="" />)}
               {sectionId === 'mainStats' && (stats ? (
-        <div className="flex gap-3 p-4 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-h-0 min-w-0">
-          <div className="flex-shrink-0 w-36 snap-center bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4">
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-lg">📋</div>
               <p className="text-xs text-slate-500 dark:text-slate-400">סה"כ משימות</p>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total_tasks}</p>
           </div>
-          <div className="flex-shrink-0 w-36 snap-center bg-emerald-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-emerald-200 dark:border-slate-700">
+          <div className="bg-emerald-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-emerald-200 dark:border-slate-700 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-lg">✅</div>
               <p className="text-xs text-slate-500 dark:text-slate-400">הושלמו</p>
             </div>
             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.completed_tasks}</p>
           </div>
-          <div className="flex-shrink-0 w-36 snap-center bg-blue-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-blue-200 dark:border-slate-700">
+          <div className="bg-blue-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-blue-200 dark:border-slate-700 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-lg">⏳</div>
               <p className="text-xs text-slate-500 dark:text-slate-400">ממתינות</p>
             </div>
             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.pending_tasks}</p>
           </div>
-          <div className="flex-shrink-0 w-36 snap-center bg-red-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-red-200 dark:border-slate-700">
+          <div className="bg-red-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-red-200 dark:border-slate-700 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-lg">⚠️</div>
               <p className="text-xs text-slate-500 dark:text-slate-400">באיחור</p>
@@ -428,17 +440,17 @@ export default function Dashboard() {
         </div>
               ) : <EmptySection title="אחוז השלמה" />)}
               {sectionId === 'weekly' && (weeklyStats ? (
-        <div className="bg-purple-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600">
+        <div className="bg-purple-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span>📈</span>
             <span>סיכום שבועי</span>
           </h2>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="text-center p-3 bg-white dark:bg-slate-700 rounded-xl">
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="text-center p-3 bg-white dark:bg-slate-700 rounded-xl min-w-0">
               <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{weeklyStats.completed_this_week}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">הושלמו השבוע</p>
             </div>
-            <div className="text-center p-3 bg-white dark:bg-slate-700 rounded-xl">
+            <div className="text-center p-3 bg-white dark:bg-slate-700 rounded-xl min-w-0">
               <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{weeklyStats.created_this_week}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">נוצרו השבוע</p>
             </div>
@@ -467,14 +479,14 @@ export default function Dashboard() {
             <span>📌</span>
             <span>משימות לפי סטטוס</span>
           </h2>
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {tasksByStatus.map((item) => {
               const total = tasksByStatus.reduce((sum, i) => sum + i.count, 0);
               const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
               return (
-                <div key={item.status} className="flex-shrink-0 w-28 snap-center bg-white dark:bg-slate-700 rounded-xl p-3 border border-slate-200 dark:border-slate-600">
+                <div key={item.status} className="bg-white dark:bg-slate-700 rounded-xl p-3 border border-slate-200 dark:border-slate-600 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${statusColors[item.status] || 'bg-slate-500'}`} />
+                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusColors[item.status] || 'bg-slate-500'}`} />
                     <span className="text-xs text-slate-600 dark:text-slate-300 truncate">{statusLabels[item.status] || item.status}</span>
                   </div>
                   <p className="text-lg font-bold text-slate-900 dark:text-white">{item.count}</p>
@@ -494,14 +506,14 @@ export default function Dashboard() {
             <span>משימות לפי עדיפות</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על עדיפות לצפייה במשימות</p>
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {tasksByPriority.map((item) => (
               <div 
                 key={item.priority} 
                 onClick={() => fetchPriorityTasks(item)}
                 role="button"
                 tabIndex={0}
-                className="flex-shrink-0 w-40 snap-center bg-white dark:bg-slate-700 rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-amber-300 dark:hover:border-amber-600 border border-transparent active:scale-[0.99] transition-all"
+                className="bg-white dark:bg-slate-700 rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-amber-300 dark:hover:border-amber-600 border border-transparent active:scale-[0.99] transition-all min-w-0"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -529,9 +541,9 @@ export default function Dashboard() {
             <span>משימות חוזרות</span>
             <span className="text-sm font-normal text-slate-500">({recurringStats.total_recurring})</span>
           </h2>
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
             {recurringStats.by_type.map((item) => (
-              <div key={item.recurrence} className="flex-shrink-0 w-24 snap-center text-center p-3 bg-white dark:bg-slate-700 rounded-xl">
+              <div key={item.recurrence} className="text-center p-3 bg-white dark:bg-slate-700 rounded-xl min-w-0">
                 <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">{item.count}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{recurrenceLabels[item.recurrence] || item.recurrence}</p>
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400">✓ {item.completed}</p>
@@ -547,14 +559,14 @@ export default function Dashboard() {
             <span>שימוש בתגיות</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">לחץ על תגית לצפייה במשימות</p>
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-w-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {tagStats.map((tag) => (
               <div
                 key={tag.id}
                 onClick={() => fetchTagTasks(tag)}
                 role="button"
                 tabIndex={0}
-                className="flex-shrink-0 snap-center flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold cursor-pointer hover:scale-105 active:scale-95 transition-all shadow-md select-none"
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-bold cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md select-none min-w-0"
                 style={{ 
                   background: tag.color2 
                     ? `linear-gradient(135deg, ${tag.color} 0%, ${tag.color2} 100%)`
@@ -580,14 +592,14 @@ export default function Dashboard() {
             <p className="font-semibold text-slate-500 text-xs">אין נתונים</p>
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth min-h-0 min-w-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {staffPerformance.map((staff, index) => (
               <div 
                 key={staff.user_id} 
                 onClick={() => fetchWorkerTasks(staff)}
                 role="button"
                 tabIndex={0}
-                className="flex-shrink-0 w-52 snap-center bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md hover:border-teal-300 dark:hover:border-teal-600 active:scale-[0.99] transition-all"
+                className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md hover:border-teal-300 dark:hover:border-teal-600 active:scale-[0.99] transition-all min-w-0"
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
@@ -638,7 +650,7 @@ export default function Dashboard() {
               )}
 
                       </div>
-                    </div>
+                    </motion.div>
                   )}
                 </Draggable>
               ))}

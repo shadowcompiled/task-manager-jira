@@ -1,11 +1,13 @@
 # Database migrations
 
-For **existing** databases that were created with the old schema (table `restaurants`, column `restaurant_id`), run the rename migration before using the new code:
+The app **auto-runs** the rename migration on first request (or server start) when it detects the old schema (`restaurants` / `restaurant_id`). No manual step required; data is preserved (rename only, no deletes).
+
+To run manually (e.g. in Vercel Postgres SQL tab), use the idempotent script:
 
 ```bash
 psql $POSTGRES_URL -f src/db/migrations/001_rename_restaurant_to_organization.sql
 ```
 
-Or in Vercel Postgres: run the SQL from `001_rename_restaurant_to_organization.sql` in the SQL tab.
+The migration is safe to run multiple times and does not drop or delete any data.
 
 **New** installations should use `schema.sql` only (it already defines `organizations` and `organization_id`).

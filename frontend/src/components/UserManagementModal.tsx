@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '../store';
 import axios from 'axios';
+import { modalTransition, quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 
 export default function UserManagementModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { user } = useAuthStore();
+  const reducedMotion = useReducedMotion();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -62,8 +65,22 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-teal-500/30 shadow-2xl">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={getTransition(reducedMotion, quickTransition)}
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={getTransition(reducedMotion, modalTransition)}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-teal-500/30 shadow-2xl"
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">👥 ניהול משתמשים</h2>
           <button
@@ -134,7 +151,7 @@ export default function UserManagementModal({ isOpen, onClose }: { isOpen: boole
         >
           סגירה
         </button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTaskStore, useAuthStore } from '../store';
 import TaskCard from './TaskCard';
+import { TaskCardSkeleton } from './skeletons';
 
 const listVariants = {
   hidden: { opacity: 0 },
@@ -13,8 +14,8 @@ const listVariants = {
 
 type QuickFilter = 'all' | 'my' | 'overdue' | 'due_today';
 
-export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSelect: (task: any) => void; onEditTask?: (task: any) => void }) {
-  const { tasks, fetchTasks } = useTaskStore();
+export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }: { onTaskSelect: (task: any) => void; onEditTask?: (task: any) => void; onCreateTask?: () => void }) {
+  const { tasks, fetchTasks, loading } = useTaskStore();
   const { user } = useAuthStore();
   const [showCompleted, setShowCompleted] = useState(false);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
@@ -98,9 +99,16 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {pullY > 20 && (
-        <div className="text-center py-2 text-teal-500 text-sm">
-          {pullY > 50 ? 'מרענן...' : 'משוך לרענון'}
+      {pullY > 0 && (
+        <div className="flex items-center justify-center gap-2 py-2 text-teal-500 text-sm">
+          <span
+            className="inline-block text-xl transition-transform duration-150"
+            style={{ transform: `scale(${Math.min(1, pullY / 50)}) rotate(${pullY * 4}deg)` }}
+            aria-hidden="true"
+          >
+            🔄
+          </span>
+          <span>{pullY > 50 ? 'מרענן...' : 'משוך לרענון'}</span>
         </div>
       )}
       {/* Header + Summary */}
@@ -147,16 +155,34 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
       <div className="mb-6">
         <h2 className="text-sm font-bold text-teal-600 dark:text-teal-400 mb-3 flex items-center gap-2">
           <span className="w-2 h-2 bg-teal-500 rounded-full" />
-          משימות פעילות ({pendingTasks.length})
+          משימות פעילות {!loading ? `(${pendingTasks.length})` : ''}
         </h2>
         
-        {pendingTasks.length === 0 ? (
-          <div className="rounded-xl p-3 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/50 text-center min-h-0">
-            <p className="font-semibold text-slate-500 dark:text-slate-400 text-sm">משימות פעילות (0) — אין משימות</p>
+        {loading ? (
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <TaskCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : pendingTasks.length === 0 ? (
+          <div className="rounded-2xl p-6 sm:p-8 border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 text-center">
+            <p className="text-4xl mb-3" aria-hidden="true">📋</p>
+            <p className="font-bold text-slate-700 dark:text-slate-300 text-base mb-1">אין משימות פעילות</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">צור משימה ראשונה או רענן את הרשימה</p>
+            {onCreateTask && (
+              <button
+                type="button"
+                onClick={onCreateTask}
+                className="min-h-[48px] px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors shadow-md"
+              >
+                ➕ צור משימה
+              </button>
+            )}
           </div>
         ) : (
           <motion.div
-            className="space-y-3 sm:space-y-4"
+            layout
+            className="flex flex-col gap-3 sm:gap-4"
             variants={listVariants}
             initial="hidden"
             animate="visible"
@@ -190,7 +216,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask }: { onTaskSele
             </span>
           </button>
           {showCompleted && (
-            <div className="space-y-3 opacity-60">
+            <div className="flex flex-col space-y-3 opacity-60">
               {completedTasks.map((task) => (
                 <TaskCard
                   key={task.id}

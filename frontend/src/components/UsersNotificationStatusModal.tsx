@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE } from '../store';
+import { modalTransition, quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 
 interface UserStatus {
   id: number;
@@ -20,6 +22,7 @@ interface Response {
 }
 
 export default function UsersNotificationStatusModal({ onClose }: { onClose: () => void }) {
+  const reducedMotion = useReducedMotion();
   const [data, setData] = useState<Response | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,8 +37,22 @@ export default function UsersNotificationStatusModal({ onClose }: { onClose: () 
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={onClose}>
-      <div className="bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col border border-teal-500/30" onClick={(e) => e.stopPropagation()}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={getTransition(reducedMotion, quickTransition)}
+      className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={getTransition(reducedMotion, modalTransition)}
+        className="bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col border border-teal-500/30"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-4 border-b border-slate-600 flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">משתמשים והתראות</h2>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-lg" aria-label="סגור">✕</button>
@@ -69,7 +86,7 @@ export default function UsersNotificationStatusModal({ onClose }: { onClose: () 
             </>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

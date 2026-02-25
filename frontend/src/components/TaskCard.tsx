@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 
 const priorityLabels = {
   critical: 'דחוף ביותר',
@@ -18,6 +19,7 @@ const statusLabels = {
 };
 
 export default function TaskCard({ task, onClick, showEditButton, onEdit }: any) {
+  const reducedMotion = useReducedMotion();
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !['completed', 'verified'].includes(task.status);
 
   const priorityEmojis = {
@@ -32,7 +34,7 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit }: any)
       layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
+      transition={getTransition(reducedMotion, quickTransition)}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
       className={`p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 min-h-[72px] ${

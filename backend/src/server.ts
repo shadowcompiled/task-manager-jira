@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { initializeDatabase } from './database';
+import { runMigrationIfNeeded } from './db/migrate';
 import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
 import dashboardRoutes from './routes/dashboard';
@@ -20,6 +21,16 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Ensure migration has run (for Vercel serverless where initializeDatabase is not called on boot)
+app.use('/api', (req, res, next) => {
+  runMigrationIfNeeded()
+    .then(() => next())
+    .catch((err) => {
+      console.error('Migration failed:', err);
+      res.status(503).json({ error: 'Database migration in progress or failed. Please retry.' });
+    });
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
