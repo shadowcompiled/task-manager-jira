@@ -27,7 +27,7 @@ const TrashIcon = () => (
   </svg>
 );
 
-export default function TaskCard({ task, onClick, showEditButton, onEdit, isAssignedToMe, showDeleteButton, onDelete }: any) {
+export default function TaskCard({ task, onClick, showEditButton, onEdit, showDeleteButton, onDelete }: any) {
   const reducedMotion = useReducedMotion();
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !['completed', 'verified'].includes(task.status);
 
