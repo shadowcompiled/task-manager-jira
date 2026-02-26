@@ -67,7 +67,7 @@ export default function App() {
     <ToastProvider>
     <div className="app-shell min-h-[100dvh] h-[100dvh] max-h-[100dvh] max-w-[100vw] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden min-w-0">
       {/* Header - safe area top; equal padding top/bottom */}
-      <header className="app-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[max(1rem,env(safe-area-inset-top))] pb-4 px-4 sm:px-5">
+      <header className="app-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[max(1rem,env(safe-area-inset-top))] pb-4 px-2 sm:px-3">
         <div className="max-w-7xl mx-auto h-14 sm:h-16 flex items-center justify-between gap-2 min-h-[52px]">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <h1 className="text-xl md:text-2xl font-bold text-white truncate drop-shadow-lg">🍽️ מעקב משימות</h1>
@@ -122,8 +122,9 @@ export default function App() {
                       exit={{ y: '100%' }}
                       transition={getTransition(reducedMotion, modalTransition)}
                       className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden"
+                      style={{ direction: 'rtl' }}
                     >
-                      <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5 flex flex-col gap-0 items-end" dir="rtl" style={{ direction: 'rtl' }}>
+                      <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5 flex flex-col gap-0 items-stretch text-right" dir="rtl" style={{ direction: 'rtl' }}>
                         {user.role === 'admin' && (
                           <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                             <span>משתמשים</span><span>👤</span>
@@ -152,28 +153,28 @@ export default function App() {
                 </AnimatePresence>
                 {showHeaderMenu && (
                   <>
-                    {/* Desktop: dropdown */}
-                    <div dir="rtl" className="hidden md:block absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50 flex flex-col items-end" style={{ direction: 'rtl' }}>
+                    {/* Desktop: dropdown - top to bottom, right to left (RTL) */}
+                    <div dir="rtl" className="hidden md:flex absolute right-0 left-auto top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50 flex-col items-stretch text-right" style={{ direction: 'rtl' }}>
                       {user.role === 'admin' && (
-                        <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold rounded-none first:rounded-t-xl">
                           <span>משתמשים</span><span>👤</span>
                         </button>
                       )}
                       {user.role === 'admin' && (
-                        <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                           <span>התראות</span><span>🔔</span>
                         </button>
                       )}
-                      <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>אישור משתמשים</span><span>✓</span>
                       </button>
-                      <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>סטטוסים</span><span>⚙️</span>
                       </button>
-                      <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>תגיות</span><span>🏷️</span>
                       </button>
-                      <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold last:rounded-b-xl">
                         <span>צוות</span><span>👥</span>
                       </button>
                     </div>
@@ -266,7 +267,7 @@ export default function App() {
         </nav>
 
       {/* Bottom Navigation for Mobile - five equal-width columns */}
-      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] px-2 sm:px-4">
+      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] px-2 sm:px-3">
         {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
           <div className="grid grid-cols-[1fr_1fr_auto_1fr_1fr] w-full max-w-lg mx-auto gap-0 items-end min-h-[52px]">
             <button

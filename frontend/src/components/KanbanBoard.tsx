@@ -29,6 +29,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   const rafIdRef = useRef<number | null>(null);
   const pointerOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const pointerOffsetInitializedRef = useRef(false);
+  const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
+  const pointerDownTargetRectRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     if (!user || !token) return;
@@ -52,6 +54,30 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  // Capture pointer position and target card rect at touch/mouse down so we can pin the preview under the finger
+  useEffect(() => {
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? (e as TouchEvent).touches[0]?.clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? (e as TouchEvent).touches[0]?.clientY : (e as MouseEvent).clientY;
+      if (typeof clientX !== 'number' || typeof clientY !== 'number') return;
+      pointerDownRef.current = { x: clientX, y: clientY };
+      const el = document.elementFromPoint(clientX, clientY);
+      const draggable = el?.closest('[data-rbd-draggable-context-id]');
+      if (draggable) {
+        const r = draggable.getBoundingClientRect();
+        pointerDownTargetRectRef.current = { left: r.left, top: r.top, width: r.width, height: r.height };
+      } else {
+        pointerDownTargetRectRef.current = null;
+      }
+    };
+    document.addEventListener('mousedown', onDown, { passive: true });
+    document.addEventListener('touchstart', onDown, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('touchstart', onDown);
+    };
+  }, []);
 
   // Unmount cleanup: ensure scroll lock is removed if user navigates away during drag
   useEffect(() => {
@@ -78,13 +104,24 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
   const handleDragStart = (result: any) => {
     document.body.classList.add('kanban-dragging');
-    setPointerPosition(null);
-    pointerOffsetRef.current = { x: 0, y: 0 };
-    pointerOffsetInitializedRef.current = false;
     const taskId = parseInt(result.draggableId, 10);
     setDraggingTaskId(taskId);
     const task = tasks.find((t) => t.id === taskId);
     setDraggingTask(task ?? null);
+    if (pointerDownRef.current && pointerDownTargetRectRef.current) {
+      const rect = pointerDownTargetRectRef.current;
+      pointerOffsetRef.current = {
+        x: pointerDownRef.current.x - rect.left,
+        y: pointerDownRef.current.y - rect.top,
+      };
+      pointerOffsetInitializedRef.current = true;
+      setPointerPosition(pointerDownRef.current);
+      setDragPreviewRect(rect);
+    } else {
+      setPointerPosition(null);
+      pointerOffsetRef.current = { x: 0, y: 0 };
+      pointerOffsetInitializedRef.current = false;
+    }
   };
 
   const handleDragEnd = async (result: any) => {
@@ -94,6 +131,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
     setDragPreviewRect(null);
     setPointerPosition(null);
     placeholderRef.current = null;
+    pointerDownRef.current = null;
+    pointerDownTargetRectRef.current = null;
     if (rafIdRef.current != null) {
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
@@ -226,7 +265,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
           document.body
         )}
         <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0">
-          <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-3 w-full md:min-w-fit px-3 md:px-0">
+          <div className="flex flex-col md:flex md:flex-row gap-3 md:gap-4 w-full md:min-w-fit px-3 md:px-0">
             {statuses.map((status, idx) => (
               <Droppable key={status.name} droppableId={status.name} direction="horizontal">
                 {/* @ts-ignore - react-beautiful-dnd types */}
@@ -234,7 +273,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:w-full rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
+                    className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:min-w-[380px] md:w-[380px] rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'
