@@ -728,10 +728,11 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
               ) : <EmptySection title="📈 סיכום שבועי" />)}
               {sectionId === 'byStatus' && (tasksByStatus.length > 0 ? (
         <div className="bg-indigo-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0 w-full min-w-0">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <span className="emoji-icon">📌</span>
             <span>משימות לפי סטטוס</span>
           </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">כמות משימות בכל סטטוס (ללא רשימת משימות)</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {tasksByStatus.map((item) => (
               <div key={item.status} className="flex items-center justify-between gap-2 bg-white dark:bg-slate-700 rounded-xl p-3 border border-slate-200 dark:border-slate-600 min-w-0">
@@ -739,7 +740,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
                   <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusColors[item.status] || 'bg-slate-500'}`} />
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{statusLabels[item.status] || item.status}</span>
                 </div>
-                <span className="text-lg font-bold text-slate-900 dark:text-white flex-shrink-0">{item.count}</span>
+                <span className="text-lg font-bold text-slate-900 dark:text-white flex-shrink-0" aria-label={`${item.count} משימות`}>{item.count}</span>
               </div>
             ))}
           </div>

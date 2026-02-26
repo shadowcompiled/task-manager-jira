@@ -28,6 +28,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   const placeholderRef = useRef<HTMLDivElement | null>(null);
   const rafIdRef = useRef<number | null>(null);
   const pointerOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const pointerOffsetInitializedRef = useRef(false);
 
   useEffect(() => {
     if (!user || !token) return;
@@ -79,6 +80,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
     document.body.classList.add('kanban-dragging');
     setPointerPosition(null);
     pointerOffsetRef.current = { x: 0, y: 0 };
+    pointerOffsetInitializedRef.current = false;
     const taskId = parseInt(result.draggableId, 10);
     setDraggingTaskId(taskId);
     const task = tasks.find((t) => t.id === taskId);
@@ -114,15 +116,10 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
   useLayoutEffect(() => {
     if (draggingTaskId == null) return;
-    let offsetSet = false;
     const tick = () => {
       if (placeholderRef.current) {
         const rect = placeholderRef.current.getBoundingClientRect();
         setDragPreviewRect(rect);
-        if (!offsetSet && rect.width > 0 && rect.height > 0) {
-          pointerOffsetRef.current = { x: rect.width / 2, y: rect.height / 2 };
-          offsetSet = true;
-        }
       }
       rafIdRef.current = requestAnimationFrame(tick);
     };
@@ -135,6 +132,16 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       }
     };
   }, [draggingTaskId]);
+
+  // Set pointer offset from first finger/cursor position relative to card so the grab point stays under the finger
+  useLayoutEffect(() => {
+    if (draggingTaskId == null || pointerPosition == null || dragPreviewRect == null || pointerOffsetInitializedRef.current) return;
+    pointerOffsetRef.current = {
+      x: pointerPosition.x - dragPreviewRect.left,
+      y: pointerPosition.y - dragPreviewRect.top,
+    };
+    pointerOffsetInitializedRef.current = true;
+  }, [draggingTaskId, pointerPosition?.x, pointerPosition?.y, dragPreviewRect?.left, dragPreviewRect?.top]);
 
   useLayoutEffect(() => {
     if (draggingTaskId == null) return;

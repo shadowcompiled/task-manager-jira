@@ -66,9 +66,9 @@ export default function App() {
   return (
     <ToastProvider>
     <div className="app-shell min-h-[100dvh] h-[100dvh] max-h-[100dvh] max-w-[100vw] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden min-w-0">
-      {/* Header - safe area top for notch; compact on phone */}
-      <header className="app-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-5 h-12 sm:h-14 flex items-center justify-between gap-2 min-h-[44px]">
+      {/* Header - safe area top for notch; more space */}
+      <header className="app-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top)] pb-4 px-4 sm:px-5">
+        <div className="max-w-7xl mx-auto h-14 sm:h-16 flex items-center justify-between gap-2 min-h-[52px]">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <h1 className="text-xl md:text-2xl font-bold text-white truncate drop-shadow-lg">🍽️ מעקב משימות</h1>
             <span className="text-xs md:text-sm text-teal-300/80 hidden sm:inline font-semibold">ניהול משימות במסעדה</span>
@@ -276,7 +276,7 @@ export default function App() {
         </nav>
 
       {/* Bottom Navigation for Mobile - five equal-width columns */}
-      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-5 px-2 sm:px-4">
+      <div className="app-bottom-bar md:hidden fixed bottom-0 left-0 right-0 w-full max-w-[100vw] bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-t border-teal-500/40 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-50 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pt-1.5 px-2 sm:px-4">
         {(user.role === 'manager' || user.role === 'admin' || user.role === 'maintainer') && (
           <div className="grid grid-cols-[1fr_1fr_auto_1fr_1fr] w-full max-w-lg mx-auto gap-0 items-end min-h-[52px]">
             <button
@@ -359,7 +359,7 @@ export default function App() {
       </div>
 
         {/* Main Content - scrollable; mobile: bottom padding so footer never overlays content when fully scrolled */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(15rem,calc(14rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pb-[max(10rem,calc(9rem+env(safe-area-inset-bottom)))] md:pb-0 px-3 sm:px-4">
           <AnimatePresence mode="wait">
             {currentView === 'daily' && (
               <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
