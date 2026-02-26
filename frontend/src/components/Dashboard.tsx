@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { useAuthStore } from '../store';
+import { useAuthStore, useTaskStore } from '../store';
 import { quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 import { DashboardSectionSkeleton } from './skeletons';
+import TaskCard from './TaskCard';
 
 const SECTION_ORDER = [
   'today',
@@ -89,8 +90,9 @@ interface TagTask {
   assignees: { id: number; name: string }[];
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any) => void } = {}) {
   const { user, token } = useAuthStore();
+  const { tasks, fetchTasks } = useTaskStore();
   const reducedMotion = useReducedMotion();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [staffPerformance, setStaffPerformance] = useState<StaffPerformance[]>([]);
@@ -116,6 +118,22 @@ export default function Dashboard() {
   const [selectedPriority, setSelectedPriority] = useState<TaskByPriority | null>(null);
   const [priorityTasks, setPriorityTasks] = useState<any[]>([]);
   const [loadingPriorityTasks, setLoadingPriorityTasks] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'admin' || user?.role === 'maintainer') {
+      fetchTasks();
+    }
+  }, [user?.role, fetchTasks]);
+
+  const tasksGroupedByStatus = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    tasks.forEach((t) => {
+      const status = t.status === 'verified' ? 'completed' : t.status;
+      if (!map[status]) map[status] = [];
+      map[status].push(t);
+    });
+    return map;
+  }, [tasks]);
 
   useEffect(() => {
     if (user?.role !== 'admin' && user?.role !== 'maintainer') return;
@@ -440,19 +458,28 @@ export default function Dashboard() {
             <span className="emoji-icon">📌</span>
             <span>משימות לפי סטטוס</span>
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="space-y-4">
             {tasksByStatus.map((item) => {
-              const total = tasksByStatus.reduce((sum, i) => sum + i.count, 0);
-              const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
+              const statusTasks = tasksGroupedByStatus[item.status] ?? [];
               return (
-                <div key={item.status} className="bg-white dark:bg-slate-700 rounded-xl p-3 border border-slate-200 dark:border-slate-600 min-w-0">
+                <div key={item.status} className="min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusColors[item.status] || 'bg-slate-500'}`} />
-                    <span className="text-xs text-slate-600 dark:text-slate-300 truncate">{statusLabels[item.status] || item.status}</span>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{statusLabels[item.status] || item.status}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">({statusTasks.length})</span>
                   </div>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">{item.count}</p>
-                  <div className="h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mt-1">
-                    <div className={`h-full rounded-full transition-all duration-500 ${statusColors[item.status] || 'bg-slate-500'}`} style={{ width: `${percentage}%` }} />
+                  <div className="flex flex-row gap-3 overflow-x-auto pb-2 min-h-[7rem]">
+                    {statusTasks.length === 0 ? (
+                      <div className="flex items-center justify-center min-w-[200px] rounded-xl border-2 border-dashed border-slate-600 text-slate-500 text-sm">
+                        אין משימות
+                      </div>
+                    ) : (
+                      statusTasks.map((task) => (
+                        <div key={task.id} className="min-w-[280px] w-[280px] flex-shrink-0">
+                          <TaskCard task={task} onClick={() => onTaskSelect?.(task)} />
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               );

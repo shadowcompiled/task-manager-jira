@@ -106,6 +106,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       }
       rafIdRef.current = requestAnimationFrame(tick);
     };
+    tick();
     rafIdRef.current = requestAnimationFrame(tick);
     return () => {
       if (rafIdRef.current != null) {
@@ -158,16 +159,21 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {draggingTask && dragPreviewRect != null && createPortal(
           <div
-            className="pointer-events-none fixed z-[10000] rounded-xl scale-105 ring-2 ring-teal-400 transition-shadow"
+            className="pointer-events-none fixed rounded-xl scale-105 ring-2 ring-teal-400 overflow-hidden"
             style={{
               left: dragPreviewRect.left,
               top: dragPreviewRect.top,
               width: dragPreviewRect.width,
               height: dragPreviewRect.height,
-              boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+              zIndex: 2147483647,
+              boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.05)',
+              willChange: 'transform',
+              isolation: 'isolate',
             }}
           >
-            <TaskCard task={draggingTask} onClick={() => {}} />
+            <div className="h-full w-full bg-slate-800 rounded-xl">
+              <TaskCard task={draggingTask} onClick={() => {}} />
+            </div>
           </div>,
           document.body
         )}

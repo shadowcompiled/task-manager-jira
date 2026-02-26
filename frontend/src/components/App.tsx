@@ -368,7 +368,7 @@ export default function App() {
             )}
             {currentView === 'dashboard' && (
               <motion.div key="dashboard" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
-                <Dashboard />
+                <Dashboard onTaskSelect={setSelectedTask} />
               </motion.div>
             )}
           </AnimatePresence>
