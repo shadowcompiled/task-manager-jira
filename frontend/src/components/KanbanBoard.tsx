@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useTaskStore, useAuthStore } from '../store';
 import TaskCard from './TaskCard';
@@ -20,6 +21,11 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   const [tasksByStatus, setTasksByStatus] = useState<Record<string, any[]>>({});
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [loading, setLoading] = useState(false);
+  const [draggingTaskId, setDraggingTaskId] = useState<number | null>(null);
+  const [draggingTask, setDraggingTask] = useState<any>(null);
+  const [dragPreviewRect, setDragPreviewRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  const placeholderRef = useRef<HTMLDivElement | null>(null);
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user || !token) return;
@@ -60,11 +66,26 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
     setTasksByStatus(byStatus);
   }, [tasks, statuses]);
 
+  const handleDragStart = (result: any) => {
+    const taskId = parseInt(result.draggableId, 10);
+    setDraggingTaskId(taskId);
+    const task = tasks.find((t) => t.id === taskId);
+    setDraggingTask(task ?? null);
+  };
+
   const handleDragEnd = async (result: any) => {
+    setDraggingTaskId(null);
+    setDraggingTask(null);
+    setDragPreviewRect(null);
+    placeholderRef.current = null;
+    if (rafIdRef.current != null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
     const { source, destination } = result;
     if (!destination) return;
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
-    const taskId = parseInt(result.draggableId);
+    const taskId = parseInt(result.draggableId, 10);
     const newStatus = destination.droppableId;
     try {
       setLoading(true);
@@ -76,6 +97,23 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       setLoading(false);
     }
   };
+
+  useLayoutEffect(() => {
+    if (draggingTaskId == null) return;
+    const tick = () => {
+      if (placeholderRef.current) {
+        setDragPreviewRect(placeholderRef.current.getBoundingClientRect());
+      }
+      rafIdRef.current = requestAnimationFrame(tick);
+    };
+    rafIdRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafIdRef.current != null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
+  }, [draggingTaskId]);
 
   return (
     <div className="kanban-page min-h-full w-full min-w-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -117,11 +155,26 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
           )}
         </div>
       ) : (
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        {draggingTask && dragPreviewRect != null && createPortal(
+          <div
+            className="pointer-events-none fixed z-[10000] rounded-xl scale-105 ring-2 ring-teal-400 transition-shadow"
+            style={{
+              left: dragPreviewRect.left,
+              top: dragPreviewRect.top,
+              width: dragPreviewRect.width,
+              height: dragPreviewRect.height,
+              boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+            }}
+          >
+            <TaskCard task={draggingTask} onClick={() => {}} />
+          </div>,
+          document.body
+        )}
         <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0">
           <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-3 w-full md:min-w-fit px-3 md:px-0">
             {statuses.map((status, idx) => (
-              <Droppable key={status.name} droppableId={status.name}>
+              <Droppable key={status.name} droppableId={status.name} direction="horizontal">
                 {/* @ts-ignore - react-beautiful-dnd types */}
                 {(provided, snapshot) => (
                   <div
@@ -149,29 +202,23 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       </span>
                     </div>
 
-                    <div className={`space-y-2 ${(tasksByStatus[status.name]?.length || 0) === 0 ? 'min-h-28' : 'min-h-0'}`}>
+                    <div className={`flex flex-row gap-2 overflow-x-auto overflow-y-hidden pb-1 min-h-[7rem] ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
                       {tasksByStatus[status.name]?.map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                           {/* @ts-ignore - react-beautiful-dnd types */}
                           {(provided, snapshot) => (
                             <div
-                              ref={provided.innerRef}
+                              ref={(el) => {
+                                (provided.innerRef as (el: HTMLDivElement | null) => void)(el);
+                                if (snapshot.isDragging) placeholderRef.current = el;
+                              }}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
                               style={{
                                 ...provided.draggableProps.style,
-                                ...(snapshot.isDragging
-                                  ? {
-                                      opacity: 1,
-                                      boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
-                                      borderRadius: '12px',
-                                      zIndex: 9999,
-                                    }
-                                  : {}),
+                                ...(snapshot.isDragging ? { opacity: 0, visibility: 'hidden' as const } : {}),
                               }}
-                              className={`transition-transform duration-200 ease-out transition-shadow duration-200 rounded-xl ${
-                                snapshot.isDragging ? 'scale-[1.02] ring-2 ring-teal-400' : 'hover:shadow-lg'
-                              }`}
+                              className="min-w-[280px] w-[280px] flex-shrink-0 rounded-xl transition-transform duration-200 ease-out transition-shadow duration-200 hover:shadow-lg"
                             >
                               <TaskCard task={task} onClick={() => (onEditTask || onTaskSelect)(task)} />
                             </div>
@@ -181,9 +228,11 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       {provided.placeholder}
 
                       {(!tasksByStatus[status.name] || tasksByStatus[status.name].length === 0) && (
-                        <div className="text-center py-6 text-slate-400">
-                          <p className="text-xs font-semibold">✨ אין משימות</p>
-                          <p className="text-[10px] mt-0.5">גרור משימות לכאן</p>
+                        <div className="flex items-center justify-center min-w-[280px] w-[280px] flex-shrink-0 text-center py-6 text-slate-400 rounded-xl border-2 border-dashed border-slate-600">
+                          <div>
+                            <p className="text-xs font-semibold">✨ אין משימות</p>
+                            <p className="text-[10px] mt-0.5">גרור משימות לכאן</p>
+                          </div>
                         </div>
                       )}
                     </div>
