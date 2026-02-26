@@ -132,7 +132,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
       />
 
       {/* Quick filters */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1" style={{ touchAction: 'pan-x' }}>
         {(['all', 'my', 'overdue', 'due_today'] as QuickFilter[]).map((f) => (
           <button
             key={f}

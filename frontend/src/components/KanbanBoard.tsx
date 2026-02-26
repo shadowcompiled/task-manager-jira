@@ -265,7 +265,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
           </div>,
           document.body
         )}
-        <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0">
+        <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0" style={{ touchAction: 'pan-x' }}>
           <div className="flex flex-col md:flex md:flex-row gap-3 md:gap-4 w-full md:min-w-fit px-3 md:px-0">
             {statuses.map((status, idx) => (
               <Droppable key={status.name} droppableId={status.name} direction="horizontal">
@@ -296,7 +296,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       </span>
                     </div>
 
-                    <div className={`flex flex-row gap-3 overflow-x-auto overflow-y-hidden min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
+                    <div className={`flex flex-row gap-3 overflow-x-auto overflow-y-hidden min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`} style={{ touchAction: 'pan-x' }}>
                       {tasksByStatus[status.name]?.map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                           {/* @ts-ignore - react-beautiful-dnd types */}

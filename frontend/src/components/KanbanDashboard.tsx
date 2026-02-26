@@ -243,9 +243,9 @@ export default function KanbanDashboard() {
         </p>
       </div>
 
-      {/* Status Manager (for admins) */}
+      {/* Status Manager (for admins) - no solid background so it matches the section */}
       {user?.role === 'admin' && (
-        <div className="mb-6 bg-white rounded-lg shadow p-4 border-2 border-purple-200">
+        <div className="mb-6 bg-transparent rounded-lg p-4 border-2 border-purple-200 dark:border-purple-500/40">
           <button
             onClick={() => setShowStatusManager(!showStatusManager)}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition"
@@ -285,17 +285,17 @@ export default function KanbanDashboard() {
       {loading ? (
         <div className="text-center text-gray-600 dark:text-slate-300 py-12 font-bold">⏳ טוען משימות...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 overflow-x-hidden md:overflow-x-auto pb-6 min-w-0 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 overflow-x-hidden md:overflow-x-auto pb-2 min-w-0 w-full" style={{ touchAction: 'pan-x' }}>
           {columns.map((column) => (
             <div
               key={column.id}
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(column.name)}
-              className="kanban-column min-w-0 bg-white dark:bg-slate-800 rounded-lg shadow-lg border-2 border-gray-200 dark:border-slate-600 p-3 flex flex-col animate-slideIn hover:shadow-xl transition-shadow"
+              className="kanban-column min-w-0 bg-transparent rounded-lg border-2 border-gray-200 dark:border-slate-600 p-3 flex flex-col animate-slideIn transition-shadow"
               style={{ borderTopColor: column.color }}
             >
-              {/* Column Header */}
-              <div className="mb-2 pb-2 border-b-2" style={{ borderBottomColor: column.color }}>
+              {/* Column Header - no wrapper background so status container has no white behind it */}
+              <div className="mb-2 pb-2 border-b-2 bg-transparent" style={{ borderBottomColor: column.color }}>
                 <h2
                   className="font-bold text-lg text-white px-3 py-2 rounded-lg text-center"
                   style={{ backgroundColor: column.color }}
@@ -384,13 +384,12 @@ export default function KanbanDashboard() {
         </div>
       )}
 
-      {/* Mobile-friendly footer tip */}
-      <div className="mt-6 lg:hidden bg-blue-50 dark:bg-slate-800 border-2 border-blue-200 dark:border-slate-600 rounded-lg p-4 text-center">
-        <p className="text-sm text-gray-700 dark:text-slate-300 font-semibold">
+      {/* Mobile-friendly footer tip - compact so no big white gap below last mission */}
+      <div className="mt-2 lg:hidden bg-blue-50 dark:bg-slate-800 border-2 border-blue-200 dark:border-slate-600 rounded-lg px-3 py-2 text-center">
+        <p className="text-xs text-gray-700 dark:text-slate-300 font-semibold">
           💡 גרור משימות לשינוי סטטוס. גלול לראות יותר עמודות
         </p>
       </div>
-      <div className="min-h-[4rem]" aria-hidden="true" />
       </div>
     </div>
   );

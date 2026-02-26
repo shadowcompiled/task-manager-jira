@@ -63,10 +63,11 @@ body {
   padding-right: env(safe-area-inset-right);
 }
 
-/* Smooth scroll on iOS */
+/* Smooth scroll on iOS; one swipe reaches top/bottom (no overscroll bounce stealing the gesture) */
 .main-scroll {
   -webkit-overflow-scrolling: touch;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 /* Prevent main and body from scrolling while dragging on Kanban so missions can't be dropped below the page */
