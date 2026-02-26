@@ -27,7 +27,7 @@ const TrashIcon = () => (
   </svg>
 );
 
-export default function TaskCard({ task, onClick, showEditButton, onEdit, showDeleteButton, onDelete, isAssignedToMe }: any) {
+export default function TaskCard({ task, onClick, showEditButton, onEdit, showDeleteButton, onDelete, isAssignedToMe, isDragPreview }: any) {
   const reducedMotion = useReducedMotion();
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !['completed', 'verified'].includes(task.status);
 
@@ -46,8 +46,10 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, showDe
       transition={getTransition(reducedMotion, quickTransition)}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
-      className={`p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 min-h-[72px] ${isAssignedToMe ? 'task-card-assigned-to-me ' : ''}${
-        isOverdue
+      className={`p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 min-h-[72px] ${isAssignedToMe && !isDragPreview ? 'task-card-assigned-to-me ' : ''}${
+        isDragPreview
+          ? 'border-slate-600 bg-slate-700/90 shadow-md'
+          : isOverdue
           ? 'border-red-400/80 bg-red-50 dark:bg-slate-700/60 shadow-md'
           : isAssignedToMe
           ? 'border-teal-500 bg-teal-50/80 dark:bg-teal-900/20 shadow-md ring-2 ring-teal-400/60 dark:ring-teal-500/50 hover:border-teal-400 hover:ring-teal-400/70'

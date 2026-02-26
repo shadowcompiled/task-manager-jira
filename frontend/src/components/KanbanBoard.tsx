@@ -259,7 +259,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
             }}
           >
             <div className="h-full w-full overflow-hidden rounded-xl bg-slate-800 dark">
-              <TaskCard task={draggingTask} onClick={() => {}} />
+              <TaskCard task={draggingTask} onClick={() => {}} isDragPreview />
             </div>
           </div>,
           document.body
