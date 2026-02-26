@@ -228,7 +228,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
         <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0">
           <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-3 w-full md:min-w-fit px-3 md:px-0">
             {statuses.map((status, idx) => (
-              <Droppable key={status.name} droppableId={status.name} direction="vertical">
+              <Droppable key={status.name} droppableId={status.name} direction="horizontal">
                 {/* @ts-ignore - react-beautiful-dnd types */}
                 {(provided, snapshot) => (
                   <div
@@ -256,7 +256,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       </span>
                     </div>
 
-                    <div className={`flex flex-col gap-2 overflow-y-auto min-h-[7rem] min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
+                    <div className={`flex flex-row gap-3 overflow-x-auto overflow-y-hidden pb-2 min-h-[7rem] min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
                       {tasksByStatus[status.name]?.map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                           {/* @ts-ignore - react-beautiful-dnd types */}
@@ -272,7 +272,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                                 ...provided.draggableProps.style,
                                 ...(snapshot.isDragging ? { opacity: 0, visibility: 'hidden' as const } : {}),
                               }}
-                              className="w-full flex-shrink-0 rounded-xl transition-transform duration-200 ease-out transition-shadow duration-200 hover:shadow-lg"
+                              className="min-w-[280px] w-[280px] flex-shrink-0 rounded-xl transition-transform duration-200 ease-out transition-shadow duration-200 hover:shadow-lg"
                             >
                               <TaskCard task={task} onClick={() => (onEditTask || onTaskSelect)(task)} />
                             </div>
@@ -282,7 +282,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       {provided.placeholder}
 
                       {(!tasksByStatus[status.name] || tasksByStatus[status.name].length === 0) && (
-                        <div className="flex items-center justify-center w-full min-h-[7rem] text-center py-6 text-slate-400 rounded-xl border-2 border-dashed border-slate-600">
+                        <div className="flex items-center justify-center min-w-[200px] w-[200px] flex-shrink-0 min-h-[7rem] text-center py-6 text-slate-400 rounded-xl border-2 border-dashed border-slate-600">
                           <div>
                             <p className="text-xs font-semibold">✨ אין משימות</p>
                             <p className="text-[10px] mt-0.5">גרור משימות לכאן</p>
