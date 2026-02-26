@@ -273,7 +273,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:min-w-[380px] md:w-[380px] rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
+                    className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:min-w-[380px] md:w-[380px] rounded-2xl pt-2 px-2 pb-0 sm:pt-3 sm:px-3 sm:pb-0 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'
@@ -295,7 +295,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       </span>
                     </div>
 
-                    <div className={`flex flex-row gap-3 overflow-x-auto overflow-y-hidden pb-2 min-h-[7rem] min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
+                    <div className={`flex flex-row gap-3 overflow-x-auto overflow-y-hidden min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
                       {tasksByStatus[status.name]?.map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                           {/* @ts-ignore - react-beautiful-dnd types */}
@@ -321,7 +321,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       {provided.placeholder}
 
                       {(!tasksByStatus[status.name] || tasksByStatus[status.name].length === 0) && (
-                        <div className="flex items-center justify-center min-w-[200px] w-[200px] flex-shrink-0 min-h-[7rem] text-center py-6 text-slate-400 rounded-xl border-2 border-dashed border-slate-600">
+                        <div className="flex items-center justify-center min-w-[200px] w-[200px] flex-shrink-0 min-h-[4rem] text-center py-3 text-slate-400 rounded-xl border-2 border-dashed border-slate-600">
                           <div>
                             <p className="text-xs font-semibold">✨ אין משימות</p>
                             <p className="text-[10px] mt-0.5">גרור משימות לכאן</p>
@@ -337,7 +337,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
         </div>
       </DragDropContext>
       )}
-      <div className="min-h-[6rem] sm:min-h-[8rem]" aria-hidden="true" />
+      <div className="min-h-[1rem]" aria-hidden="true" />
       </div>
     </div>
   );
