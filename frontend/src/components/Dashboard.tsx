@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useAuthStore, useTaskStore } from '../store';
@@ -19,6 +19,16 @@ const SECTION_ORDER = [
 ] as const;
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+const STATUS_LABELS: Record<string, string> = {
+  planned: 'מתוכנן',
+  assigned: 'הוקצה',
+  in_progress: 'בתהליך',
+  waiting: 'בהמתנה',
+  completed: 'הושלם',
+  verified: 'הושלם',
+  overdue: 'בפיגור',
+};
 
 interface DashboardStats {
   total_tasks: number;
@@ -60,10 +70,47 @@ interface TodayStats {
   due_soon: number;
 }
 
+interface TodayActivityCreated {
+  id: number;
+  title: string;
+  status: string;
+  created_at: string;
+  assigned_to_name: string | null;
+}
+
+interface TodayActivityStatusChange {
+  task_id: number;
+  title: string;
+  old_status: string | null;
+  new_status: string;
+  changed_at: string;
+  changed_by_name: string | null;
+}
+
+interface TodayActivity {
+  created: TodayActivityCreated[];
+  status_changes: TodayActivityStatusChange[];
+}
+
 interface WeeklyStats {
   completed_this_week: number;
   created_this_week: number;
   daily_breakdown: { date: string; created: number; completed: number }[];
+}
+
+interface WeeklyDetailTask {
+  id: number;
+  title: string;
+  status: string;
+  priority: string;
+  due_date: string | null;
+  assigned_to_name: string | null;
+}
+
+interface WeeklyDetail {
+  overdue: WeeklyDetailTask[];
+  due_this_week: WeeklyDetailTask[];
+  high_priority_pending: WeeklyDetailTask[];
 }
 
 interface RecurringStats {
@@ -119,21 +166,21 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
   const [priorityTasks, setPriorityTasks] = useState<any[]>([]);
   const [loadingPriorityTasks, setLoadingPriorityTasks] = useState(false);
 
+  // Today activity (created + status changes)
+  const [showTodayActivity, setShowTodayActivity] = useState(false);
+  const [todayActivity, setTodayActivity] = useState<TodayActivity | null>(null);
+  const [loadingTodayActivity, setLoadingTodayActivity] = useState(false);
+
+  // Weekly summary detail (overdue, due this week, high priority)
+  const [showWeeklyDetail, setShowWeeklyDetail] = useState(false);
+  const [weeklyDetail, setWeeklyDetail] = useState<WeeklyDetail | null>(null);
+  const [loadingWeeklyDetail, setLoadingWeeklyDetail] = useState(false);
+
   useEffect(() => {
     if (user?.role === 'admin' || user?.role === 'maintainer') {
       fetchTasks();
     }
   }, [user?.role, fetchTasks]);
-
-  const tasksGroupedByStatus = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    tasks.forEach((t) => {
-      const status = t.status === 'verified' ? 'completed' : t.status;
-      if (!map[status]) map[status] = [];
-      map[status].push(t);
-    });
-    return map;
-  }, [tasks]);
 
   useEffect(() => {
     if (user?.role !== 'admin' && user?.role !== 'maintainer') return;
@@ -211,6 +258,48 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
     }
   };
 
+  const fetchTodayActivity = async () => {
+    setLoadingTodayActivity(true);
+    try {
+      const res = await axios.get(`${API_BASE}/dashboard/stats/today/activity`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTodayActivity(res.data);
+    } catch (e) {
+      console.error('Today activity:', e);
+      setTodayActivity({ created: [], status_changes: [] });
+    } finally {
+      setLoadingTodayActivity(false);
+    }
+  };
+
+  const toggleTodayActivity = () => {
+    const next = !showTodayActivity;
+    setShowTodayActivity(next);
+    if (next && todayActivity === null) fetchTodayActivity();
+  };
+
+  const fetchWeeklyDetail = async () => {
+    setLoadingWeeklyDetail(true);
+    try {
+      const res = await axios.get(`${API_BASE}/dashboard/stats/weekly/detail`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setWeeklyDetail(res.data);
+    } catch (e) {
+      console.error('Weekly detail:', e);
+      setWeeklyDetail({ overdue: [], due_this_week: [], high_priority_pending: [] });
+    } finally {
+      setLoadingWeeklyDetail(false);
+    }
+  };
+
+  const toggleWeeklyDetail = () => {
+    const next = !showWeeklyDetail;
+    setShowWeeklyDetail(next);
+    if (next && weeklyDetail === null) fetchWeeklyDetail();
+  };
+
   // Fetch tasks by worker
   const fetchWorkerTasks = async (worker: StaffPerformance) => {
     console.log('Fetching tasks for worker:', worker.user_id, worker.user_name);
@@ -261,7 +350,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-6xl mx-auto w-full min-w-0 overflow-x-hidden">
+      <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-[95rem] mx-auto w-full min-w-0 overflow-x-hidden">
         <div className="mb-6">
           <div className="h-8 w-48 bg-slate-600/40 rounded animate-pulse mb-1" />
           <div className="h-4 w-64 bg-slate-600/30 rounded animate-pulse" />
@@ -326,7 +415,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
   );
 
   return (
-    <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-6xl mx-auto w-full min-w-0 overflow-x-hidden">
+    <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-[95rem] mx-auto w-full min-w-0 overflow-x-hidden">
       {/* Header */}
       <div className="mb-6 pt-4 pb-3">
         <h1 className="text-[1.875rem] sm:text-3xl font-bold text-slate-900 dark:text-white mb-1">סטטיסטיקה</h1>
@@ -349,8 +438,8 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
             <span className="emoji-icon">📅</span>
             <span>היום</span>
           </h2>
-<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="text-center p-2 rounded-lg bg-white/10">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="text-center p-2 rounded-lg bg-white/10">
               <p className="text-2xl font-bold">{todayStats.completed_today}</p>
               <p className="text-xs opacity-80">הושלמו</p>
             </div>
@@ -367,6 +456,82 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
               <p className="text-xs opacity-80">ב-24 שעות</p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={toggleTodayActivity}
+            className="mt-4 w-full py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            {showTodayActivity ? 'הסתר שינויים' : 'ראה שינויים היום'}
+            <span className={`transition-transform ${showTodayActivity ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+          {showTodayActivity && (
+            <div className="mt-4 pt-4 border-t border-white/20 space-y-4">
+              {loadingTodayActivity ? (
+                <p className="text-sm opacity-90">טוען...</p>
+              ) : todayActivity ? (
+                <>
+                  <div>
+                    <h3 className="text-sm font-bold mb-2 flex items-center gap-2">
+                      <span>➕</span> נוצרו היום ({todayActivity.created.length})
+                    </h3>
+                    {todayActivity.created.length === 0 ? (
+                      <p className="text-sm opacity-80">אין משימות שנוצרו היום</p>
+                    ) : (
+                      <ul className="space-y-1.5 max-h-40 overflow-y-auto">
+                        {todayActivity.created.map((item) => {
+                          const fullTask = tasks.find((t) => t.id === item.id);
+                          return (
+                            <li
+                              key={item.id}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => fullTask && onTaskSelect?.(fullTask)}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fullTask && onTaskSelect?.(fullTask); } }}
+                              className="flex items-center justify-between gap-2 text-sm bg-white/10 rounded-lg px-3 py-2 cursor-pointer hover:bg-white/20 transition-colors"
+                            >
+                              <span className="truncate flex-1">{item.title}</span>
+                              <span className="shrink-0 opacity-90">{STATUS_LABELS[item.status] || item.status}</span>
+                              {item.assigned_to_name && <span className="text-xs opacity-80">👤 {item.assigned_to_name}</span>}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold mb-2 flex items-center gap-2">
+                      <span>🔄</span> שינויי סטטוס היום ({todayActivity.status_changes.length})
+                    </h3>
+                    {todayActivity.status_changes.length === 0 ? (
+                      <p className="text-sm opacity-80">אין שינויי סטטוס היום</p>
+                    ) : (
+                      <ul className="space-y-1.5 max-h-40 overflow-y-auto">
+                        {todayActivity.status_changes.map((item, idx) => {
+                          const fullTask = tasks.find((t) => t.id === item.task_id);
+                          return (
+                            <li
+                              key={`${item.task_id}-${item.changed_at}-${idx}`}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => fullTask && onTaskSelect?.(fullTask)}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fullTask && onTaskSelect?.(fullTask); } }}
+                              className="text-sm bg-white/10 rounded-lg px-3 py-2 cursor-pointer hover:bg-white/20 transition-colors"
+                            >
+                              <span className="font-medium truncate block">{item.title}</span>
+                              <span className="opacity-90">
+                                {item.old_status ? STATUS_LABELS[item.old_status] || item.old_status : '—'} → {STATUS_LABELS[item.new_status] || item.new_status}
+                                {item.changed_by_name && ` · ${item.changed_by_name}`}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          )}
         </div>
               ) : <EmptySection title="📅 היום" description="" />)}
               {sectionId === 'mainStats' && (stats ? (
@@ -435,7 +600,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
             </div>
           </div>
           {weeklyStats.daily_breakdown.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 mb-4">
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">פירוט יומי</p>
               {weeklyStats.daily_breakdown.slice(0, 5).map((day) => (
                 <div key={day.date} className="flex items-center justify-between text-sm bg-white dark:bg-slate-700 rounded-lg p-2">
@@ -450,40 +615,134 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
               ))}
             </div>
           )}
+          <button
+            type="button"
+            onClick={toggleWeeklyDetail}
+            className="w-full py-2.5 rounded-xl bg-purple-200/80 dark:bg-purple-900/40 hover:bg-purple-300/80 dark:hover:bg-purple-800/50 text-slate-800 dark:text-slate-200 text-sm font-bold transition-colors flex items-center justify-center gap-2"
+          >
+            {showWeeklyDetail ? 'הסתר פירוט' : 'ראה פירוט: באיחור, תפוגה השבוע, דחוף'}
+            <span className={`transition-transform ${showWeeklyDetail ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+          {showWeeklyDetail && (
+            <div className="mt-4 pt-4 border-t border-slate-300 dark:border-slate-600 space-y-4">
+              {loadingWeeklyDetail ? (
+                <p className="text-sm text-slate-600 dark:text-slate-400">טוען...</p>
+              ) : weeklyDetail ? (
+                <>
+                  <div>
+                    <h3 className="text-sm font-bold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
+                      <span>⚠️</span> באיחור ({weeklyDetail.overdue.length})
+                    </h3>
+                    {weeklyDetail.overdue.length === 0 ? (
+                      <p className="text-sm text-slate-500 dark:text-slate-400">אין משימות באיחור</p>
+                    ) : (
+                      <ul className="space-y-1.5 max-h-44 overflow-y-auto">
+                        {weeklyDetail.overdue.map((item) => {
+                          const fullTask = tasks.find((t) => t.id === item.id);
+                          return (
+                            <li
+                              key={item.id}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => fullTask && onTaskSelect?.(fullTask)}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fullTask && onTaskSelect?.(fullTask); } }}
+                              className="text-sm bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 transition-colors"
+                            >
+                              <span className="font-medium truncate block">{item.title}</span>
+                              <span className="text-xs text-slate-600 dark:text-slate-400">
+                                {PRIORITY_LABELS[item.priority] || item.priority} · {STATUS_LABELS[item.status] || item.status}
+                                {item.due_date && ` · ${new Date(item.due_date).toLocaleDateString('he-IL')}`}
+                                {item.assigned_to_name && ` · 👤 ${item.assigned_to_name}`}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-2">
+                      <span>📅</span> תפוגה השבוע ({weeklyDetail.due_this_week.length})
+                    </h3>
+                    {weeklyDetail.due_this_week.length === 0 ? (
+                      <p className="text-sm text-slate-500 dark:text-slate-400">אין משימות עם תפוגה השבוע</p>
+                    ) : (
+                      <ul className="space-y-1.5 max-h-44 overflow-y-auto">
+                        {weeklyDetail.due_this_week.map((item) => {
+                          const fullTask = tasks.find((t) => t.id === item.id);
+                          return (
+                            <li
+                              key={item.id}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => fullTask && onTaskSelect?.(fullTask)}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fullTask && onTaskSelect?.(fullTask); } }}
+                              className="text-sm bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-amber-200 dark:border-amber-800 transition-colors"
+                            >
+                              <span className="font-medium truncate block">{item.title}</span>
+                              <span className="text-xs text-slate-600 dark:text-slate-400">
+                                {PRIORITY_LABELS[item.priority] || item.priority} · {item.due_date && new Date(item.due_date).toLocaleDateString('he-IL')}
+                                {item.assigned_to_name && ` · 👤 ${item.assigned_to_name}`}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-orange-700 dark:text-orange-400 mb-2 flex items-center gap-2">
+                      <span>🔴</span> עדיפות גבוהה / דחוף ({weeklyDetail.high_priority_pending.length})
+                    </h3>
+                    {weeklyDetail.high_priority_pending.length === 0 ? (
+                      <p className="text-sm text-slate-500 dark:text-slate-400">אין משימות דחופות ממתינות</p>
+                    ) : (
+                      <ul className="space-y-1.5 max-h-44 overflow-y-auto">
+                        {weeklyDetail.high_priority_pending.map((item) => {
+                          const fullTask = tasks.find((t) => t.id === item.id);
+                          return (
+                            <li
+                              key={item.id}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => fullTask && onTaskSelect?.(fullTask)}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fullTask && onTaskSelect?.(fullTask); } }}
+                              className="text-sm bg-orange-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 border border-orange-200 dark:border-orange-800 transition-colors"
+                            >
+                              <span className="font-medium truncate block">{item.title}</span>
+                              <span className="text-xs text-slate-600 dark:text-slate-400">
+                                {PRIORITY_LABELS[item.priority] || item.priority} · {STATUS_LABELS[item.status] || item.status}
+                                {item.due_date && ` · ${new Date(item.due_date).toLocaleDateString('he-IL')}`}
+                                {item.assigned_to_name && ` · 👤 ${item.assigned_to_name}`}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          )}
         </div>
               ) : <EmptySection title="📈 סיכום שבועי" />)}
               {sectionId === 'byStatus' && (tasksByStatus.length > 0 ? (
-        <div className="bg-indigo-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0">
+        <div className="bg-indigo-50 dark:bg-slate-800 rounded-none p-5 shadow-sm border-0 border-t border-slate-600 min-h-0 w-full min-w-0">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             <span className="emoji-icon">📌</span>
             <span>משימות לפי סטטוס</span>
           </h2>
-          <div className="space-y-4">
-            {tasksByStatus.map((item) => {
-              const statusTasks = tasksGroupedByStatus[item.status] ?? [];
-              return (
-                <div key={item.status} className="min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusColors[item.status] || 'bg-slate-500'}`} />
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{statusLabels[item.status] || item.status}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">({statusTasks.length})</span>
-                  </div>
-                  <div className="flex flex-row gap-3 overflow-x-auto pb-2 min-h-[7rem]">
-                    {statusTasks.length === 0 ? (
-                      <div className="flex items-center justify-center min-w-[200px] rounded-xl border-2 border-dashed border-slate-600 text-slate-500 text-sm">
-                        אין משימות
-                      </div>
-                    ) : (
-                      statusTasks.map((task) => (
-                        <div key={task.id} className="min-w-[280px] w-[280px] flex-shrink-0">
-                          <TaskCard task={task} onClick={() => onTaskSelect?.(task)} />
-                        </div>
-                      ))
-                    )}
-                  </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {tasksByStatus.map((item) => (
+              <div key={item.status} className="flex items-center justify-between gap-2 bg-white dark:bg-slate-700 rounded-xl p-3 border border-slate-200 dark:border-slate-600 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusColors[item.status] || 'bg-slate-500'}`} />
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{statusLabels[item.status] || item.status}</span>
                 </div>
-              );
-            })}
+                <span className="text-lg font-bold text-slate-900 dark:text-white flex-shrink-0">{item.count}</span>
+              </div>
+            ))}
           </div>
         </div>
               ) : <EmptySection title="📌 לפי סטטוס" description="" />)}

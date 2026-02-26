@@ -131,6 +131,52 @@ router.get('/stats/today', authenticateToken, authorize(['maintainer', 'admin'])
   }
 });
 
+router.get('/stats/today/activity', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const organizationId = req.user?.organizationId;
+
+    const [createdRows, statusChangeRows] = await Promise.all([
+      sql`
+        SELECT t.id, t.title, t.status, t.created_at, u.name as assigned_to_name
+        FROM tasks t
+        LEFT JOIN users u ON t.assigned_to = u.id
+        WHERE t.organization_id = ${organizationId}
+          AND (t.created_at AT TIME ZONE 'Asia/Jerusalem')::date = (NOW() AT TIME ZONE 'Asia/Jerusalem')::date
+        ORDER BY t.created_at DESC
+      `,
+      sql`
+        SELECT h.task_id, t.title, h.old_status, h.new_status, h.changed_at, u.name as changed_by_name
+        FROM task_status_history h
+        INNER JOIN tasks t ON t.id = h.task_id AND t.organization_id = ${organizationId}
+        LEFT JOIN users u ON h.changed_by = u.id
+        WHERE (h.changed_at AT TIME ZONE 'Asia/Jerusalem')::date = (NOW() AT TIME ZONE 'Asia/Jerusalem')::date
+        ORDER BY h.changed_at DESC
+      `
+    ]);
+
+    res.json({
+      created: (createdRows.rows as any[]).map((r: any) => ({
+        id: r.id,
+        title: r.title,
+        status: r.status,
+        created_at: r.created_at,
+        assigned_to_name: r.assigned_to_name || null
+      })),
+      status_changes: (statusChangeRows.rows as any[]).map((r: any) => ({
+        task_id: r.task_id,
+        title: r.title,
+        old_status: r.old_status,
+        new_status: r.new_status,
+        changed_at: r.changed_at,
+        changed_by_name: r.changed_by_name || null
+      }))
+    });
+  } catch (error) {
+    console.error('Today activity error:', error);
+    res.status(500).json({ error: 'Failed to fetch today activity' });
+  }
+});
+
 router.get('/stats/weekly', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const organizationId = req.user?.organizationId;
@@ -151,6 +197,73 @@ router.get('/stats/weekly', authenticateToken, authorize(['maintainer', 'admin']
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch weekly stats' });
+  }
+});
+
+router.get('/stats/weekly/detail', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const organizationId = req.user?.organizationId;
+
+    const [overdueRows, dueThisWeekRows, highPriorityRows] = await Promise.all([
+      sql`
+        SELECT t.id, t.title, t.status, t.priority, t.due_date, u.name as assigned_to_name
+        FROM tasks t
+        LEFT JOIN users u ON t.assigned_to = u.id
+        WHERE t.organization_id = ${organizationId}
+          AND t.status NOT IN ('completed', 'verified')
+          AND t.due_date IS NOT NULL AND t.due_date < NOW()
+        ORDER BY t.due_date ASC
+      `,
+      sql`
+        SELECT t.id, t.title, t.status, t.priority, t.due_date, u.name as assigned_to_name
+        FROM tasks t
+        LEFT JOIN users u ON t.assigned_to = u.id
+        WHERE t.organization_id = ${organizationId}
+          AND t.status NOT IN ('completed', 'verified')
+          AND t.due_date IS NOT NULL
+          AND t.due_date >= NOW() AND t.due_date <= NOW() + INTERVAL '7 days'
+        ORDER BY t.due_date ASC
+      `,
+      sql`
+        SELECT t.id, t.title, t.status, t.priority, t.due_date, u.name as assigned_to_name
+        FROM tasks t
+        LEFT JOIN users u ON t.assigned_to = u.id
+        WHERE t.organization_id = ${organizationId}
+          AND t.status NOT IN ('completed', 'verified')
+          AND t.priority IN ('critical', 'high')
+        ORDER BY CASE t.priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 ELSE 3 END, t.due_date ASC NULLS LAST
+      `
+    ]);
+
+    res.json({
+      overdue: (overdueRows.rows as any[]).map((r: any) => ({
+        id: r.id,
+        title: r.title,
+        status: r.status,
+        priority: r.priority,
+        due_date: r.due_date,
+        assigned_to_name: r.assigned_to_name || null
+      })),
+      due_this_week: (dueThisWeekRows.rows as any[]).map((r: any) => ({
+        id: r.id,
+        title: r.title,
+        status: r.status,
+        priority: r.priority,
+        due_date: r.due_date,
+        assigned_to_name: r.assigned_to_name || null
+      })),
+      high_priority_pending: (highPriorityRows.rows as any[]).map((r: any) => ({
+        id: r.id,
+        title: r.title,
+        status: r.status,
+        priority: r.priority,
+        due_date: r.due_date,
+        assigned_to_name: r.assigned_to_name || null
+      }))
+    });
+  } catch (error) {
+    console.error('Weekly detail error:', error);
+    res.status(500).json({ error: 'Failed to fetch weekly detail' });
   }
 });
 

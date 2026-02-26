@@ -24,8 +24,10 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   const [draggingTaskId, setDraggingTaskId] = useState<number | null>(null);
   const [draggingTask, setDraggingTask] = useState<any>(null);
   const [dragPreviewRect, setDragPreviewRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
   const placeholderRef = useRef<HTMLDivElement | null>(null);
   const rafIdRef = useRef<number | null>(null);
+  const pointerOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!user || !token) return;
@@ -75,6 +77,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
   const handleDragStart = (result: any) => {
     document.body.classList.add('kanban-dragging');
+    setPointerPosition(null);
+    pointerOffsetRef.current = { x: 0, y: 0 };
     const taskId = parseInt(result.draggableId, 10);
     setDraggingTaskId(taskId);
     const task = tasks.find((t) => t.id === taskId);
@@ -86,6 +90,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
     setDraggingTaskId(null);
     setDraggingTask(null);
     setDragPreviewRect(null);
+    setPointerPosition(null);
     placeholderRef.current = null;
     if (rafIdRef.current != null) {
       cancelAnimationFrame(rafIdRef.current);
@@ -109,9 +114,15 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
   useLayoutEffect(() => {
     if (draggingTaskId == null) return;
+    let offsetSet = false;
     const tick = () => {
       if (placeholderRef.current) {
-        setDragPreviewRect(placeholderRef.current.getBoundingClientRect());
+        const rect = placeholderRef.current.getBoundingClientRect();
+        setDragPreviewRect(rect);
+        if (!offsetSet && rect.width > 0 && rect.height > 0) {
+          pointerOffsetRef.current = { x: rect.width / 2, y: rect.height / 2 };
+          offsetSet = true;
+        }
       }
       rafIdRef.current = requestAnimationFrame(tick);
     };
@@ -122,6 +133,23 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
       }
+    };
+  }, [draggingTaskId]);
+
+  useLayoutEffect(() => {
+    if (draggingTaskId == null) return;
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0]?.clientY : e.clientY;
+      if (typeof clientX === 'number' && typeof clientY === 'number') {
+        setPointerPosition({ x: clientX, y: clientY });
+      }
+    };
+    document.addEventListener('mousemove', onMove, { passive: true });
+    document.addEventListener('touchmove', onMove, { passive: true });
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('touchmove', onMove);
     };
   }, [draggingTaskId]);
 
@@ -170,8 +198,12 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
           <div
             className="pointer-events-none fixed rounded-xl scale-105 ring-2 ring-teal-400 overflow-hidden"
             style={{
-              left: dragPreviewRect.left,
-              top: dragPreviewRect.top,
+              left: pointerPosition != null
+                ? pointerPosition.x - pointerOffsetRef.current.x
+                : dragPreviewRect.left,
+              top: pointerPosition != null
+                ? pointerPosition.y - pointerOffsetRef.current.y
+                : dragPreviewRect.top,
               width: dragPreviewRect.width,
               height: dragPreviewRect.height,
               zIndex: 2147483647,
@@ -189,7 +221,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
         <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0">
           <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-3 w-full md:min-w-fit px-3 md:px-0">
             {statuses.map((status, idx) => (
-              <Droppable key={status.name} droppableId={status.name} direction="horizontal">
+              <Droppable key={status.name} droppableId={status.name} direction="vertical">
                 {/* @ts-ignore - react-beautiful-dnd types */}
                 {(provided, snapshot) => (
                   <div
@@ -217,7 +249,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       </span>
                     </div>
 
-                    <div className={`flex flex-row flex-nowrap gap-2 overflow-x-scroll overflow-y-hidden pb-1 min-h-[7rem] min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
+                    <div className={`flex flex-col gap-2 overflow-y-auto min-h-[7rem] min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
                       {tasksByStatus[status.name]?.map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                           {/* @ts-ignore - react-beautiful-dnd types */}
@@ -233,7 +265,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                                 ...provided.draggableProps.style,
                                 ...(snapshot.isDragging ? { opacity: 0, visibility: 'hidden' as const } : {}),
                               }}
-                              className="min-w-[280px] w-[280px] flex-shrink-0 rounded-xl transition-transform duration-200 ease-out transition-shadow duration-200 hover:shadow-lg"
+                              className="w-full flex-shrink-0 rounded-xl transition-transform duration-200 ease-out transition-shadow duration-200 hover:shadow-lg"
                             >
                               <TaskCard task={task} onClick={() => (onEditTask || onTaskSelect)(task)} />
                             </div>
@@ -243,7 +275,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       {provided.placeholder}
 
                       {(!tasksByStatus[status.name] || tasksByStatus[status.name].length === 0) && (
-                        <div className="flex items-center justify-center min-w-[280px] w-[280px] flex-shrink-0 text-center py-6 text-slate-400 rounded-xl border-2 border-dashed border-slate-600">
+                        <div className="flex items-center justify-center w-full min-h-[7rem] text-center py-6 text-slate-400 rounded-xl border-2 border-dashed border-slate-600">
                           <div>
                             <p className="text-xs font-semibold">✨ אין משימות</p>
                             <p className="text-[10px] mt-0.5">גרור משימות לכאן</p>

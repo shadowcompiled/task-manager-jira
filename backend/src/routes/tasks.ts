@@ -170,16 +170,18 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       }
     }
 
-    if (assignedUser?.email) {
-      const [orgRows, creatorRows] = await Promise.all([
-        sql`SELECT name FROM organizations WHERE id = ${organizationId}`,
-        sql`SELECT name FROM users WHERE id = ${req.user?.id}`
-      ]);
-      const organizationName = (orgRows.rows[0] as any)?.name || 'Organization';
-      const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
+    if (assignedUser) {
       const taskTitle = title || task.title;
-      sendAssignmentNotification(assignedUser.email, taskTitle, createdByName, organizationName).catch((err: any) => console.error('Failed to send email:', err));
       const assigneeId = Number(assignedUser.id);
+      if (assignedUser.email) {
+        const [orgRows, creatorRows] = await Promise.all([
+          sql`SELECT name FROM organizations WHERE id = ${organizationId}`,
+          sql`SELECT name FROM users WHERE id = ${req.user?.id}`
+        ]);
+        const organizationName = (orgRows.rows[0] as any)?.name || 'Organization';
+        const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
+        sendAssignmentNotification(assignedUser.email, taskTitle, createdByName, organizationName).catch((err: any) => console.error('Failed to send email:', err));
+      }
       sendNotificationToUser(assigneeId, 'משימה חדשה', taskTitle, undefined, 'mission-assigned').then((r) => {
         if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${assigneeId}; enable notifications on the device to receive assignment alerts.`);
       }).catch((err: any) => console.error('Push assignment:', err));

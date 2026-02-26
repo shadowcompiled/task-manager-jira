@@ -89,6 +89,16 @@ export default function App() {
             >
               {isDark ? '☀️' : '🌙'}
             </button>
+            {/* Notifications - all users can enable push for "mission assigned to me" */}
+            <button
+              type="button"
+              onClick={() => setShowUsersNotificationStatus(true)}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-slate-600/80 text-white p-2 md:p-2"
+              title="התראות"
+              aria-label="התראות"
+            >
+              🔔
+            </button>
             {/* Mobile: single menu button */}
             {(user.role === 'admin' || user.role === 'manager' || user.role === 'maintainer') && (
               <div className="md:hidden relative">
@@ -446,7 +456,7 @@ export default function App() {
 
       {/* Users & Notifications Status (admin only) */}
       <AnimatePresence>
-        {showUsersNotificationStatus && user?.role === 'admin' && (
+        {showUsersNotificationStatus && (
           <UsersNotificationStatusModal key="users-notification-status" onClose={() => setShowUsersNotificationStatus(false)} />
         )}
       </AnimatePresence>
