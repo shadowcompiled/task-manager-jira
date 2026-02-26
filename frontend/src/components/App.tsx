@@ -66,8 +66,8 @@ export default function App() {
   return (
     <ToastProvider>
     <div className="app-shell min-h-[100dvh] h-[100dvh] max-h-[100dvh] max-w-[100vw] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden min-w-0">
-      {/* Header - safe area top; equal padding top/bottom */}
-      <header className="app-header bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg sticky top-0 z-40 shrink-0 pt-[max(1rem,env(safe-area-inset-top))] pb-4 px-2 sm:px-3">
+      {/* Header - fixed so it stays visible when scrolled */}
+      <header className="app-header fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg pt-[max(1rem,env(safe-area-inset-top))] pb-4 px-2 sm:px-3">
         <div className="max-w-7xl mx-auto h-14 sm:h-16 flex items-center justify-between gap-2 min-h-[52px]">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
             <h1 className="text-xl md:text-2xl font-bold text-white truncate drop-shadow-lg">🍽️ מעקב משימות</h1>
@@ -117,11 +117,11 @@ export default function App() {
                     <motion.div
                       key="header-menu-sheet"
                       dir="rtl"
-                      initial={{ y: '100%' }}
-                      animate={{ y: 0 }}
-                      exit={{ y: '100%' }}
+                      initial={{ opacity: 0, y: -16, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -16, scale: 0.96 }}
                       transition={getTransition(reducedMotion, modalTransition)}
-                      className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden"
+                      className="md:hidden fixed top-[max(5rem,calc(4rem+env(safe-area-inset-top)))] right-0 z-50 w-64 max-h-[70vh] rounded-bl-2xl rounded-tr-none rounded-tl-2xl rounded-br-2xl bg-slate-800 border border-teal-500/40 shadow-2xl flex flex-col overflow-hidden mr-2 sm:mr-3"
                       style={{ direction: 'rtl' }}
                     >
                       <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5 flex flex-col gap-0 items-stretch text-right" dir="rtl" style={{ direction: 'rtl' }}>
@@ -153,8 +153,8 @@ export default function App() {
                 </AnimatePresence>
                 {showHeaderMenu && (
                   <>
-                    {/* Desktop: dropdown - top to bottom, right to left (RTL) */}
-                    <div dir="rtl" className="hidden md:flex absolute right-0 left-auto top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50 flex-col items-stretch text-right" style={{ direction: 'rtl' }}>
+                    {/* Desktop: dropdown from top right - top to bottom, right to left (RTL) */}
+                    <div dir="rtl" className="hidden md:flex absolute right-0 left-auto top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-bl-xl rounded-br-xl rounded-tl-xl shadow-xl z-50 flex-col items-stretch text-right" style={{ direction: 'rtl' }}>
                       {user.role === 'admin' && (
                         <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold rounded-none first:rounded-t-xl">
                           <span>משתמשים</span><span>👤</span>
@@ -203,6 +203,8 @@ export default function App() {
           </div>
         </div>
       </header>
+      {/* Spacer so content is not hidden under the fixed header */}
+      <div className="shrink-0 w-full h-[5.5rem] sm:h-[6rem]" aria-hidden="true" />
 
       <div className="flex-1 overflow-hidden flex min-w-0">
         {/* Sidebar Navigation */}
