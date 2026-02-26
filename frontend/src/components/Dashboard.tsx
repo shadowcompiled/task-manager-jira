@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useAuthStore, useTaskStore } from '../store';
 import { quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 import { DashboardSectionSkeleton } from './skeletons';
-import TaskCard from './TaskCard';
 
 const SECTION_ORDER = [
   'today',
@@ -650,7 +649,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
                             >
                               <span className="font-medium truncate block">{item.title}</span>
                               <span className="text-xs text-slate-600 dark:text-slate-400">
-                                {PRIORITY_LABELS[item.priority] || item.priority} · {STATUS_LABELS[item.status] || item.status}
+                                {priorityLabels[item.priority] || item.priority} · {STATUS_LABELS[item.status] || item.status}
                                 {item.due_date && ` · ${new Date(item.due_date).toLocaleDateString('he-IL')}`}
                                 {item.assigned_to_name && ` · 👤 ${item.assigned_to_name}`}
                               </span>
@@ -681,7 +680,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
                             >
                               <span className="font-medium truncate block">{item.title}</span>
                               <span className="text-xs text-slate-600 dark:text-slate-400">
-                                {PRIORITY_LABELS[item.priority] || item.priority} · {item.due_date && new Date(item.due_date).toLocaleDateString('he-IL')}
+                                {priorityLabels[item.priority] || item.priority} · {item.due_date && new Date(item.due_date).toLocaleDateString('he-IL')}
                                 {item.assigned_to_name && ` · 👤 ${item.assigned_to_name}`}
                               </span>
                             </li>
@@ -711,7 +710,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
                             >
                               <span className="font-medium truncate block">{item.title}</span>
                               <span className="text-xs text-slate-600 dark:text-slate-400">
-                                {PRIORITY_LABELS[item.priority] || item.priority} · {STATUS_LABELS[item.status] || item.status}
+                                {priorityLabels[item.priority] || item.priority} · {STATUS_LABELS[item.status] || item.status}
                                 {item.due_date && ` · ${new Date(item.due_date).toLocaleDateString('he-IL')}`}
                                 {item.assigned_to_name && ` · 👤 ${item.assigned_to_name}`}
                               </span>
