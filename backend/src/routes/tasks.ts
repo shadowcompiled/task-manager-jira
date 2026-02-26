@@ -22,12 +22,20 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const status = req.query.status as string;
     const assigned = req.query.assigned_to as string;
 
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const threeDaysAgoStr = threeDaysAgo.toISOString();
+
     const { rows } = await sql`
       SELECT t.*, u.name as assigned_to_name, creator.name as created_by_name
       FROM tasks t
       LEFT JOIN users u ON t.assigned_to = u.id
       LEFT JOIN users creator ON t.created_by = creator.id
       WHERE t.organization_id = ${organizationId}
+        AND NOT (
+          (t.status = 'completed' AND (t.completed_at < ${threeDaysAgoStr} OR (t.completed_at IS NULL AND t.updated_at < ${threeDaysAgoStr})))
+          OR (t.status = 'verified' AND (t.verified_at < ${threeDaysAgoStr} OR (t.verified_at IS NULL AND COALESCE(t.completed_at, t.updated_at) < ${threeDaysAgoStr})))
+        )
       ORDER BY t.due_date ASC NULLS LAST
     `;
     let tasks = rows as any[];

@@ -113,11 +113,12 @@ router.get('/stats/by-status', authenticateToken, authorize(['maintainer', 'admi
 router.get('/stats/today', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const organizationId = req.user?.organizationId;
+    // Use Israel timezone so "today" matches the user's day (app is Hebrew/Israel-oriented)
     const [completedToday, dueToday, createdToday, dueSoon] = await Promise.all([
-      sql`SELECT COUNT(*) as count FROM tasks WHERE organization_id = ${organizationId} AND status IN ('completed', 'verified') AND (completed_at::date = CURRENT_DATE OR updated_at::date = CURRENT_DATE)`,
-      sql`SELECT COUNT(*) as count FROM tasks WHERE organization_id = ${organizationId} AND due_date::date = CURRENT_DATE`,
-      sql`SELECT COUNT(*) as count FROM tasks WHERE organization_id = ${organizationId} AND created_at::date = CURRENT_DATE`,
-      sql`SELECT COUNT(*) as count FROM tasks WHERE organization_id = ${organizationId} AND status NOT IN ('completed', 'verified') AND due_date BETWEEN NOW() AND NOW() + INTERVAL '1 day'`
+      sql`SELECT COUNT(*) as count FROM tasks WHERE organization_id = ${organizationId} AND status IN ('completed', 'verified') AND ((completed_at AT TIME ZONE 'Asia/Jerusalem')::date = (NOW() AT TIME ZONE 'Asia/Jerusalem')::date OR (updated_at AT TIME ZONE 'Asia/Jerusalem')::date = (NOW() AT TIME ZONE 'Asia/Jerusalem')::date)`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE organization_id = ${organizationId} AND due_date IS NOT NULL AND (due_date AT TIME ZONE 'Asia/Jerusalem')::date = (NOW() AT TIME ZONE 'Asia/Jerusalem')::date`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE organization_id = ${organizationId} AND (created_at AT TIME ZONE 'Asia/Jerusalem')::date = (NOW() AT TIME ZONE 'Asia/Jerusalem')::date`,
+      sql`SELECT COUNT(*) as count FROM tasks WHERE organization_id = ${organizationId} AND status NOT IN ('completed', 'verified') AND due_date IS NOT NULL AND due_date BETWEEN NOW() AND NOW() + INTERVAL '1 day'`
     ]);
     res.json({
       completed_today: Number((completedToday.rows[0] as any)?.count ?? 0),

@@ -46,18 +46,14 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, isAssi
       transition={getTransition(reducedMotion, quickTransition)}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
-      className={`p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 min-h-[72px] ${isAssignedToMe ? 'task-card-assigned-to-me ' : ''}${
+      className={`p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 min-h-[72px] task-card-assigned-to-me ${
         isOverdue
-          ? isAssignedToMe
-            ? 'border-red-400/80 bg-red-50 dark:bg-slate-700/60 shadow-md'
-            : 'border-red-400/80 bg-slate-800/80 shadow-md'
-          : isAssignedToMe
-            ? 'border-teal-500/40 bg-slate-200 dark:bg-slate-700/50 hover:border-teal-400/50 shadow-md'
-            : 'border-teal-500/30 bg-slate-800/60 hover:border-teal-400/50 shadow-md'
+          ? 'border-red-400/80 bg-red-50 dark:bg-slate-700/60 shadow-md'
+          : 'border-teal-500/40 bg-slate-200 dark:bg-slate-700/50 hover:border-teal-400/50 shadow-md'
       }`}
     >
       <div className="flex justify-between items-start mb-2 gap-2">
-        <h3 className={`font-bold text-base flex-1 line-clamp-2 ${isAssignedToMe ? 'text-slate-900 dark:text-white' : 'text-white'}`}>{task.title}</h3>
+        <h3 className="font-bold text-base flex-1 line-clamp-2 text-slate-900 dark:text-white">{task.title}</h3>
         <div className="flex items-center gap-1 shrink-0">
           {showDeleteButton && onDelete && (
             <motion.button
@@ -96,7 +92,7 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, isAssi
       </div>
 
       {task.description && (
-        <p className={`text-xs sm:text-sm mb-2 line-clamp-2 leading-relaxed ${isAssignedToMe ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400'}`}>{task.description}</p>
+        <p className="text-xs sm:text-sm mb-2 line-clamp-2 leading-relaxed text-slate-600 dark:text-slate-400">{task.description}</p>
       )}
 
       <div className="flex flex-wrap justify-between items-start gap-1 md:gap-2 mb-2 md:mb-3">
@@ -127,7 +123,7 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, isAssi
       </div>
 
       {(task.due_date || task.estimated_time || task.assigned_to_name) && (
-        <div className={`mt-2 pt-2 border-t text-xs space-y-1 ${isAssignedToMe ? 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400' : 'border-slate-600 text-slate-400'}`}>
+        <div className="mt-2 pt-2 border-t border-slate-300 dark:border-slate-600 text-xs space-y-1 text-slate-600 dark:text-slate-400">
           {task.due_date && (
             <div className="flex items-center gap-2 font-semibold">
               <span>📅</span>

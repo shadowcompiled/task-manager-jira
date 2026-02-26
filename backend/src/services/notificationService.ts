@@ -144,13 +144,13 @@ export async function cleanupOldCompletedTasks() {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     const threeDaysAgoStr = threeDaysAgo.toISOString();
-    // Use completed_at, verified_at, or updated_at so we catch tasks that entered last status via any path
+    // Use completed_at / verified_at for the 3-day cutoff (fallback to updated_at only for legacy tasks with NULL)
     const { rows: tasksToDelete } = await sql`
       SELECT id, title FROM tasks
       WHERE status IN ('completed', 'verified')
         AND (
-          (status = 'completed' AND COALESCE(completed_at, updated_at) < ${threeDaysAgoStr})
-          OR (status = 'verified' AND COALESCE(verified_at, completed_at, updated_at) < ${threeDaysAgoStr})
+          (status = 'completed' AND (completed_at < ${threeDaysAgoStr} OR (completed_at IS NULL AND updated_at < ${threeDaysAgoStr})))
+          OR (status = 'verified' AND (verified_at < ${threeDaysAgoStr} OR (verified_at IS NULL AND COALESCE(completed_at, updated_at) < ${threeDaysAgoStr})))
         )
     `;
     if (tasksToDelete.length > 0) {
