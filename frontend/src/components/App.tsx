@@ -204,7 +204,7 @@ export default function App() {
         </div>
       </header>
       {/* Spacer so when fully scrolled up no content is hidden under the sticky header (all sections) */}
-      <div className="shrink-0 w-full h-[6.5rem] sm:h-[7rem]" aria-hidden="true" />
+      <div className="shrink-0 w-full h-[calc(6.5rem+env(safe-area-inset-top))] sm:h-[calc(7rem+env(safe-area-inset-top))]" aria-hidden="true" />
 
       <div className="flex-1 overflow-hidden flex min-w-0">
         {/* Sidebar Navigation */}
