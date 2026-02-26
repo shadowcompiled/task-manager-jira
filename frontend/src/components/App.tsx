@@ -99,10 +99,9 @@ export default function App() {
                 </button>
                 {showHeaderMenu && (
                   <>
-                    <div className="fixed inset-0 bg-black/50" style={{ zIndex: 9998 }} onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
-                    {/* Mobile: full-width bottom sheet, text right-aligned */}
-                    <div dir="rtl" className="md:hidden fixed inset-x-0 rounded-2xl mx-3 bg-slate-800 border border-teal-500/40 shadow-2xl" style={{ bottom: '76px', zIndex: 9999 }}>
-                      <div className="py-3 px-2 flex flex-col gap-0" dir="rtl" style={{ direction: 'rtl' }}>
+                    <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
+                    {/* Mobile: dropdown menu below button */}
+                    <div dir="rtl" className="md:hidden absolute left-0 top-full mt-1 py-2 w-56 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50" style={{ direction: 'rtl' }}>
                         {user.role === 'admin' && (
                           <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                             <span>משתמשים</span><span>👤</span>
@@ -128,7 +127,6 @@ export default function App() {
                         <button onClick={() => { setShowTaskHistory(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                           <span>היסטוריה</span><span>📜</span>
                         </button>
-                      </div>
                     </div>
                     {/* Desktop: dropdown */}
                     <div dir="rtl" className="hidden md:block absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50 flex flex-col" style={{ direction: 'rtl' }}>
