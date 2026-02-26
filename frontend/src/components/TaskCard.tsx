@@ -48,7 +48,7 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, showDe
       onClick={onClick}
       className={`p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 min-h-[72px] ${isAssignedToMe && !isDragPreview ? 'task-card-assigned-to-me ' : ''}${
         isDragPreview
-          ? 'border-slate-600 bg-slate-700/90 shadow-md'
+          ? 'border-slate-600 bg-slate-700 shadow-md'
           : isOverdue
           ? 'border-red-400/80 bg-red-50 dark:bg-slate-700/60 shadow-md'
           : isAssignedToMe

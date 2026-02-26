@@ -351,8 +351,8 @@ export default function App() {
         )}
       </div>
 
-        {/* Main Content - scrollable; top padding so header never hides first row; bottom padding so footer never hides last row in ALL sections */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pt-2 pb-[max(12rem,calc(11rem+env(safe-area-inset-bottom)))] md:pt-0 md:pb-0 px-3 sm:px-4">
+        {/* Main Content - scrollable; bottom padding must clear fixed nav + FAB + safe area so when fully scrolled down no content is hidden */}
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pt-2 pb-[max(14rem,calc(12rem+env(safe-area-inset-bottom)))] md:pt-0 md:pb-0 px-3 sm:px-4">
           <AnimatePresence mode="wait">
             {currentView === 'daily' && (
               <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">

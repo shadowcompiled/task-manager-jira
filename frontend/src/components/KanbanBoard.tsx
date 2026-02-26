@@ -242,7 +242,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {draggingTask && dragPreviewRect != null && createPortal(
           <div
-            className="pointer-events-none fixed rounded-xl overflow-hidden bg-slate-800 ring-2 ring-slate-600 shadow-2xl"
+            className="pointer-events-none fixed rounded-2xl overflow-hidden shadow-2xl"
             style={{
               left: pointerPosition != null
                 ? pointerPosition.x - pointerOffsetRef.current.x
@@ -253,12 +253,13 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
               width: dragPreviewRect.width,
               height: dragPreviewRect.height,
               zIndex: 2147483647,
-              boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(30,41,59,0.8)',
+              backgroundColor: 'rgb(51 65 85)', /* slate-700 opaque - no white bleed */
+              boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(51,65,85,1)',
               willChange: 'transform',
               isolation: 'isolate',
             }}
           >
-            <div className="h-full w-full overflow-hidden rounded-xl bg-slate-800 dark">
+            <div className="h-full w-full overflow-hidden rounded-2xl" style={{ backgroundColor: 'rgb(51 65 85)' }}>
               <TaskCard task={draggingTask} onClick={() => {}} isDragPreview />
             </div>
           </div>,

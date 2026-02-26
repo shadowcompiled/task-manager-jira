@@ -102,10 +102,20 @@ export default function KanbanDashboard() {
     }
   };
 
-  // Handle drag start - lock main scroll so missions can't be dropped below the page
-  const handleDragStart = (task: TaskWithAssignee) => {
+  // Handle drag start - lock main scroll; use custom dark drag image so no white background shows
+  const handleDragStart = (task: TaskWithAssignee, e: React.DragEvent) => {
     setDraggedTask(task);
     document.body.classList.add('kanban-dragging');
+    const dt = e.dataTransfer;
+    if (dt) {
+      const ghost = document.createElement('div');
+      ghost.setAttribute('aria-hidden', 'true');
+      ghost.style.cssText = 'position:absolute;top:-9999px;left:0;width:260px;min-height:80px;padding:10px;border-radius:8px;background:rgb(51 65 85);border:2px solid rgb(71 85 105);color:rgb(226 232 240);font-size:12px;font-weight:700;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);pointer-events:none;';
+      ghost.textContent = task.title || 'משימה';
+      document.body.appendChild(ghost);
+      dt.setDragImage(ghost, 20, 16);
+      requestAnimationFrame(() => ghost.remove());
+    }
     const onDragEnd = () => {
       document.body.classList.remove('kanban-dragging');
       document.removeEventListener('dragend', onDragEnd);
@@ -297,15 +307,15 @@ export default function KanbanDashboard() {
                 </p>
               </div>
 
-              {/* Tasks - horizontal row with horizontal scroll (flex-nowrap so row never wraps) */}
-              <div className="flex flex-row flex-nowrap gap-2 overflow-x-scroll overflow-y-hidden pb-1 min-h-[7rem] min-w-0">
+              {/* Tasks - vertical stack so missions appear one below the other */}
+              <div className="flex flex-col gap-2 min-w-0 min-h-0">
                 {column.tasks.length > 0 ? (
                   column.tasks.map((task) => (
                     <div
                       key={task.id}
                       draggable
-                      onDragStart={() => handleDragStart(task)}
-                      className="flex-shrink-0 min-w-[260px] w-[260px] bg-gradient-to-br from-white to-gray-50 dark:from-slate-700 dark:to-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded-lg p-2.5 cursor-move hover:shadow-lg hover:border-blue-400 dark:hover:border-teal-500 transition-all duration-200 ease-out transform hover:scale-[1.02] active:scale-[0.98]"
+                      onDragStart={(ev) => handleDragStart(task, ev)}
+                      className="w-full min-w-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-700 dark:to-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded-lg p-2.5 cursor-move hover:shadow-lg hover:border-blue-400 dark:hover:border-teal-500 transition-all duration-200 ease-out transform hover:scale-[1.01] active:scale-[0.98]"
                     >
                       {/* Task Title */}
                       <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm mb-2 line-clamp-2">
@@ -364,7 +374,7 @@ export default function KanbanDashboard() {
                     </div>
                   ))
                 ) : (
-                  <div className="flex-shrink-0 min-w-[260px] w-[260px] flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-slate-600 text-gray-400 dark:text-slate-500 text-xs font-semibold">
+                  <div className="w-full min-h-[4rem] flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-slate-600 text-gray-400 dark:text-slate-500 text-xs font-semibold py-4">
                     אין משימות
                   </div>
                 )}
@@ -377,10 +387,10 @@ export default function KanbanDashboard() {
       {/* Mobile-friendly footer tip */}
       <div className="mt-6 lg:hidden bg-blue-50 dark:bg-slate-800 border-2 border-blue-200 dark:border-slate-600 rounded-lg p-4 text-center">
         <p className="text-sm text-gray-700 dark:text-slate-300 font-semibold">
-          💡 גרור משימות לשינוי סטטוס. גלול אופקיים לראות יותר עמודות
+          💡 גרור משימות לשינוי סטטוס. גלול לראות יותר עמודות
         </p>
       </div>
-      <div className="min-h-[6rem] sm:min-h-[8rem]" aria-hidden="true" />
+      <div className="min-h-[4rem]" aria-hidden="true" />
       </div>
     </div>
   );
