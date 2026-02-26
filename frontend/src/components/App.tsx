@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store';
 import LoginPage from './LoginPage';
@@ -35,6 +36,7 @@ export default function App() {
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [showUsersNotificationStatus, setShowUsersNotificationStatus] = useState(false);
   const [showTaskHistory, setShowTaskHistory] = useState(false);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
   const [isDark, setIsDark] = useState<boolean>(() => {
     return (localStorage.getItem(THEME_KEY) ?? 'light') !== 'light';
   });
@@ -90,6 +92,7 @@ export default function App() {
             {(user.role === 'admin' || user.role === 'manager' || user.role === 'maintainer') && (
               <div className="md:hidden relative">
                 <button
+                  ref={menuBtnRef}
                   onClick={() => setShowHeaderMenu(!showHeaderMenu)}
                   className="p-2 rounded-lg bg-slate-600/80 text-white min-h-[44px] min-w-[44px] flex items-center justify-center"
                   title="תפריט"
@@ -97,66 +100,50 @@ export default function App() {
                 >
                   ⋯
                 </button>
-                {showHeaderMenu && (
+                {showHeaderMenu && createPortal(
                   <>
-                    <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
-                    {/* Mobile: dropdown menu below button */}
-                    <div dir="rtl" className="md:hidden absolute left-0 top-full mt-1 py-2 w-56 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50" style={{ direction: 'rtl' }}>
-                        {user.role === 'admin' && (
-                          <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
-                            <span>משתמשים</span><span>👤</span>
-                          </button>
-                        )}
-                        {user.role === 'admin' && (
-                          <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
-                            <span>התראות</span><span>🔔</span>
-                          </button>
-                        )}
-                        <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
-                          <span>אישור משתמשים</span><span>✓</span>
-                        </button>
-                        <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
-                          <span>סטטוסים</span><span>⚙️</span>
-                        </button>
-                        <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
-                          <span>תגיות</span><span>🏷️</span>
-                        </button>
-                        <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
-                          <span>צוות</span><span>👥</span>
-                        </button>
-                        <button onClick={() => { setShowTaskHistory(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
-                          <span>היסטוריה</span><span>📜</span>
-                        </button>
-                    </div>
-                    {/* Desktop: dropdown */}
-                    <div dir="rtl" className="hidden md:block absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50 flex flex-col" style={{ direction: 'rtl' }}>
+                    <div className="fixed inset-0 bg-black/50" style={{ zIndex: 99998 }} onClick={() => setShowHeaderMenu(false)} aria-hidden="true" />
+                    <div
+                      dir="rtl"
+                      className="py-2 w-56 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl"
+                      style={{
+                        position: 'fixed',
+                        zIndex: 99999,
+                        top: menuBtnRef.current ? menuBtnRef.current.getBoundingClientRect().bottom + 4 : 60,
+                        right: 12,
+                        direction: 'rtl',
+                        maxHeight: '70vh',
+                        overflowY: 'auto',
+                      }}
+                    >
                       {user.role === 'admin' && (
-                        <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                           <span>משתמשים</span><span>👤</span>
                         </button>
                       )}
                       {user.role === 'admin' && (
-                        <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                        <button onClick={() => { setShowUsersNotificationStatus(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                           <span>התראות</span><span>🔔</span>
                         </button>
                       )}
-                      <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowUserApproval(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>אישור משתמשים</span><span>✓</span>
                       </button>
-                      <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowStatusManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>סטטוסים</span><span>⚙️</span>
                       </button>
-                      <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>תגיות</span><span>🏷️</span>
                       </button>
-                      <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>צוות</span><span>👥</span>
                       </button>
-                      <button onClick={() => { setShowTaskHistory(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                      <button onClick={() => { setShowTaskHistory(true); setShowHeaderMenu(false); }} className="w-full text-right px-5 py-3 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>היסטוריה</span><span>📜</span>
                       </button>
                     </div>
-                  </>
+                  </>,
+                  document.body
                 )}
               </div>
             )}
