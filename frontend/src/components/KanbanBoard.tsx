@@ -50,6 +50,13 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
     fetchTasks();
   }, [fetchTasks]);
 
+  // Unmount cleanup: ensure scroll lock is removed if user navigates away during drag
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('kanban-dragging');
+    };
+  }, []);
+
   useEffect(() => {
     const byStatus: Record<string, any[]> = {};
     statuses.forEach((s) => { byStatus[s.name] = []; });
@@ -67,6 +74,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   }, [tasks, statuses]);
 
   const handleDragStart = (result: any) => {
+    document.body.classList.add('kanban-dragging');
     const taskId = parseInt(result.draggableId, 10);
     setDraggingTaskId(taskId);
     const task = tasks.find((t) => t.id === taskId);
@@ -74,6 +82,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   };
 
   const handleDragEnd = async (result: any) => {
+    document.body.classList.remove('kanban-dragging');
     setDraggingTaskId(null);
     setDraggingTask(null);
     setDragPreviewRect(null);
@@ -186,7 +195,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`animate-slideDown w-full flex-shrink-0 md:w-full rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
+                    className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:w-full rounded-2xl p-2 sm:p-3 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'
@@ -208,7 +217,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       </span>
                     </div>
 
-                    <div className={`flex flex-row gap-2 overflow-x-auto overflow-y-hidden pb-1 min-h-[7rem] ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
+                    <div className={`flex flex-row flex-nowrap gap-2 overflow-x-scroll overflow-y-hidden pb-1 min-h-[7rem] min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
                       {tasksByStatus[status.name]?.map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                           {/* @ts-ignore - react-beautiful-dnd types */}

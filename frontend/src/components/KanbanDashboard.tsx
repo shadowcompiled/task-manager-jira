@@ -46,6 +46,13 @@ export default function KanbanDashboard() {
     { id: 'overdue', name: 'overdue', displayName: '🔴 בפיגור', color: '#ef4444' },
   ];
 
+  // Unmount cleanup: ensure scroll lock is removed if user navigates away during drag
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('kanban-dragging');
+    };
+  }, []);
+
   // Load all tasks and organize by status
   const loadTasks = async () => {
     try {
@@ -95,9 +102,16 @@ export default function KanbanDashboard() {
     }
   };
 
-  // Handle drag start
+  // Handle drag start - lock main scroll so missions can't be dropped below the page
   const handleDragStart = (task: TaskWithAssignee) => {
     setDraggedTask(task);
+    document.body.classList.add('kanban-dragging');
+    const onDragEnd = () => {
+      document.body.classList.remove('kanban-dragging');
+      document.removeEventListener('dragend', onDragEnd);
+      setDraggedTask(null);
+    };
+    document.addEventListener('dragend', onDragEnd);
   };
 
   // Handle drag over
@@ -140,6 +154,7 @@ export default function KanbanDashboard() {
     } catch (error) {
       console.error('Failed to update task:', error);
     } finally {
+      document.body.classList.remove('kanban-dragging');
       setDraggedTask(null);
     }
   };
@@ -266,7 +281,7 @@ export default function KanbanDashboard() {
               key={column.id}
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(column.name)}
-              className="kanban-column bg-white dark:bg-slate-800 rounded-lg shadow-lg border-2 border-gray-200 dark:border-slate-600 p-3 flex flex-col animate-slideIn hover:shadow-xl transition-shadow"
+              className="kanban-column min-w-0 bg-white dark:bg-slate-800 rounded-lg shadow-lg border-2 border-gray-200 dark:border-slate-600 p-3 flex flex-col animate-slideIn hover:shadow-xl transition-shadow"
               style={{ borderTopColor: column.color }}
             >
               {/* Column Header */}
@@ -282,15 +297,15 @@ export default function KanbanDashboard() {
                 </p>
               </div>
 
-              {/* Tasks */}
-              <div className="space-y-2 flex-1 overflow-y-auto">
+              {/* Tasks - horizontal row with horizontal scroll (flex-nowrap so row never wraps) */}
+              <div className="flex flex-row flex-nowrap gap-2 overflow-x-scroll overflow-y-hidden pb-1 min-h-[7rem] min-w-0">
                 {column.tasks.length > 0 ? (
                   column.tasks.map((task) => (
                     <div
                       key={task.id}
                       draggable
                       onDragStart={() => handleDragStart(task)}
-                      className="bg-gradient-to-br from-white to-gray-50 dark:from-slate-700 dark:to-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded-lg p-2.5 cursor-move hover:shadow-lg hover:border-blue-400 dark:hover:border-teal-500 transition-all duration-200 ease-out transform hover:scale-[1.02] active:scale-[0.98]"
+                      className="flex-shrink-0 min-w-[260px] w-[260px] bg-gradient-to-br from-white to-gray-50 dark:from-slate-700 dark:to-slate-800 border-2 border-gray-300 dark:border-slate-600 rounded-lg p-2.5 cursor-move hover:shadow-lg hover:border-blue-400 dark:hover:border-teal-500 transition-all duration-200 ease-out transform hover:scale-[1.02] active:scale-[0.98]"
                     >
                       {/* Task Title */}
                       <h3 className="font-bold text-gray-800 dark:text-slate-100 text-sm mb-2 line-clamp-2">
@@ -349,9 +364,9 @@ export default function KanbanDashboard() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-gray-400 dark:text-slate-500 py-3 text-xs font-semibold">
+                  <div className="flex-shrink-0 min-w-[260px] w-[260px] flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-slate-600 text-gray-400 dark:text-slate-500 text-xs font-semibold">
                     אין משימות
-                  </p>
+                  </div>
                 )}
               </div>
             </div>

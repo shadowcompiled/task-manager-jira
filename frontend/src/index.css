@@ -23,6 +23,11 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Phone: remove 300ms tap delay and improve touch */
+button, a, [role="button"], input[type="submit"], input[type="button"] {
+  touch-action: manipulation;
+}
+
 body {
   font-family: 'Heebo', 'Segoe UI', Tahoma, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -62,6 +67,14 @@ body {
 .main-scroll {
   -webkit-overflow-scrolling: touch;
   overflow-x: hidden;
+}
+
+/* Prevent main and body from scrolling while dragging on Kanban so missions can't be dropped below the page */
+body.kanban-dragging {
+  overflow: hidden;
+}
+body.kanban-dragging main {
+  overflow: hidden !important;
 }
 
 /* Mobile-First: Prevent horizontal scroll */
@@ -552,13 +565,17 @@ html.light-mode .hover\:bg-slate-600\/70:hover {
   background-color: #f0ede8;
 }
 
-/* Modal overlays - warm dark */
+/* Modal overlays - warm dark (readable in light mode) */
 html.light-mode .bg-black\/80 {
   background-color: rgba(44, 36, 32, 0.5);
 }
 
 html.light-mode .bg-black\/60 {
   background-color: rgba(44, 36, 32, 0.4);
+}
+
+html.light-mode .bg-black\/50 {
+  background-color: rgba(44, 36, 32, 0.35);
 }
 
 /* Teal accent - slightly warmer */
@@ -754,4 +771,15 @@ html.light-mode [class*="modal"],
 html.light-mode [class*="dropdown"] {
   background-color: var(--light-surface);
   color: var(--light-text);
+}
+
+/* Settings menu (header dropdown & bottom sheet) - light panel in light mode */
+html.light-mode .app-header [class*="bg-slate-800"].rounded-xl,
+html.light-mode .app-header .rounded-t-2xl.bg-slate-800 {
+  background-color: #ffffff;
+  border-color: #e2ddd4;
+  box-shadow: 0 4px 20px rgba(44, 36, 32, 0.08);
+}
+html.light-mode .menu-item-rtl:hover {
+  background-color: #f5f2ed;
 }

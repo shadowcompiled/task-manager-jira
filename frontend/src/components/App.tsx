@@ -123,7 +123,7 @@ export default function App() {
                       transition={getTransition(reducedMotion, modalTransition)}
                       className="md:hidden fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl bg-slate-800 border border-b-0 border-teal-500/40 shadow-2xl flex flex-col pb-[env(safe-area-inset-bottom)] overflow-hidden"
                     >
-                      <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5 flex flex-col gap-0" dir="rtl" style={{ direction: 'rtl' }}>
+                      <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-5 flex flex-col gap-0 items-end" dir="rtl" style={{ direction: 'rtl' }}>
                         {user.role === 'admin' && (
                           <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                             <span>משתמשים</span><span>👤</span>
@@ -153,7 +153,7 @@ export default function App() {
                 {showHeaderMenu && (
                   <>
                     {/* Desktop: dropdown */}
-                    <div dir="rtl" className="hidden md:block absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50 flex flex-col" style={{ direction: 'rtl' }}>
+                    <div dir="rtl" className="hidden md:block absolute right-0 top-full mt-1 py-2 w-52 bg-slate-800 border border-teal-500/40 rounded-xl shadow-xl z-50 flex flex-col items-end" style={{ direction: 'rtl' }}>
                       {user.role === 'admin' && (
                         <button onClick={() => { setShowAdminPanel(true); setShowHeaderMenu(false); }} className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[44px] flex items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                           <span>משתמשים</span><span>👤</span>
