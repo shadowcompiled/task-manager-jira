@@ -1,245 +1,61 @@
-# 🚀 Vercel Deployment Guide
+# Deployment – Single Vercel Project
 
-## Overview
+This app is deployed as **one Vercel project**: frontend (static) and backend (serverless API) in the same repo and the same deployment.
 
-This app uses:
-- **Frontend**: React + Vite → Deploy on **Vercel**
-- **Backend**: Node.js + Express + SQLite → Deploy on **Railway** or **Render**
+## Architecture
 
-> ⚠️ Vercel serverless doesn't support SQLite (ephemeral filesystem). Backend must be deployed separately.
+- **Repo root** is the project root for Vercel. Deploy from the repository root (not from `frontend/` or `backend/`).
+- **Build:** `vercel.json` runs `installCommand` and `buildCommand` to install and build both backend and frontend. Output is `frontend/dist` (static assets).
+- **API:** All `/api/*` requests are rewritten to the serverless function at `api/index.js`, which loads the Express app from `backend/dist/server.js`. The backend runs only as serverless (no long-running process).
+- **Crons:** Scheduled jobs (expiring-task notifications, push reminders, cleanup) run via **Vercel Cron** by calling the HTTP endpoints defined in root `vercel.json`. No in-process scheduler.
 
----
+## One-time setup
 
-## Step 1: Deploy Backend (Railway - Recommended)
+1. **Connect the repo** to Vercel (Import Git Repository). Use the **root** of the repository as the project root.
+2. **Database:** Use **Vercel Postgres** (Storage tab → Create Database). This sets `POSTGRES_URL` (and related) automatically. For a new database, run the schema once (Vercel Postgres SQL tab or locally: `psql $POSTGRES_URL -f backend/src/db/schema.sql`).
+3. **Environment variables:** In Vercel → Project Settings → Environment Variables, set the variables below (Production and Preview as needed).
 
-### Option A: Railway (Easiest)
+## Environment variables
 
-1. **Go to** [railway.app](https://railway.app) and sign up
+Set these in the Vercel project (**Settings → Environment Variables**):
 
-2. **Create new project** → "Deploy from GitHub"
+| Variable | Required | Notes |
+|----------|----------|--------|
+| `POSTGRES_URL` | Yes | Usually set by **Vercel Postgres** integration. Otherwise paste the connection string. |
+| `JWT_SECRET` | Yes | Strong secret for auth tokens (e.g. `openssl rand -hex 32`). |
+| `CRON_SECRET` | Yes | Secret for protecting cron endpoints. Vercel Cron must send it (see Crons below). |
+| `VAPID_PUBLIC_KEY` | Yes (for push) | Web Push VAPID public key. |
+| `VAPID_PRIVATE_KEY` | Yes (for push) | Web Push VAPID private key. |
+| `EMAIL_FROM` | Optional | e.g. `mailto:you@example.com` (used for push/VAPID subject). |
+| `EMAIL_USER` / `EMAIL_PASSWORD` | Optional | For SMTP email (task assignment/expiry). App works without email. |
+| `SENDGRID_API_KEY` | Optional | Alternative to SMTP for sending email. |
 
-3. **Connect your repo** and select the `backend` folder
+After moving from Railway (or any other host), remove env vars from the old host once the Vercel deployment is verified.
 
-4. **Add environment variables**:
-   ```
-   PORT=3000
-   NODE_ENV=production
-   JWT_SECRET=your-super-secret-key-change-this
-   DATABASE_PATH=./restaurant.db
-   EMAIL_HOST=smtp.gmail.com
-   EMAIL_PORT=587
-   EMAIL_SECURE=false
-   EMAIL_USER=your-email@gmail.com
-   EMAIL_PASSWORD=your-app-password
-   EMAIL_FROM=your-email@gmail.com
-   ```
+## Crons
 
-5. **Set start command**: `npm run build && npm start`
+Root `vercel.json` defines two cron jobs:
 
-6. **Get your URL**: `https://your-app.railway.app`
+- **`/api/cron/daily-notifications`** – hourly (`0 * * * *`): expiring-task emails, recurring task processing, cleanup of old completed tasks.
+- **`/api/cron/push-scheduled`** – every minute (`* * * * *`): scheduled push notifications (e.g. morning/noon/evening).
 
-### Option B: Render
+The cron routes in `backend/src/routes/cron.ts` require authentication: `Authorization: Bearer <CRON_SECRET>` or header `x-cron-secret: <CRON_SECRET>`. Set `CRON_SECRET` in Vercel and, if your plan supports it, configure the Vercel Cron to send this header or use Vercel’s cron secret feature so that only Vercel’s runner can call these endpoints.
 
-1. **Go to** [render.com](https://render.com) and sign up
+## Database and migrations
 
-2. **New** → **Web Service** → Connect GitHub
+- **Vercel Postgres:** With the integration, `POSTGRES_URL` is injected automatically.
+- **Schema:** Backend runs `runMigrationIfNeeded()` on each request when on Vercel. For a brand-new database, run `backend/src/db/schema.sql` once (e.g. via Vercel Postgres SQL tab or `psql $POSTGRES_URL -f backend/src/db/schema.sql`).
 
-3. **Settings**:
-   - Root Directory: `backend`
-   - Build Command: `npm install && npm run build`
-   - Start Command: `npm start`
+## Railway (or other host) cleanup
 
-4. **Add environment variables** (same as Railway)
+After the Vercel deployment is working:
 
-5. **Get your URL**: `https://your-app.onrender.com`
+- Stop or remove the backend service on Railway (or other host).
+- Remove env vars from the old host.
+- No Railway config files are in the repo; no code changes needed for removal.
 
----
+## Summary
 
-## Step 2: Deploy Frontend (Vercel)
-
-### Option A: Vercel CLI
-
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Navigate to frontend
-cd frontend
-
-# Deploy
-vercel
-
-# Follow prompts:
-# - Link to existing project? No
-# - Project name: mission-tracking
-# - Framework: Vite
-# - Build command: npm run build
-# - Output directory: dist
-```
-
-### Option B: Vercel Dashboard
-
-1. **Go to** [vercel.com](https://vercel.com) and sign up
-
-2. **Import Project** → Connect GitHub
-
-3. **Configure**:
-   - Root Directory: `frontend`
-   - Framework Preset: Vite
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-
-4. **Add Environment Variable**:
-   ```
-   VITE_API_URL=https://your-backend-url.railway.app/api
-   ```
-
-5. **Deploy**
-
----
-
-## Step 3: Configure CORS
-
-Update `backend/src/server.ts` to allow your Vercel domain:
-
-```typescript
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://your-app.vercel.app',
-    'https://your-custom-domain.com'
-  ],
-  credentials: true
-}));
-```
-
----
-
-## Step 4: Custom Domain (Optional)
-
-### Vercel (Frontend)
-1. Go to Project Settings → Domains
-2. Add your domain
-3. Update DNS records as instructed
-
-### Railway (Backend)
-1. Go to Project Settings → Custom Domain
-2. Add your API subdomain (e.g., `api.yourdomain.com`)
-3. Update DNS records
-
----
-
-## Environment Variables Summary
-
-### Backend (.env)
-```env
-# Server
-PORT=3000
-NODE_ENV=production
-JWT_SECRET=generate-a-32-char-random-string
-
-# Database
-DATABASE_PATH=./restaurant.db
-
-# Email (Gmail)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_SECURE=false
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-16-char-app-password
-EMAIL_FROM=your-email@gmail.com
-```
-
-### Frontend (Vercel Environment Variables)
-```env
-VITE_API_URL=https://your-backend.railway.app/api
-```
-
----
-
-## Quick Deploy Commands
-
-```bash
-# Frontend (Vercel)
-cd frontend
-vercel --prod
-
-# Backend (Railway - using CLI)
-npm install -g @railway/cli
-cd backend
-railway login
-railway init
-railway up
-```
-
----
-
-## Post-Deployment Checklist
-
-- [ ] Backend API is accessible (test: `https://your-backend/api/health`)
-- [ ] Frontend loads correctly
-- [ ] Login works (admin@restaurant.com / admin123)
-- [ ] Can create new users
-- [ ] Email notifications working
-- [ ] CORS configured correctly
-- [ ] HTTPS enabled
-- [ ] Custom domain configured (optional)
-
----
-
-## Default Admin Credentials
-
-```
-Email: admin@restaurant.com
-Password: admin123
-```
-
-**⚠️ Change this password immediately after first login!**
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| CORS errors | Add frontend URL to backend CORS config |
-| API not reachable | Check VITE_API_URL in Vercel env vars |
-| Login fails | Verify JWT_SECRET is set in backend |
-| Emails not sending | Check EMAIL_* variables and app password |
-| Database reset | Railway/Render persist SQLite file |
-
----
-
-## Architecture Diagram
-
-```
-┌─────────────────┐         ┌─────────────────┐
-│   Vercel        │         │   Railway       │
-│   (Frontend)    │  HTTPS  │   (Backend)     │
-│                 │◄───────►│                 │
-│   React + Vite  │         │   Express API   │
-│                 │         │   + SQLite      │
-└─────────────────┘         └─────────────────┘
-        │                           │
-        │                           │
-        ▼                           ▼
-   ┌─────────┐               ┌─────────────┐
-   │ Users   │               │ Gmail SMTP  │
-   │ Browser │               │ (Emails)    │
-   └─────────┘               └─────────────┘
-```
-
----
-
-## Cost Estimate
-
-| Service | Free Tier | Notes |
-|---------|-----------|-------|
-| Vercel | 100GB bandwidth/month | Hobby plan free |
-| Railway | $5 credit/month | Enough for small apps |
-| Render | 750 hours/month | Free web service |
-| Gmail SMTP | Free | 500 emails/day limit |
-
----
-
-**Your app is ready for production! 🚀**
+- **Single Git repo, single Vercel project, one deployment.**
+- Frontend: static from `frontend/dist`. API: serverless via `api/index.js` → Express in `backend/`.
+- All required env vars and cron auth are configured in the Vercel project.

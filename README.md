@@ -52,4 +52,4 @@ Password: password123
 
 ## Deployment
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment instructions.
+The app is a **single Vercel project** (deploy from repo root): frontend is static (`frontend/dist`), API is serverless via `api/index.js` and the Express app in `backend/`. Crons are configured in root `vercel.json` and require `CRON_SECRET`. See [DEPLOYMENT.md](DEPLOYMENT.md) for env vars, database, and production steps.
