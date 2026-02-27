@@ -49,15 +49,27 @@ export default function KanbanDashboard() {
   const [newStatusName, setNewStatusName] = useState('');
   const [newStatusColor, setNewStatusColor] = useState('#3b82f6');
   const dragScrollListenerRef = useRef<((ev: DragEvent) => void) | null>(null);
+  const dropFallbackListenerRef = useRef<((ev: DragEvent) => void) | null>(null);
+  const handleDropRef = useRef<(statusName: string) => void>(() => {});
 
-  // Unmount cleanup: ensure scroll lock and drag-scroll listener are removed if user navigates away during drag
+  // Keep ref updated so document-level drop listener always sees current handleDrop
+  useEffect(() => {
+    handleDropRef.current = handleDrop;
+  });
+
+  // Unmount cleanup: ensure scroll lock and drag-scroll/drop-fallback listeners are removed if user navigates away during drag
   useEffect(() => {
     return () => {
       document.body.classList.remove('kanban-dragging');
-      const listener = dragScrollListenerRef.current;
-      if (listener) {
-        document.removeEventListener('dragover', listener);
+      const scrollListener = dragScrollListenerRef.current;
+      if (scrollListener) {
+        document.removeEventListener('dragover', scrollListener);
         dragScrollListenerRef.current = null;
+      }
+      const dropListener = dropFallbackListenerRef.current;
+      if (dropListener) {
+        document.removeEventListener('drop', dropListener, true);
+        dropFallbackListenerRef.current = null;
       }
     };
   }, []);
@@ -151,12 +163,36 @@ export default function KanbanDashboard() {
       // Do not call ev.preventDefault() here so dragover can reach the column under the pointer and drop target stays correct after scroll
     };
     dragScrollListenerRef.current = onDragOverScroll;
+
+    // When drop lands on spacer/footer (no column), resolve column from point above footer and call handleDrop
+    const FOOTER_OFFSET = 100;
+    const onDropFallback = (ev: DragEvent) => {
+      const target = ev.target as HTMLElement;
+      if (target.closest('[data-kanban-dash-column]')) return;
+      const el = document.elementFromPoint(ev.clientX, ev.clientY - FOOTER_OFFSET);
+      const col = el?.closest<HTMLElement>('[data-kanban-dash-column]');
+      if (col) {
+        const name = col.getAttribute('data-kanban-dash-column');
+        if (name) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          handleDropRef.current(name);
+        }
+      }
+    };
+    dropFallbackListenerRef.current = onDropFallback;
+    document.addEventListener('drop', onDropFallback, true);
+
     const onDragEnd = () => {
       document.body.classList.remove('kanban-dragging');
       document.removeEventListener('dragend', onDragEnd);
       if (dragScrollListenerRef.current) {
         document.removeEventListener('dragover', dragScrollListenerRef.current);
         dragScrollListenerRef.current = null;
+      }
+      if (dropFallbackListenerRef.current) {
+        document.removeEventListener('drop', dropFallbackListenerRef.current, true);
+        dropFallbackListenerRef.current = null;
       }
       setDraggedTask(null);
     };
@@ -326,6 +362,7 @@ export default function KanbanDashboard() {
           {columns.map((column) => (
             <div
               key={column.id}
+              data-kanban-dash-column={column.name}
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(column.name)}
               className="kanban-column min-w-0 bg-transparent rounded-lg border-2 border-gray-200 dark:border-slate-600 p-3 flex flex-col animate-slideIn transition-shadow"

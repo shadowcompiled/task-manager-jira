@@ -215,10 +215,14 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
         if (main) {
           if (clientY < SCROLL_THRESHOLD) {
             main.scrollTop = Math.max(0, main.scrollTop - SCROLL_STEP);
-            main.dispatchEvent(new Event('scroll', { bubbles: true }));
+            requestAnimationFrame(() => {
+              main.dispatchEvent(new Event('scroll', { bubbles: true }));
+            });
           } else if (clientY > window.innerHeight - SCROLL_THRESHOLD) {
             main.scrollTop = Math.min(main.scrollHeight - main.clientHeight, main.scrollTop + SCROLL_STEP);
-            main.dispatchEvent(new Event('scroll', { bubbles: true }));
+            requestAnimationFrame(() => {
+              main.dispatchEvent(new Event('scroll', { bubbles: true }));
+            });
           }
         }
       }
