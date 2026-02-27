@@ -87,6 +87,11 @@ body.kanban-dragging {
 body.kanban-dragging main {
   overflow: hidden !important;
 }
+/* Let drag/drop hit the scrollable content under header/footer so drop target stays correct after auto-scroll */
+body.kanban-dragging .app-header,
+body.kanban-dragging .app-bottom-bar {
+  pointer-events: none;
+}
 
 /* Mobile-First: Prevent horizontal scroll */
 html, body, #root {
