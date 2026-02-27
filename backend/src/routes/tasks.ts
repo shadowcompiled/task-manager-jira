@@ -84,6 +84,13 @@ router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (r
     const createdBy = req.user?.id;
     const status = assigned_to ? 'assigned' : 'planned';
 
+    if (assigned_to) {
+      const assigneeCheck = await sql`SELECT id FROM users WHERE id = ${assigned_to} AND organization_id = ${organizationId}`;
+      if (assigneeCheck.rows.length === 0) {
+        return res.status(403).json({ error: 'Assignee must belong to your organization' });
+      }
+    }
+
     const result = await sql`
       INSERT INTO tasks (title, description, assigned_to, organization_id, priority, status, due_date, recurrence, created_by)
       VALUES (${title}, ${description ?? null}, ${assigned_to ?? null}, ${organizationId}, ${priority || 'medium'}, ${status}, ${due_date ?? null}, ${recurrence || 'once'}, ${createdBy})
@@ -141,6 +148,12 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 
     let assignedUser: any = null;
     if (assigned_to !== undefined && assigned_to !== task.assigned_to) {
+      if (assigned_to != null) {
+        const assigneeCheck = await sql`SELECT id FROM users WHERE id = ${assigned_to} AND organization_id = ${organizationId}`;
+        if (assigneeCheck.rows.length === 0) {
+          return res.status(403).json({ error: 'Assignee must belong to your organization' });
+        }
+      }
       const u = await sql`SELECT id, email, name FROM users WHERE id = ${assigned_to}`;
       assignedUser = u.rows[0] as any;
     }

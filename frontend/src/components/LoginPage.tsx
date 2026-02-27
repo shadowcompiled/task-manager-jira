@@ -19,7 +19,9 @@ const item = {
   }),
 };
 
-export default function LoginPage() {
+type Props = { onShowRegister?: () => void };
+
+export default function LoginPage({ onShowRegister }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -128,6 +130,14 @@ export default function LoginPage() {
           >
             {loading ? '⏳ מתחבר...' : '🔓 התחבר'}
           </motion.button>
+
+          {onShowRegister && (
+            <motion.p className="mt-6 text-center text-slate-300 text-sm" variants={item} custom={reducedMotion ?? false}>
+              <button type="button" onClick={onShowRegister} className="text-teal-400 hover:text-teal-300 font-semibold underline">
+                אין לך חשבון? הרשם
+              </button>
+            </motion.p>
+          )}
         </motion.form>
       </motion.div>
 

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { modalTransition, quickTransition, pageTransition, getTransition, useReducedMotion } from '../utils/motion';
 import { useAuthStore } from '../store';
 import LoginPage from './LoginPage';
+import RegisterPage from './RegisterPage';
 import DailyTaskList from './DailyTaskList';
 import KanbanBoard from './KanbanBoard';
 import KanbanDashboard from './KanbanDashboard';
@@ -39,6 +40,7 @@ export default function App() {
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [showUsersNotificationStatus, setShowUsersNotificationStatus] = useState(false);
   const [showChangesHistory, setShowChangesHistory] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
     return (localStorage.getItem(THEME_KEY) ?? 'light') !== 'light';
   });
@@ -62,7 +64,15 @@ export default function App() {
   }, []);
 
   if (!user) {
-    return <LoginPage />;
+    if (showRegister) {
+      return (
+        <RegisterPage
+          onShowLogin={() => setShowRegister(false)}
+          onRegistered={() => setShowRegister(false)}
+        />
+      );
+    }
+    return <LoginPage onShowRegister={() => setShowRegister(true)} />;
   }
 
   return (

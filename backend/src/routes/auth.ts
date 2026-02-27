@@ -30,16 +30,35 @@ router.post('/login', async (req: Request, res: Response) => {
 
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { email, name, password, organizationId: bodyOrgId, restaurantId } = req.body;
+    const { email, name, password } = req.body;
     if (!email || !name || !password) {
       return res.status(400).json({ error: 'Missing required fields: email, name, password' });
     }
     const hashedPassword = bcrypt.hashSync(password, 10);
-    const role = 'worker';
-    let finalOrganizationId = bodyOrgId ?? restaurantId ?? 1;
 
-    if (finalOrganizationId == null || finalOrganizationId === '') {
-      const checkOrg = await sql`SELECT id FROM organizations LIMIT 1`;
+    // Organization: never trust client. Use token's org when admin/maintainer creates user, else first org or create for first user.
+    let finalOrganizationId: number;
+    let isAdminCreating = false;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader?.split(' ')[1];
+    if (token) {
+      try {
+        const decoded = verifyToken(token) as any;
+        const roleDecoded = decoded.role;
+        const orgId = decoded.organizationId ?? decoded.restaurant_id;
+        if ((roleDecoded === 'admin' || roleDecoded === 'maintainer') && orgId) {
+          finalOrganizationId = Number(orgId);
+          isAdminCreating = true;
+        } else {
+          const first = await sql`SELECT id FROM organizations ORDER BY id LIMIT 1`;
+          finalOrganizationId = first.rows.length > 0 ? (first.rows[0] as any).id : 1;
+        }
+      } catch {
+        const first = await sql`SELECT id FROM organizations ORDER BY id LIMIT 1`;
+        finalOrganizationId = first.rows.length > 0 ? (first.rows[0] as any).id : 1;
+      }
+    } else {
+      const checkOrg = await sql`SELECT id FROM organizations ORDER BY id LIMIT 1`;
       if (checkOrg.rows.length > 0) {
         finalOrganizationId = (checkOrg.rows[0] as any).id;
       } else {
@@ -48,17 +67,31 @@ router.post('/register', async (req: Request, res: Response) => {
       }
     }
 
+    const userCount = await sql`SELECT COUNT(*)::int as n FROM users`;
+    const isFirstUser = (userCount.rows[0] as any)?.n === 0;
+    let role: string = isFirstUser ? 'admin' : 'worker';
+    let status: string = isFirstUser ? 'approved' : 'pending';
+    if (isAdminCreating) {
+      const bodyRole = req.body.role as string | undefined;
+      if (bodyRole === 'admin') role = 'admin';
+      else if (bodyRole === 'manager') role = 'maintainer';
+      else if (bodyRole === 'staff') role = 'worker';
+      status = 'approved';
+    }
+
     try {
       const result = await sql`
         INSERT INTO users (email, name, password, role, status, organization_id)
-        VALUES (${email}, ${name}, ${hashedPassword}, ${role}, 'pending', ${finalOrganizationId})
+        VALUES (${email}, ${name}, ${hashedPassword}, ${role}, ${status}, ${finalOrganizationId})
         RETURNING *
       `;
       const created = result.rows[0] as any;
       if (!created) return res.status(500).json({ error: 'Failed to create user - no ID returned' });
       res.status(201).json({
         user: { ...created, password: undefined },
-        message: `User ${name} registered successfully. Your account is pending admin approval.`
+        message: isFirstUser
+          ? `Welcome, ${name}. You are the first user and have been set as admin. You can log in now.`
+          : `User ${name} registered successfully. Your account is pending admin approval.`
       });
     } catch (dbError: any) {
       console.error('Database error creating user:', dbError);
