@@ -203,7 +203,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
   useLayoutEffect(() => {
     if (draggingTaskId == null) return;
-    const SCROLL_THRESHOLD = 80;
+    // Narrow band (48px) so drop on columns near top/bottom works without finger offset
+    const SCROLL_THRESHOLD = 48;
     const SCROLL_STEP = 12;
     const onMove = (e: MouseEvent | TouchEvent) => {
       const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX;
@@ -230,7 +231,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
   return (
     <div className="kanban-page min-h-full w-full min-w-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <div className="max-w-6xl mx-auto w-full px-4 sm:px-4 md:px-6 py-4 md:py-6">
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-4 md:px-6 pt-4 pb-2 md:py-6">
       <style>{`
         @keyframes slideDown {
           from { opacity: 0; transform: translateY(-20px); }

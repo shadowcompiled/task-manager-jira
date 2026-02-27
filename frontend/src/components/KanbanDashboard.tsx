@@ -136,10 +136,10 @@ export default function KanbanDashboard() {
       dt.setDragImage(ghost, 20, 16);
       requestAnimationFrame(() => ghost.remove());
     }
-    const SCROLL_THRESHOLD = 80;
+    // Narrow band (48px) so user can drop on columns near top/bottom without triggering scroll; do not preventDefault so dragover reaches column under pointer
+    const SCROLL_THRESHOLD = 48;
     const SCROLL_STEP = 12;
     const onDragOverScroll = (ev: DragEvent) => {
-      ev.preventDefault();
       const main = document.querySelector<HTMLElement>('main.main-scroll');
       if (!main) return;
       const y = ev.clientY;
@@ -148,6 +148,7 @@ export default function KanbanDashboard() {
       } else if (y > window.innerHeight - SCROLL_THRESHOLD) {
         main.scrollTop = Math.min(main.scrollHeight - main.clientHeight, main.scrollTop + SCROLL_STEP);
       }
+      // Do not call ev.preventDefault() here so dragover can reach the column under the pointer and drop target stays correct after scroll
     };
     dragScrollListenerRef.current = onDragOverScroll;
     const onDragEnd = () => {

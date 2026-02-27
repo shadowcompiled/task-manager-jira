@@ -349,7 +349,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-[95rem] mx-auto w-full min-w-0 overflow-x-hidden">
+      <div className="p-4 sm:p-5 md:p-6 pb-3 md:pb-8 max-w-[95rem] mx-auto w-full min-w-0 overflow-x-hidden">
         <div className="mb-6">
           <div className="h-8 w-48 bg-slate-600/40 rounded animate-pulse mb-1" />
           <div className="h-4 w-64 bg-slate-600/30 rounded animate-pulse" />
@@ -414,7 +414,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
   );
 
   return (
-    <div className="p-4 sm:p-5 md:p-6 pb-8 max-w-[95rem] mx-auto w-full min-w-0 overflow-x-hidden">
+    <div className="p-4 sm:p-5 md:p-6 pb-3 md:pb-8 max-w-[95rem] mx-auto w-full min-w-0 overflow-x-hidden">
       {/* Header */}
       <div className="mb-6 pt-4 pb-3">
         <h1 className="text-[1.875rem] sm:text-3xl font-bold text-slate-900 dark:text-white mb-1">סטטיסטיקה</h1>

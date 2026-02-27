@@ -94,7 +94,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
 
   return (
     <div
-      className="p-4 sm:p-4 max-w-2xl mx-auto w-full min-w-0 pb-6"
+      className="p-4 sm:p-4 max-w-2xl mx-auto w-full min-w-0 pb-3 md:pb-6"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

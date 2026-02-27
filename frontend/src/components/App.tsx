@@ -402,7 +402,7 @@ export default function App() {
               )}
             </AnimatePresence>
             {/* Spacer so last content clears the fixed footer on mobile (minimal) */}
-            <div className="md:hidden shrink-0 w-full h-12" aria-hidden="true" />
+            <div className="md:hidden shrink-0 w-full h-10" aria-hidden="true" />
           </div>
         </main>
       </div>
