@@ -145,16 +145,21 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       assignedUser = u.rows[0] as any;
     }
 
+    const newDueDate = due_date !== undefined ? due_date : task.due_date;
+    const dueDateChanged = newDueDate !== task.due_date;
     await sql`
       UPDATE tasks
       SET title = ${title ?? task.title}, description = ${description !== undefined ? description : task.description},
           assigned_to = ${assigned_to !== undefined ? assigned_to : task.assigned_to},
           priority = ${priority || task.priority}, status = ${newStatus},
-          due_date = ${due_date !== undefined ? due_date : task.due_date},
+          due_date = ${newDueDate},
           estimated_time = ${estimated_time !== undefined ? estimated_time : task.estimated_time},
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${taskId}
     `;
+    if (dueDateChanged) {
+      await sql`UPDATE tasks SET push_reminder_sent_at = NULL WHERE id = ${taskId}`;
+    }
 
     // When moving to last status, set completed_at/verified_at so 3-day auto-cleanup can delete them after 3 days
     if (newStatus === 'completed' && !task.completed_at) {

@@ -122,7 +122,45 @@ const getIsraelTime = () => {
   };
 };
 
+/** Send push to assignees for tasks whose due_date is due right now (within last 2 min). Runs when cron hits every minute. */
+export const checkAndSendTaskDueNowNotifications = async () => {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - 2 * 60 * 1000); // 2 min ago
+  const nowStr = now.toISOString();
+  const windowStr = windowStart.toISOString();
+  const { rows: tasks } = await sql`
+    SELECT t.id, t.title, t.due_date, t.assigned_to
+    FROM tasks t
+    WHERE t.due_date IS NOT NULL
+      AND t.due_date <= ${nowStr}
+      AND t.due_date >= ${windowStr}
+      AND t.push_reminder_sent_at IS NULL
+      AND t.status NOT IN ('completed', 'verified')
+  `;
+  for (const task of tasks as any[]) {
+    const { rows: assigneeRows } = await sql`
+      SELECT user_id FROM task_assignments WHERE task_id = ${task.id}
+    `;
+    const userIds = (assigneeRows as any[]).map((r) => r.user_id);
+    if (userIds.length === 0 && task.assigned_to) userIds.push(task.assigned_to);
+    if (userIds.length === 0) continue;
+    for (const userId of userIds) {
+      await sendNotificationToUser(
+        userId,
+        '⏰ משימה בשל',
+        task.title,
+        undefined,
+        'task-due-now'
+      );
+    }
+    await sql`UPDATE tasks SET push_reminder_sent_at = CURRENT_TIMESTAMP WHERE id = ${task.id}`;
+    console.log(`📲 Due-now push sent for task "${task.title}" (ID: ${task.id})`);
+  }
+};
+
 export const checkAndSendScheduledNotifications = async () => {
+  await checkAndSendTaskDueNowNotifications();
+
   const { hours, minutes, dateStr } = getIsraelTime();
   
   // Reset flags at midnight Israel time (new day)
