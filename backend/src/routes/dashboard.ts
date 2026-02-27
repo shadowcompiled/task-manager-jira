@@ -177,6 +177,40 @@ router.get('/stats/today/activity', authenticateToken, authorize(['maintainer', 
   }
 });
 
+router.get('/changes-history', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const organizationId = req.user?.organizationId;
+    const limit = Math.min(Math.max(1, parseInt(String(req.query.limit), 10) || 100), 200);
+    const offset = Math.max(0, parseInt(String(req.query.offset), 10) || 0);
+
+    const { rows } = await sql`
+      SELECT h.id, h.task_id, t.title AS task_title, u.name AS changed_by_name, h.new_status,
+        s.display_name AS status_display_name, h.changed_at
+      FROM task_status_history h
+      INNER JOIN tasks t ON t.id = h.task_id AND t.organization_id = ${organizationId}
+      LEFT JOIN users u ON h.changed_by = u.id
+      LEFT JOIN statuses s ON s.organization_id = t.organization_id AND s.name = h.new_status
+      ORDER BY h.changed_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const changes = (rows as any[]).map((r: any) => ({
+      id: r.id,
+      task_id: r.task_id,
+      task_title: r.task_title || '',
+      changed_by_name: r.changed_by_name || null,
+      new_status: r.new_status,
+      status_display_name: r.status_display_name || null,
+      changed_at: r.changed_at
+    }));
+
+    res.json({ changes });
+  } catch (error) {
+    console.error('Changes history error:', error);
+    res.status(500).json({ error: 'Failed to fetch changes history' });
+  }
+});
+
 router.get('/stats/weekly', authenticateToken, authorize(['maintainer', 'admin']), async (req: AuthRequest, res: Response) => {
   try {
     const organizationId = req.user?.organizationId;

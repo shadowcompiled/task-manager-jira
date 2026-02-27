@@ -235,7 +235,7 @@ export default function KanbanDashboard() {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+        <h1 className="emoji-icon text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
           📊 לוח משימות
         </h1>
         <p className="text-gray-600 dark:text-slate-300 font-semibold text-sm md:text-base">
@@ -248,7 +248,7 @@ export default function KanbanDashboard() {
         <div className="mb-6 bg-transparent rounded-lg p-4 border-2 border-purple-200 dark:border-purple-500/40">
           <button
             onClick={() => setShowStatusManager(!showStatusManager)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition"
+            className="emoji-icon px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition"
           >
             {showStatusManager ? '✕ סגור מנהל סטטוס' : '⚙️ הוסף סטטוס חדש'}
           </button>
@@ -271,7 +271,7 @@ export default function KanbanDashboard() {
                 />
                 <button
                   onClick={handleAddStatus}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition"
+                  className="emoji-icon flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition"
                 >
                   ✓ הוסף סטטוס
                 </button>
@@ -297,7 +297,7 @@ export default function KanbanDashboard() {
               {/* Column Header - no wrapper background so status container has no white behind it */}
               <div className="mb-2 pb-2 border-b-2 bg-transparent" style={{ borderBottomColor: column.color }}>
                 <h2
-                  className="font-bold text-lg text-white px-3 py-2 rounded-lg text-center"
+                  className="emoji-icon font-bold text-lg text-white px-3 py-2 rounded-lg text-center"
                   style={{ backgroundColor: column.color }}
                 >
                   {column.displayName}
@@ -324,7 +324,7 @@ export default function KanbanDashboard() {
 
                       {/* Priority Badge */}
                       <div className="mb-2">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full border ${getPriorityColor(task.priority)}`}>
+                        <span className={`emoji-icon text-xs font-bold px-2 py-1 rounded-full border ${getPriorityColor(task.priority)}`}>
                           {task.priority === 'critical' && '🔴 חירום'}
                           {task.priority === 'high' && '🟠 גבוה'}
                           {task.priority === 'medium' && '🟡 בינוני'}
@@ -335,13 +335,13 @@ export default function KanbanDashboard() {
                       {/* Assigned User & Estimated Time */}
                       <div className="space-y-1 text-xs text-gray-600 dark:text-slate-300 mb-2">
                         {task.assigned_to_name && (
-                          <p className="font-semibold">👤 {task.assigned_to_name}</p>
+                          <p className="emoji-icon font-semibold">👤 {task.assigned_to_name}</p>
                         )}
                         {task.estimated_time && (
-                          <p className="font-semibold">⏱️ {formatEstimatedTime(task.estimated_time)}</p>
+                          <p className="emoji-icon font-semibold">⏱️ {formatEstimatedTime(task.estimated_time)}</p>
                         )}
                         {task.due_date && (
-                          <p className="font-semibold">📅 {new Date(task.due_date).toLocaleDateString('he-IL')}</p>
+                          <p className="emoji-icon font-semibold">📅 {new Date(task.due_date).toLocaleDateString('he-IL')}</p>
                         )}
                       </div>
 
@@ -386,7 +386,7 @@ export default function KanbanDashboard() {
 
       {/* Mobile-friendly footer tip - compact so no big white gap below last mission */}
       <div className="mt-2 lg:hidden bg-blue-50 dark:bg-slate-800 border-2 border-blue-200 dark:border-slate-600 rounded-lg px-3 py-2 text-center">
-        <p className="text-xs text-gray-700 dark:text-slate-300 font-semibold">
+        <p className="emoji-icon text-xs text-gray-700 dark:text-slate-300 font-semibold">
           💡 גרור משימות לשינוי סטטוס. גלול לראות יותר עמודות
         </p>
       </div>

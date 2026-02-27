@@ -75,13 +75,13 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, showDe
               type="button"
               whileTap={{ scale: 0.92 }}
               onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(); }}
-              className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-slate-600 hover:bg-teal-500/80 text-white text-sm"
+              className="emoji-icon min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg bg-slate-600 hover:bg-teal-500/80 text-white text-sm"
               aria-label="עריכה"
             >
               ✏️
             </motion.button>
           )}
-        <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-1 md:ml-2 shadow-md text-white ${
+        <span className={`emoji-icon px-2 md:px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-1 md:ml-2 shadow-md text-white ${
           task.priority === 'critical'
             ? 'bg-red-600'
             : task.priority === 'high'
@@ -119,7 +119,7 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, showDe
             {statusLabels[task.status as keyof typeof statusLabels]}
           </span>
           {task.recurrence !== 'once' && (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md">
+            <span className="emoji-icon px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md">
               🔄 {task.recurrence === 'daily' ? 'יומי' : task.recurrence === 'weekly' ? 'שבועי' : task.recurrence === 'monthly' ? 'חודשי' : task.recurrence}
             </span>
           )}
@@ -130,13 +130,13 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, showDe
         <div className="mt-2 pt-2 border-t border-slate-300 dark:border-slate-600 text-xs space-y-1 text-slate-600 dark:text-slate-400">
           {task.due_date && (
             <div className="flex items-center gap-2 font-semibold">
-              <span>📅</span>
+              <span className="emoji-icon">📅</span>
               <span className="text-xs">{new Date(task.due_date).toLocaleDateString('he-IL')}</span>
             </div>
           )}
           {task.estimated_time && (
             <div className="flex items-center gap-2 font-semibold">
-              <span>⏱️</span>
+              <span className="emoji-icon">⏱️</span>
               <span className="text-xs">
                 {task.estimated_time < 60 
                   ? `${task.estimated_time} דקות` 
@@ -148,7 +148,7 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, showDe
           )}
           {task.assigned_to_name && (
             <div className="flex items-center gap-2 font-semibold">
-              <span>👤</span>
+              <span className="emoji-icon">👤</span>
               <span className="text-xs truncate">{task.assigned_to_name}</span>
             </div>
           )}

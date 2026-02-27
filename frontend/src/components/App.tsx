@@ -15,6 +15,7 @@ import AdminPanel from './AdminPanel';
 import UserManagementModal from './UserManagementModal';
 import { UserApprovalModal } from './UserApprovalModal';
 import UsersNotificationStatusModal from './UsersNotificationStatusModal';
+import ChangesHistoryModal from './ChangesHistoryModal';
 import { ToastProvider } from '../contexts/ToastContext';
 import Toast from './Toast';
 
@@ -37,6 +38,7 @@ export default function App() {
   const [showUserApproval, setShowUserApproval] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [showUsersNotificationStatus, setShowUsersNotificationStatus] = useState(false);
+  const [showChangesHistory, setShowChangesHistory] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
     return (localStorage.getItem(THEME_KEY) ?? 'light') !== 'light';
   });
@@ -144,6 +146,9 @@ export default function App() {
                         <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} dir="rtl" className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex flex-row-reverse items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                           <span>תגיות</span><span>🏷️</span>
                         </button>
+                        <button onClick={() => { setShowChangesHistory(true); setShowHeaderMenu(false); }} dir="rtl" className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex flex-row-reverse items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                          <span>היסטוריית שינויים</span><span>📜</span>
+                        </button>
                         <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} dir="rtl" className="menu-item-rtl w-full text-right px-5 py-3.5 min-h-[48px] flex flex-row-reverse items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                           <span>צוות</span><span>👥</span>
                         </button>
@@ -174,6 +179,9 @@ export default function App() {
                       <button onClick={() => { setShowTagManager(true); setShowHeaderMenu(false); }} dir="rtl" className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex flex-row-reverse items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
                         <span>תגיות</span><span>🏷️</span>
                       </button>
+                      <button onClick={() => { setShowChangesHistory(true); setShowHeaderMenu(false); }} dir="rtl" className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex flex-row-reverse items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold">
+                        <span>היסטוריית שינויים</span><span>📜</span>
+                      </button>
                       <button onClick={() => { setShowUserManagement(true); setShowHeaderMenu(false); }} dir="rtl" className="menu-item-rtl w-full text-right px-4 py-3 min-h-[44px] flex flex-row-reverse items-center justify-end gap-2 text-white hover:bg-slate-700 text-sm font-bold last:rounded-b-xl">
                         <span>צוות</span><span>👥</span>
                       </button>
@@ -194,6 +202,7 @@ export default function App() {
                 <button onClick={() => setShowUserApproval(true)} className="px-3 py-2 bg-orange-600/80 hover:bg-orange-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">✓ אישור</button>
                 <button onClick={() => setShowStatusManager(true)} className="px-3 py-2 bg-cyan-600/80 hover:bg-cyan-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">⚙️ סטטוסים</button>
                 <button onClick={() => setShowTagManager(true)} className="px-3 py-2 bg-emerald-600/80 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">🏷️ תגיות</button>
+                <button onClick={() => setShowChangesHistory(true)} className="px-3 py-2 bg-slate-600/80 hover:bg-slate-700 text-white rounded-lg text-sm font-bold whitespace-nowrap" title="היסטוריית שינויים">📜 היסטוריה</button>
                 <button onClick={() => setShowUserManagement(true)} className="px-3 py-2 bg-purple-600/80 hover:bg-purple-700 text-white rounded-lg text-sm font-bold whitespace-nowrap">👥 צוות</button>
               </div>
             )}
@@ -203,8 +212,8 @@ export default function App() {
           </div>
         </div>
       </header>
-      {/* Spacer so when fully scrolled up no content is hidden under the sticky header (all sections) */}
-      <div className="shrink-0 w-full h-[calc(6.5rem+env(safe-area-inset-top))] sm:h-[calc(7rem+env(safe-area-inset-top))]" aria-hidden="true" />
+      {/* Spacer so when fully scrolled up no content is hidden under the sticky header (Kanban, Missions, all sections) */}
+      <div className="shrink-0 w-full h-[calc(7.5rem+env(safe-area-inset-top))] sm:h-[calc(8rem+env(safe-area-inset-top))]" aria-hidden="true" />
 
       <div className="flex-1 overflow-hidden flex min-w-0">
         {/* Sidebar Navigation */}
@@ -351,8 +360,8 @@ export default function App() {
         )}
       </div>
 
-        {/* Main Content - scrollable; bottom padding must clear fixed nav + FAB + safe area so when fully scrolled down no content is hidden */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pt-2 pb-[max(14rem,calc(12rem+env(safe-area-inset-bottom)))] md:pt-0 md:pb-0 px-3 sm:px-4">
+        {/* Main Content - scrollable; top/bottom padding so header and footer never hide content when fully scrolled (Kanban, Missions, all) */}
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pt-4 pb-[max(16rem,calc(14rem+env(safe-area-inset-bottom)))] md:pt-0 md:pb-0 px-3 sm:px-4">
           <AnimatePresence mode="wait">
             {currentView === 'daily' && (
               <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
@@ -451,6 +460,13 @@ export default function App() {
       <AnimatePresence>
         {showUsersNotificationStatus && (
           <UsersNotificationStatusModal key="users-notification-status" onClose={() => setShowUsersNotificationStatus(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Changes history */}
+      <AnimatePresence>
+        {showChangesHistory && (
+          <ChangesHistoryModal key="changes-history" onClose={() => setShowChangesHistory(false)} />
         )}
       </AnimatePresence>
       <Toast />

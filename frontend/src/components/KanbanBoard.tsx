@@ -211,9 +211,9 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       `}</style>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 sm:mb-6 gap-3 animate-slideDown">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">🧱 לוח פעולות</h1>
+        <h1 className="emoji-icon text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">🧱 לוח פעולות</h1>
         {user?.role === 'admin' && (
-          <div className="text-xs sm:text-sm text-slate-400 font-semibold bg-slate-800 border-r-4 border-teal-500 px-3 py-2 rounded-xl">💡 גרור משימות בין עמודות לעדכון הסטטוס</div>
+          <div className="emoji-icon text-xs sm:text-sm text-slate-400 font-semibold bg-slate-800 border-r-4 border-teal-500 px-3 py-2 rounded-xl">💡 גרור משימות בין עמודות לעדכון הסטטוס</div>
         )}
       </div>
 
@@ -225,14 +225,14 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
         </div>
       ) : tasks.length === 0 && statuses.length > 0 ? (
         <div className="rounded-2xl p-8 border-2 border-dashed border-slate-600 bg-slate-800/50 text-center">
-          <p className="text-4xl mb-3" aria-hidden="true">🧱</p>
+          <p className="emoji-icon text-4xl mb-3" aria-hidden="true">🧱</p>
           <p className="font-bold text-slate-200 text-lg mb-1">אין משימות בלוח</p>
           <p className="text-sm text-slate-400 mb-4">צור משימה ראשונה או גרור משימות מהרשימה</p>
           {onCreateTask && (
             <button
               type="button"
               onClick={onCreateTask}
-              className="min-h-[48px] px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors"
+              className="emoji-icon min-h-[48px] px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors"
             >
               ➕ צור משימה
             </button>
@@ -283,7 +283,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                   >
                     <div className="flex justify-between items-center mb-2">
                       <div className="flex-1 min-w-0">
-                        <h2 className="font-bold text-teal-300 text-sm md:text-base mb-1 truncate">
+                        <h2 className="font-bold text-teal-300 text-sm md:text-base mb-1 truncate emoji-icon">
                           {status.display_name}
                         </h2>
                         <div
@@ -324,7 +324,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       {(!tasksByStatus[status.name] || tasksByStatus[status.name].length === 0) && (
                         <div className="flex items-center justify-center min-w-[200px] w-[200px] flex-shrink-0 min-h-[4rem] text-center py-3 text-slate-400 rounded-xl border-2 border-dashed border-slate-600">
                           <div>
-                            <p className="text-xs font-semibold">✨ אין משימות</p>
+                            <p className="text-xs font-semibold emoji-icon">✨ אין משימות</p>
                             <p className="text-[10px] mt-0.5">גרור משימות לכאן</p>
                           </div>
                         </div>
