@@ -164,12 +164,17 @@ export default function KanbanDashboard() {
     };
     dragScrollListenerRef.current = onDragOverScroll;
 
-    // When drop lands on spacer/footer (no column), resolve column from point above footer and call handleDrop
-    const FOOTER_OFFSET = 100;
+    // When drop lands on spacer/header/footer, resolve column from adjusted coords so drop matches visual position after scroll
+    const EDGE_ZONE = 100;
     const onDropFallback = (ev: DragEvent) => {
-      const target = ev.target as HTMLElement;
-      if (target.closest('[data-kanban-dash-column]')) return;
-      const el = document.elementFromPoint(ev.clientX, ev.clientY - FOOTER_OFFSET);
+      const x = ev.clientX;
+      let y = ev.clientY;
+      if (y < EDGE_ZONE) {
+        y = y + 80; // was over header: use point below header
+      } else if (y > window.innerHeight - EDGE_ZONE) {
+        y = y - 80; // was over footer: use point above footer
+      }
+      const el = document.elementFromPoint(x, y);
       const col = el?.closest<HTMLElement>('[data-kanban-dash-column]');
       if (col) {
         const name = col.getAttribute('data-kanban-dash-column');
