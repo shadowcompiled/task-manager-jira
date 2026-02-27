@@ -37,6 +37,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   const pointerOffsetInitializedRef = useRef(false);
   const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
   const pointerDownTargetRectRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!user || !token) return;
@@ -120,6 +121,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
   const handleDragStart = (result: any) => {
     document.body.classList.add('kanban-dragging');
+    if (pointerDownRef.current) lastPointerRef.current = { ...pointerDownRef.current };
     const taskId = parseInt(result.draggableId, 10);
     setDraggingTaskId(taskId);
     const task = tasks.find((t) => t.id === taskId);
@@ -141,6 +143,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   };
 
   const handleDragEnd = async (result: any) => {
+    const lastPointer = lastPointerRef.current;
+    lastPointerRef.current = null;
     document.body.classList.remove('kanban-dragging');
     setDraggingTaskId(null);
     setDraggingTask(null);
@@ -154,11 +158,44 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       rafIdRef.current = null;
     }
     const { source, destination } = result;
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+    let resolvedStatus: string | null = null;
+    if (destination?.droppableId) resolvedStatus = String(destination.droppableId).trim();
+    if (lastPointer) {
+      const main = document.querySelector<HTMLElement>('main.main-scroll');
+      if (main) {
+        const mainRect = main.getBoundingClientRect();
+        const inHeaderZone = lastPointer.y < mainRect.top + 80;
+        const inFooterZone = lastPointer.y > mainRect.bottom - 80;
+        if (!resolvedStatus || inHeaderZone || inFooterZone) {
+          let id: string | null = null;
+          if (inHeaderZone) {
+            const y = mainRect.top + Math.min(120, mainRect.height / 3);
+            const col = document.elementFromPoint(lastPointer.x, y)?.closest<HTMLElement>('[data-droppable-id]');
+            id = col?.getAttribute('data-droppable-id');
+          } else if (inFooterZone) {
+            for (const offset of [50, 100, 160, 220]) {
+              const y = mainRect.bottom - offset;
+              if (y <= mainRect.top) break;
+              const col = document.elementFromPoint(lastPointer.x, y)?.closest<HTMLElement>('[data-droppable-id]');
+              id = col?.getAttribute('data-droppable-id');
+              if (id) break;
+            }
+            if (!id) {
+              const col = document.elementFromPoint(lastPointer.x, mainRect.top + mainRect.height / 2)?.closest<HTMLElement>('[data-droppable-id]');
+              id = col?.getAttribute('data-droppable-id');
+            }
+          } else {
+            const col = document.elementFromPoint(lastPointer.x, lastPointer.y)?.closest<HTMLElement>('[data-droppable-id]');
+            id = col?.getAttribute('data-droppable-id');
+          }
+          if (id && statuses.some((s) => getStatusName(s) === id)) resolvedStatus = id;
+        }
+      }
+    }
+    if (!resolvedStatus) return;
+    if (destination && source.droppableId === destination.droppableId && source.index === destination.index) return;
     const taskId = parseInt(result.draggableId, 10);
-    const newStatus = destination.droppableId && String(destination.droppableId).trim();
-    if (!newStatus) return;
+    const newStatus = resolvedStatus;
     try {
       setLoading(true);
       await updateTask(taskId, { status: newStatus });
@@ -210,21 +247,26 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX;
       const clientY = 'touches' in e ? e.touches[0]?.clientY : e.clientY;
       if (typeof clientX === 'number' && typeof clientY === 'number') {
+        lastPointerRef.current = { x: clientX, y: clientY };
         setPointerPosition({ x: clientX, y: clientY });
         const main = document.querySelector<HTMLElement>('main.main-scroll');
         if (main) {
           if (clientY < SCROLL_THRESHOLD) {
             main.scrollTop = Math.max(0, main.scrollTop - SCROLL_STEP);
+            void main.offsetHeight; // force reflow so layout is committed
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
                 main.dispatchEvent(new Event('scroll', { bubbles: true }));
+                window.dispatchEvent(new Event('scroll', { bubbles: true }));
               });
             });
           } else if (clientY > window.innerHeight - SCROLL_THRESHOLD) {
             main.scrollTop = Math.min(main.scrollHeight - main.clientHeight, main.scrollTop + SCROLL_STEP);
+            void main.offsetHeight; // force reflow so layout is committed
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
                 main.dispatchEvent(new Event('scroll', { bubbles: true }));
+                window.dispatchEvent(new Event('scroll', { bubbles: true }));
               });
             });
           }
@@ -325,6 +367,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
+                    data-droppable-id={statusKey}
                     className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:min-w-[440px] md:w-[440px] rounded-2xl pt-2 px-2 pb-0 sm:pt-3 sm:px-3 sm:pb-0 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 

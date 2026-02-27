@@ -164,18 +164,29 @@ export default function KanbanDashboard() {
     };
     dragScrollListenerRef.current = onDragOverScroll;
 
-    // When drop lands on spacer/header/footer, resolve column from adjusted coords so drop matches visual position after scroll
-    const EDGE_ZONE = 100;
+    // When drop lands on spacer/header/footer, resolve column from a point inside the visible main content (accurate when scrolled down)
     const onDropFallback = (ev: DragEvent) => {
+      const main = document.querySelector<HTMLElement>('main.main-scroll');
+      if (!main) return;
+      const mainRect = main.getBoundingClientRect();
       const x = ev.clientX;
-      let y = ev.clientY;
-      if (y < EDGE_ZONE) {
-        y = y + 80; // was over header: use point below header
-      } else if (y > window.innerHeight - EDGE_ZONE) {
-        y = y - 80; // was over footer: use point above footer
+      const inHeaderZone = ev.clientY < mainRect.top + 80;
+      const inFooterZone = ev.clientY > mainRect.bottom - 80;
+      let col: HTMLElement | null = null;
+      if (inHeaderZone) {
+        const y = mainRect.top + Math.min(120, mainRect.height / 3);
+        col = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-kanban-dash-column]');
+      } else if (inFooterZone) {
+        for (const offset of [50, 100, 160, 220]) {
+          const y = mainRect.bottom - offset;
+          if (y <= mainRect.top) break;
+          col = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-kanban-dash-column]');
+          if (col) break;
+        }
+        if (!col) col = document.elementFromPoint(x, mainRect.top + mainRect.height / 2)?.closest<HTMLElement>('[data-kanban-dash-column]');
+      } else {
+        col = document.elementFromPoint(x, ev.clientY)?.closest<HTMLElement>('[data-kanban-dash-column]');
       }
-      const el = document.elementFromPoint(x, y);
-      const col = el?.closest<HTMLElement>('[data-kanban-dash-column]');
       if (col) {
         const name = col.getAttribute('data-kanban-dash-column');
         if (name) {
