@@ -1,1 +1,1 @@
-{"version":3,"file":"TaskCard.d.ts","sourceRoot":"","sources":["TaskCard.tsx"],"names":[],"mappings":"AA6BA,MAAM,CAAC,OAAO,UAAU,QAAQ,CAAC,EAAE,IAAI,EAAE,OAAO,EAAE,cAAc,EAAE,MAAM,EAAE,gBAAgB,EAAE,QAAQ,EAAE,cAAc,EAAE,EAAE,GAAG,2CA+H1H"}
+{"version":3,"file":"TaskCard.d.ts","sourceRoot":"","sources":["TaskCard.tsx"],"names":[],"mappings":"AA6BA,MAAM,CAAC,OAAO,UAAU,QAAQ,CAAC,EAAE,IAAI,EAAE,OAAO,EAAE,cAAc,EAAE,MAAM,EAAE,gBAAgB,EAAE,QAAQ,EAAE,cAAc,EAAE,aAAa,EAAE,EAAE,GAAG,2CAiIzI"}

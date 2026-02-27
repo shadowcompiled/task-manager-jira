@@ -175,17 +175,17 @@ export default function KanbanDashboard() {
       let col: HTMLElement | null = null;
       if (inHeaderZone) {
         const y = mainRect.top + Math.min(120, mainRect.height / 3);
-        col = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-kanban-dash-column]');
+        col = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-kanban-dash-column]') ?? null;
       } else if (inFooterZone) {
         for (const offset of [50, 100, 160, 220]) {
           const y = mainRect.bottom - offset;
           if (y <= mainRect.top) break;
-          col = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-kanban-dash-column]');
+          col = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-kanban-dash-column]') ?? null;
           if (col) break;
         }
-        if (!col) col = document.elementFromPoint(x, mainRect.top + mainRect.height / 2)?.closest<HTMLElement>('[data-kanban-dash-column]');
+        if (!col) col = document.elementFromPoint(x, mainRect.top + mainRect.height / 2)?.closest<HTMLElement>('[data-kanban-dash-column]') ?? null;
       } else {
-        col = document.elementFromPoint(x, ev.clientY)?.closest<HTMLElement>('[data-kanban-dash-column]');
+        col = document.elementFromPoint(x, ev.clientY)?.closest<HTMLElement>('[data-kanban-dash-column]') ?? null;
       }
       if (col) {
         const name = col.getAttribute('data-kanban-dash-column');

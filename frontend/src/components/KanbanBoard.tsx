@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { useTaskStore, useAuthStore } from '../store';
+import { useTaskStore, useAuthStore, type Task } from '../store';
 import TaskCard from './TaskCard';
 import axios from 'axios';
 import { API_BASE } from '../store';
@@ -171,22 +171,22 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
           if (inHeaderZone) {
             const y = mainRect.top + Math.min(120, mainRect.height / 3);
             const col = document.elementFromPoint(lastPointer.x, y)?.closest<HTMLElement>('[data-droppable-id]');
-            id = col?.getAttribute('data-droppable-id');
+            id = col?.getAttribute('data-droppable-id') ?? null;
           } else if (inFooterZone) {
             for (const offset of [50, 100, 160, 220]) {
               const y = mainRect.bottom - offset;
               if (y <= mainRect.top) break;
               const col = document.elementFromPoint(lastPointer.x, y)?.closest<HTMLElement>('[data-droppable-id]');
-              id = col?.getAttribute('data-droppable-id');
+              id = col?.getAttribute('data-droppable-id') ?? null;
               if (id) break;
             }
             if (!id) {
               const col = document.elementFromPoint(lastPointer.x, mainRect.top + mainRect.height / 2)?.closest<HTMLElement>('[data-droppable-id]');
-              id = col?.getAttribute('data-droppable-id');
+              id = col?.getAttribute('data-droppable-id') ?? null;
             }
           } else {
             const col = document.elementFromPoint(lastPointer.x, lastPointer.y)?.closest<HTMLElement>('[data-droppable-id]');
-            id = col?.getAttribute('data-droppable-id');
+            id = col?.getAttribute('data-droppable-id') ?? null;
           }
           if (id && statuses.some((s) => getStatusName(s) === id)) resolvedStatus = id;
         }
@@ -198,7 +198,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
     const newStatus = resolvedStatus;
     try {
       setLoading(true);
-      await updateTask(taskId, { status: newStatus });
+      await updateTask(taskId, { status: newStatus as Task['status'] });
       await fetchTasks();
     } catch (error) {
       console.error('Failed to update task status:', error);
