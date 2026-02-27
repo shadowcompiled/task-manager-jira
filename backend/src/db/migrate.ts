@@ -12,14 +12,21 @@ export async function runMigrationIfNeeded(): Promise<void> {
   migrationPromise = (async () => {
     try {
       // Add push_reminder_sent_at to tasks if missing (for "due now" push notifications)
-      const hasCol = await sql`
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = 'tasks' AND column_name = 'push_reminder_sent_at'
+      const hasTasksTable = await sql`
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'tasks'
         LIMIT 1
       `;
-      if (hasCol.rows.length === 0) {
-        await sql`ALTER TABLE tasks ADD COLUMN push_reminder_sent_at TIMESTAMPTZ`;
-        console.log('[migrate] Added tasks.push_reminder_sent_at');
+      if (hasTasksTable.rows.length > 0) {
+        const hasCol = await sql`
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'tasks' AND column_name = 'push_reminder_sent_at'
+          LIMIT 1
+        `;
+        if (hasCol.rows.length === 0) {
+          await sql`ALTER TABLE tasks ADD COLUMN push_reminder_sent_at TIMESTAMPTZ`;
+          console.log('[migrate] Added tasks.push_reminder_sent_at');
+        }
       }
 
       let hasNew = await sql`
