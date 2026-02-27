@@ -73,6 +73,7 @@ export async function runMigrationIfNeeded(): Promise<void> {
           await sql`ALTER TABLE tasks ADD COLUMN push_reminder_sent_at TIMESTAMPTZ`;
           console.log('[migrate] Added tasks.push_reminder_sent_at');
         }
+        await sql`ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_status_check`;
       }
 
       const hasOrganizations = await sql`
