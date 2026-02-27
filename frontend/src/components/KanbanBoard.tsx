@@ -173,12 +173,25 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
             const col = document.elementFromPoint(lastPointer.x, y)?.closest<HTMLElement>('[data-droppable-id]');
             id = col?.getAttribute('data-droppable-id') ?? null;
           } else if (inFooterZone) {
-            for (const offset of [50, 100, 160, 220]) {
-              const y = mainRect.bottom - offset;
-              if (y <= mainRect.top) break;
-              const col = document.elementFromPoint(lastPointer.x, y)?.closest<HTMLElement>('[data-droppable-id]');
-              id = col?.getAttribute('data-droppable-id') ?? null;
-              if (id) break;
+            const columns = main.querySelectorAll<HTMLElement>('[data-droppable-id]');
+            let lowestBottom = mainRect.top;
+            let foundCol: HTMLElement | null = null;
+            for (const el of columns) {
+              const rect = el.getBoundingClientRect();
+              if (rect.bottom > mainRect.top && rect.top < mainRect.bottom && rect.bottom > lowestBottom) {
+                lowestBottom = rect.bottom;
+                foundCol = el;
+              }
+            }
+            if (foundCol) id = foundCol.getAttribute('data-droppable-id') ?? null;
+            if (!id) {
+              for (const offset of [80, 150, 220]) {
+                const y = mainRect.bottom - offset;
+                if (y <= mainRect.top) break;
+                const col = document.elementFromPoint(lastPointer.x, y)?.closest<HTMLElement>('[data-droppable-id]');
+                id = col?.getAttribute('data-droppable-id') ?? null;
+                if (id) break;
+              }
             }
             if (!id) {
               const col = document.elementFromPoint(lastPointer.x, mainRect.top + mainRect.height / 2)?.closest<HTMLElement>('[data-droppable-id]');
