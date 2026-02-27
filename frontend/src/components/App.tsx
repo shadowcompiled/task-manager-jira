@@ -370,30 +370,37 @@ export default function App() {
         )}
       </div>
 
-        {/* Main Content - scrollable; top/bottom padding so header and footer never hide content when fully scrolled (Kanban, Missions, all) */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pt-4 pb-[max(20rem,calc(18rem+env(safe-area-inset-bottom)))] md:pt-0 md:pb-0 px-3 sm:px-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <AnimatePresence mode="wait">
-            {currentView === 'daily' && (
-              <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
-                <DailyTaskList onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); }} onCreateTask={(user?.role === 'manager' || user?.role === 'admin' || user?.role === 'maintainer') ? () => setShowCreateTask(true) : undefined} />
-              </motion.div>
-            )}
-            {currentView === 'kanban' && (
-              <motion.div key="kanban" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
-                <KanbanBoard onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); setOpenTaskInEditMode(true); }} onCreateTask={(user?.role === 'manager' || user?.role === 'admin' || user?.role === 'maintainer') ? () => setShowCreateTask(true) : undefined} />
-              </motion.div>
-            )}
-            {currentView === 'kanban-dash' && (
-              <motion.div key="kanban-dash" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
-                <KanbanDashboard />
-              </motion.div>
-            )}
-            {currentView === 'dashboard' && (
-              <motion.div key="dashboard" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
-                <Dashboard onTaskSelect={setSelectedTask} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* Main Content - scrollable; top/bottom padding + end spacer so header and footer never hide content when fully scrolled (all sections) */}
+        <main
+          className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pt-4 px-3 sm:px-4 md:pt-0 md:pb-0"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <div className="min-h-full flex flex-col">
+            <AnimatePresence mode="wait">
+              {currentView === 'daily' && (
+                <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="min-w-0 w-full flex-shrink-0">
+                  <DailyTaskList onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); }} onCreateTask={(user?.role === 'manager' || user?.role === 'admin' || user?.role === 'maintainer') ? () => setShowCreateTask(true) : undefined} />
+                </motion.div>
+              )}
+              {currentView === 'kanban' && (
+                <motion.div key="kanban" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="min-w-0 w-full flex-shrink-0">
+                  <KanbanBoard onTaskSelect={setSelectedTask} onEditTask={(t) => { setSelectedTask(t); setOpenTaskInEditMode(true); }} onCreateTask={(user?.role === 'manager' || user?.role === 'admin' || user?.role === 'maintainer') ? () => setShowCreateTask(true) : undefined} />
+                </motion.div>
+              )}
+              {currentView === 'kanban-dash' && (
+                <motion.div key="kanban-dash" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="min-w-0 w-full flex-shrink-0">
+                  <KanbanDashboard />
+                </motion.div>
+              )}
+              {currentView === 'dashboard' && (
+                <motion.div key="dashboard" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="min-w-0 w-full flex-shrink-0">
+                  <Dashboard onTaskSelect={setSelectedTask} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            {/* Spacer so last content can scroll above the fixed footer on mobile (all sections) */}
+            <div className="md:hidden shrink-0 w-full min-h-[12rem] sm:min-h-[14rem]" aria-hidden="true" style={{ minHeight: 'max(12rem, calc(10rem + env(safe-area-inset-bottom, 0px)))' }} />
+          </div>
         </main>
       </div>
 

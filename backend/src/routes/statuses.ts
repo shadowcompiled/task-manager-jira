@@ -4,6 +4,14 @@ import { AuthRequest, authenticateToken } from '../middleware';
 
 const router = express.Router();
 
+const DEFAULT_STATUSES = [
+  { name: 'planned', displayName: 'מתוכנן', color: '#9ca3af', order: 0 },
+  { name: 'assigned', displayName: 'הוקצה', color: '#3b82f6', order: 1 },
+  { name: 'in_progress', displayName: 'בתהליך', color: '#8b5cf6', order: 2 },
+  { name: 'waiting', displayName: 'בהמתנה', color: '#f59e0b', order: 3 },
+  { name: 'completed', displayName: 'הושלם', color: '#10b981', order: 4 },
+];
+
 router.get('/restaurant/:organizationId', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const organizationId = req.user?.organizationId;
@@ -12,11 +20,27 @@ router.get('/restaurant/:organizationId', authenticateToken, async (req: AuthReq
     if (String(paramId) !== String(organizationId)) {
       return res.status(403).json({ error: 'Access denied to this organization' });
     }
-    const { rows } = await sql`
+    let { rows } = await sql`
       SELECT id, name, display_name, color, order_index FROM statuses
       WHERE organization_id = ${organizationId}
       ORDER BY order_index ASC
     `;
+    // If org has no statuses (e.g. created before default statuses were added), create them so Kanban and tasks work
+    if (!rows || rows.length === 0) {
+      for (const s of DEFAULT_STATUSES) {
+        await sql`
+          INSERT INTO statuses (organization_id, name, display_name, color, order_index, is_default)
+          VALUES (${organizationId}, ${s.name}, ${s.displayName}, ${s.color}, ${s.order}, true)
+          ON CONFLICT (organization_id, name) DO NOTHING
+        `;
+      }
+      const next = await sql`
+        SELECT id, name, display_name, color, order_index FROM statuses
+        WHERE organization_id = ${organizationId}
+        ORDER BY order_index ASC
+      `;
+      rows = next.rows;
+    }
     res.json(rows);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

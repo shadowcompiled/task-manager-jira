@@ -90,10 +90,14 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
     const byStatus: Record<string, any[]> = {};
     statuses.forEach((s) => { byStatus[s.name] = []; });
     const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+    const firstStatusName = statuses[0]?.name;
     tasks.forEach((t) => {
-      const status = t.status === 'verified' ? 'completed' : t.status;
+      const status = t.status === 'verified' ? 'completed' : (t.status || '');
       if (byStatus[status]) {
         byStatus[status].push(t);
+      } else if (firstStatusName) {
+        // Task has unknown/missing status (e.g. org had no statuses when created); show in first column
+        byStatus[firstStatusName].push(t);
       }
     });
     Object.keys(byStatus).forEach((status) => {
