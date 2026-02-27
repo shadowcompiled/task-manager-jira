@@ -212,7 +212,13 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       }
     }
 
-    const updatedRows = await sql`SELECT * FROM tasks WHERE id = ${taskId}`;
+    const updatedRows = await sql`
+      SELECT t.*, u.name as assigned_to_name, creator.name as created_by_name
+      FROM tasks t
+      LEFT JOIN users u ON t.assigned_to = u.id
+      LEFT JOIN users creator ON t.created_by = creator.id
+      WHERE t.id = ${taskId}
+    `;
     res.json(updatedRows.rows[0]);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update task' });

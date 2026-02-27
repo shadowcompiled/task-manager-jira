@@ -70,10 +70,10 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* Ensure fixed footer never hides content when scrolled to bottom (all sections) */
+/* Clear fixed footer on mobile without huge whitespace */
 @media (max-width: 767px) {
   .main-scroll {
-    padding-bottom: max(22rem, calc(20rem + env(safe-area-inset-bottom, 0px)));
+    padding-bottom: max(6rem, calc(5rem + env(safe-area-inset-bottom, 0px)));
   }
 }
 

@@ -398,8 +398,8 @@ export default function App() {
                 </motion.div>
               )}
             </AnimatePresence>
-            {/* Spacer so last content can scroll above the fixed footer on mobile (all sections) */}
-            <div className="md:hidden shrink-0 w-full min-h-[12rem] sm:min-h-[14rem]" aria-hidden="true" style={{ minHeight: 'max(12rem, calc(10rem + env(safe-area-inset-bottom, 0px)))' }} />
+            {/* Small spacer so last content clears the fixed footer on mobile */}
+            <div className="md:hidden shrink-0 w-full h-24" aria-hidden="true" />
           </div>
         </main>
       </div>

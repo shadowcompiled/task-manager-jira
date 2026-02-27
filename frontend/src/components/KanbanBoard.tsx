@@ -6,6 +6,7 @@ import TaskCard from './TaskCard';
 import axios from 'axios';
 import { API_BASE } from '../store';
 import { KanbanColumnSkeleton } from './skeletons';
+import { useToast } from '../contexts/ToastContext';
 
 interface Status {
   id: number;
@@ -18,6 +19,7 @@ interface Status {
 export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: { onTaskSelect: (task: any) => void; onEditTask?: (task: any) => void; onCreateTask?: () => void }) {
   const { tasks, fetchTasks, updateTask } = useTaskStore();
   const { user, token } = useAuthStore();
+  const toast = useToast();
   const [tasksByStatus, setTasksByStatus] = useState<Record<string, any[]>>({});
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [loading, setLoading] = useState(false);
@@ -92,11 +94,13 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
     const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
     const firstStatusName = statuses[0]?.name;
     tasks.forEach((t) => {
-      const status = t.status === 'verified' ? 'completed' : (t.status || '');
-      if (byStatus[status]) {
-        byStatus[status].push(t);
+      const rawStatus = (t.status ?? (t as any).Status ?? '') as string;
+      const status = rawStatus === 'verified' ? 'completed' : rawStatus;
+      const normalized = String(status).toLowerCase().trim();
+      const matched = statuses.find((s) => (String(s.name || '').toLowerCase().trim() === normalized));
+      if (matched && byStatus[matched.name]) {
+        byStatus[matched.name].push(t);
       } else if (firstStatusName) {
-        // Task has unknown/missing status (e.g. org had no statuses when created); show in first column
         byStatus[firstStatusName].push(t);
       }
     });
@@ -152,6 +156,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       await fetchTasks();
     } catch (error) {
       console.error('Failed to update task status:', error);
+      toast?.showToast('לא ניתן לעדכן סטטוס – נסה שוב', 'error');
+      await fetchTasks();
     } finally {
       setLoading(false);
     }
