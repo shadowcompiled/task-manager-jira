@@ -223,7 +223,7 @@ export default function App() {
         </div>
       </header>
       {/* Spacer so when fully scrolled up no content is hidden under the sticky header */}
-      <div className="shrink-0 w-full h-[calc(6rem+env(safe-area-inset-top))] sm:h-[calc(6.5rem+env(safe-area-inset-top))]" aria-hidden="true" />
+      <div className="shrink-0 w-full h-[calc(4.5rem+env(safe-area-inset-top))] sm:h-[calc(5rem+env(safe-area-inset-top))]" aria-hidden="true" />
 
       <div className="flex-1 overflow-hidden flex min-w-0">
         {/* Sidebar Navigation */}
@@ -399,7 +399,7 @@ export default function App() {
               )}
             </AnimatePresence>
             {/* Spacer so last content clears the fixed footer on mobile (minimal) */}
-            <div className="md:hidden shrink-0 w-full h-20" aria-hidden="true" />
+            <div className="md:hidden shrink-0 w-full h-16" aria-hidden="true" />
           </div>
         </main>
       </div>

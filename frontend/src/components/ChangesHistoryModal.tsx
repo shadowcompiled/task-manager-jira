@@ -28,6 +28,16 @@ const STATUS_TO_HEBREW: Record<string, string> = {
   overdue: 'באיחור',
 };
 
+const STATUS_COLORS: Record<string, string> = {
+  planned: 'bg-slate-500/80 text-slate-100',
+  assigned: 'bg-blue-600/80 text-white',
+  in_progress: 'bg-violet-600/80 text-white',
+  waiting: 'bg-amber-600/80 text-white',
+  completed: 'bg-emerald-600/80 text-white',
+  verified: 'bg-teal-600/80 text-white',
+  overdue: 'bg-red-600/80 text-white',
+};
+
 function formatTime(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
@@ -108,30 +118,25 @@ export default function ChangesHistoryModal({ onClose }: { onClose: () => void }
             <p className="text-slate-400 text-center py-8">אין עדיין שינויי סטטוס.</p>
           )}
           {!loading && !error && changes.length > 0 && (
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               {changes.map((row) => (
                 <li
                   key={row.id}
-                  className="p-4 bg-slate-700/50 rounded-xl border border-slate-600/50 text-right"
+                  className="p-3.5 rounded-xl border border-slate-600/50 bg-slate-700/40 hover:bg-slate-700/60 transition-colors text-right"
                 >
-                  <div className="flex flex-col gap-2">
-                    <p className="font-bold text-white text-base truncate" title={row.task_title}>
-                      {row.task_title}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-300">
-                      {row.changed_by_name && (
-                        <span className="font-semibold">👤 {row.changed_by_name}</span>
-                      )}
-                      <span className="px-2 py-0.5 rounded-md bg-slate-600/80 text-slate-200">
-                        {statusLabel(row)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400">
+                  <p className="font-bold text-white text-sm truncate mb-2" title={row.task_title}>
+                    {row.task_title}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {row.changed_by_name && (
+                      <span className="text-slate-300 font-medium">👤 {row.changed_by_name}</span>
+                    )}
+                    <span className={`px-2 py-0.5 rounded-md font-medium ${STATUS_COLORS[row.new_status] ?? 'bg-slate-600/80 text-slate-200'}`}>
+                      {statusLabel(row)}
+                    </span>
+                    <span className="text-slate-400 font-medium" title={formatDateTime(row.changed_at)}>
                       {formatTime(row.changed_at)}
-                    </p>
-                    <p className="text-xs text-slate-500" title={row.changed_at}>
-                      {formatDateTime(row.changed_at)}
-                    </p>
+                    </span>
                   </div>
                 </li>
               ))}

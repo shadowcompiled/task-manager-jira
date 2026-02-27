@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTaskStore, useAuthStore } from '../store';
 import type { Task } from '../store';
 import axios from 'axios';
@@ -48,11 +48,17 @@ export default function KanbanDashboard() {
   const [showStatusManager, setShowStatusManager] = useState(false);
   const [newStatusName, setNewStatusName] = useState('');
   const [newStatusColor, setNewStatusColor] = useState('#3b82f6');
+  const dragScrollListenerRef = useRef<((ev: DragEvent) => void) | null>(null);
 
-  // Unmount cleanup: ensure scroll lock is removed if user navigates away during drag
+  // Unmount cleanup: ensure scroll lock and drag-scroll listener are removed if user navigates away during drag
   useEffect(() => {
     return () => {
       document.body.classList.remove('kanban-dragging');
+      const listener = dragScrollListenerRef.current;
+      if (listener) {
+        document.removeEventListener('dragover', listener);
+        dragScrollListenerRef.current = null;
+      }
     };
   }, []);
 
@@ -130,12 +136,30 @@ export default function KanbanDashboard() {
       dt.setDragImage(ghost, 20, 16);
       requestAnimationFrame(() => ghost.remove());
     }
+    const SCROLL_THRESHOLD = 80;
+    const SCROLL_STEP = 10;
+    const onDragOverScroll = (ev: DragEvent) => {
+      const main = document.querySelector<HTMLElement>('main.main-scroll');
+      if (!main) return;
+      const y = ev.clientY;
+      if (y < SCROLL_THRESHOLD) {
+        main.scrollTop = Math.max(0, main.scrollTop - SCROLL_STEP);
+      } else if (y > window.innerHeight - SCROLL_THRESHOLD) {
+        main.scrollTop = Math.min(main.scrollHeight - main.clientHeight, main.scrollTop + SCROLL_STEP);
+      }
+    };
+    dragScrollListenerRef.current = onDragOverScroll;
     const onDragEnd = () => {
       document.body.classList.remove('kanban-dragging');
       document.removeEventListener('dragend', onDragEnd);
+      if (dragScrollListenerRef.current) {
+        document.removeEventListener('dragover', dragScrollListenerRef.current);
+        dragScrollListenerRef.current = null;
+      }
       setDraggedTask(null);
     };
     document.addEventListener('dragend', onDragEnd);
+    document.addEventListener('dragover', onDragOverScroll);
   };
 
   // Handle drag over
@@ -222,7 +246,7 @@ export default function KanbanDashboard() {
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="max-w-6xl mx-auto w-full px-4 md:px-6 py-4 md:py-6">
+      <div className="max-w-6xl mx-auto w-full px-4 md:px-6 py-2 md:py-4">
       <style>{`
         @keyframes slideIn {
           from {
@@ -244,7 +268,7 @@ export default function KanbanDashboard() {
       `}</style>
 
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-3 md:mb-4">
         <h1 className="emoji-icon text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
           📊 לוח משימות
         </h1>
@@ -394,10 +418,11 @@ export default function KanbanDashboard() {
         </div>
       )}
 
-      {/* Mobile-friendly footer tip - compact so no big white gap below last mission */}
-      <div className="mt-2 lg:hidden bg-blue-50 dark:bg-slate-800 border-2 border-blue-200 dark:border-slate-600 rounded-lg px-3 py-2 text-center">
-        <p className="emoji-icon text-xs text-gray-700 dark:text-slate-300 font-semibold">
-          💡 גרור משימות לשינוי סטטוס. גלול לראות יותר עמודות
+      {/* Compact footer tip - soft styling, no large gap above app footer */}
+      <div className="mt-2 lg:hidden rounded-lg px-3 py-2.5 text-center bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-600/70 shadow-sm">
+        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+          <span className="inline-block ml-1 opacity-90" aria-hidden>💡</span>
+          גרור משימות לשינוי סטטוס. גלול לראות יותר עמודות — גרור כלפי הכותרת או התחתית כדי לגלול
         </p>
       </div>
       </div>
