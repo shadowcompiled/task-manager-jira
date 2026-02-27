@@ -16,7 +16,12 @@ function forward(req, res) {
   } else {
     pathSeg = decodeURIComponent(pathSeg);
   }
-  // Fallback: if path not in query (e.g. POST), try headers Vercel or other runtimes may set
+  // Fallback: req.query is sometimes set by Vercel from the rewritten URL
+  if ((pathSeg == null || pathSeg === '') && req.query && req.query.path) {
+    const q = req.query.path;
+    pathSeg = Array.isArray(q) ? q.map(decodeURIComponent).join('/') : decodeURIComponent(String(q));
+  }
+  // Fallback: headers Vercel or other runtimes may set
   if (pathSeg == null || pathSeg === '') {
     const h = req.headers;
     pathSeg = (h['x-invoke-path'] || h['x-vercel-url'] || h['x-original-url'] || h['x-forwarded-path'] || '')

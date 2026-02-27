@@ -1,10 +1,27 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd backend && npm ci && cd ../frontend && npm ci",
   "buildCommand": "cd backend && npm run build && cd ../frontend && npm run build",
   "outputDirectory": "frontend/dist",
-  "rewrites": [{"source": "/api/(.*)", "destination": "/api?path=$1"}, {"source": "/api", "destination": "/api"}],
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api?path=$1" },
+    { "source": "/api", "destination": "/api" }
+  ],
+  "functions": {
+    "api/index.js": { "memory": 1024, "maxDuration": 30 }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" }
+      ]
+    }
+  ],
   "crons": [
-    {"path": "/api/cron/daily-notifications", "schedule": "0 * * * *"},
-    {"path": "/api/cron/push-scheduled", "schedule": "* * * * *"}
+    { "path": "/api/cron/daily-notifications", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/push-scheduled", "schedule": "0 1 * * *" }
   ]
 }
