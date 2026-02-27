@@ -49,6 +49,7 @@ async function runRenameRestaurantToOrganization(): Promise<void> {
   if (tagsCol.rows.length > 0) await sql`ALTER TABLE tags RENAME COLUMN restaurant_id TO organization_id`;
   await sql`DROP INDEX IF EXISTS idx_tasks_restaurant_id`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_organization_id ON tasks(organization_id)`;
+  await sql`CREATE TABLE IF NOT EXISTS task_status_history (id SERIAL PRIMARY KEY, task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE, old_status TEXT, new_status TEXT NOT NULL, changed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, changed_by INTEGER REFERENCES users(id))`;
   console.log('[migrate] Migration completed. Data preserved.');
 }
 
@@ -79,7 +80,10 @@ export async function runMigrationIfNeeded(): Promise<void> {
         WHERE table_schema = 'public' AND table_name = 'organizations'
         LIMIT 1
       `;
-      if (hasOrganizations.rows.length > 0) return;
+      if (hasOrganizations.rows.length > 0) {
+        await sql`CREATE TABLE IF NOT EXISTS task_status_history (id SERIAL PRIMARY KEY, task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE, old_status TEXT, new_status TEXT NOT NULL, changed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, changed_by INTEGER REFERENCES users(id))`;
+        return;
+      }
 
       const hasRestaurants = await sql`
         SELECT 1 FROM information_schema.tables

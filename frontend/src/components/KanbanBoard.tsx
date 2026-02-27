@@ -16,6 +16,10 @@ interface Status {
   order_index: number;
 }
 
+function getStatusName(s: Status | { name?: string; Name?: string }): string {
+  return String((s as any)?.name ?? (s as any)?.Name ?? '').trim();
+}
+
 export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: { onTaskSelect: (task: any) => void; onEditTask?: (task: any) => void; onCreateTask?: () => void }) {
   const { tasks, fetchTasks, updateTask } = useTaskStore();
   const { user, token } = useAuthStore();
@@ -43,7 +47,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
         const res = await axios.get(`${API_BASE}/statuses/restaurant/${orgId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setStatuses((res.data as Status[]).filter((s) => s.name !== 'verified'));
+        setStatuses((res.data as Status[]).filter((s) => getStatusName(s) !== 'verified'));
       } catch (error) {
         console.error('Failed to fetch statuses:', error);
       } finally {
@@ -90,17 +94,21 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
   useEffect(() => {
     const byStatus: Record<string, any[]> = {};
-    statuses.forEach((s) => { byStatus[s.name] = []; });
+    statuses.forEach((s) => {
+      const name = getStatusName(s);
+      if (name) byStatus[name] = [];
+    });
     const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-    const firstStatusName = statuses[0]?.name;
+    const firstStatusName = statuses.length ? getStatusName(statuses[0]) : undefined;
     tasks.forEach((t) => {
       const rawStatus = (t.status ?? (t as any).Status ?? '') as string;
       const status = rawStatus === 'verified' ? 'completed' : rawStatus;
       const normalized = String(status).toLowerCase().trim();
-      const matched = statuses.find((s) => (String(s.name || '').toLowerCase().trim() === normalized));
-      if (matched && byStatus[matched.name]) {
-        byStatus[matched.name].push(t);
-      } else if (firstStatusName) {
+      const matched = statuses.find((s) => String(getStatusName(s)).toLowerCase().trim() === normalized);
+      const key = matched ? getStatusName(matched) : firstStatusName;
+      if (key && byStatus[key]) {
+        byStatus[key].push(t);
+      } else if (firstStatusName && byStatus[firstStatusName]) {
         byStatus[firstStatusName].push(t);
       }
     });
@@ -283,8 +291,10 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
         )}
         <div className="overflow-x-hidden md:overflow-x-auto md:kanban-scroll -mx-3 md:mx-0 min-w-0">
           <div className="flex flex-col md:flex md:flex-row gap-3 md:gap-4 w-full md:min-w-fit px-3 md:px-0">
-            {statuses.map((status, idx) => (
-              <Droppable key={status.name} droppableId={status.name} direction="horizontal">
+            {statuses.filter((s) => getStatusName(s)).map((status, idx) => {
+              const statusKey = getStatusName(status);
+              return (
+              <Droppable key={statusKey} droppableId={statusKey} direction="horizontal">
                 {/* @ts-ignore - react-beautiful-dnd types */}
                 {(provided, snapshot) => (
                   <div
@@ -308,12 +318,12 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                         />
                       </div>
                       <span className="bg-teal-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
-                        {tasksByStatus[status.name]?.length || 0}
+                        {tasksByStatus[statusKey]?.length || 0}
                       </span>
                     </div>
 
-                    <div className={`flex flex-row gap-3 overflow-x-auto overflow-y-hidden min-w-0 ${(tasksByStatus[status.name]?.length || 0) === 0 ? '' : ''}`}>
-                      {tasksByStatus[status.name]?.map((task, index) => (
+                    <div className={`flex flex-row gap-3 overflow-x-auto overflow-y-hidden min-w-0 ${(tasksByStatus[statusKey]?.length || 0) === 0 ? '' : ''}`}>
+                      {tasksByStatus[statusKey]?.map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
                           {/* @ts-ignore - react-beautiful-dnd types */}
                           {(provided, snapshot) => (
@@ -337,7 +347,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                       ))}
                       {provided.placeholder}
 
-                      {(!tasksByStatus[status.name] || tasksByStatus[status.name].length === 0) && (
+                      {(!tasksByStatus[statusKey] || tasksByStatus[statusKey].length === 0) && (
                         <div className="flex items-center justify-center min-w-[200px] w-[200px] flex-shrink-0 min-h-[4rem] text-center py-3 text-slate-400 rounded-xl border-2 border-dashed border-slate-600">
                           <div>
                             <p className="text-xs font-semibold emoji-icon">✨ אין משימות</p>
@@ -349,7 +359,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                   </div>
                 )}
               </Droppable>
-            ))}
+            );})}
           </div>
         </div>
       </DragDropContext>

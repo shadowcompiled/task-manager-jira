@@ -140,10 +140,14 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
     const newStatus = status || task.status;
     const oldStatus = task.status;
     if (newStatus !== oldStatus) {
-      await sql`
-        INSERT INTO task_status_history (task_id, old_status, new_status, changed_by)
-        VALUES (${taskId}, ${oldStatus}, ${newStatus}, ${req.user?.id})
-      `;
+      try {
+        await sql`
+          INSERT INTO task_status_history (task_id, old_status, new_status, changed_by)
+          VALUES (${taskId}, ${oldStatus}, ${newStatus}, ${req.user?.id})
+        `;
+      } catch (historyErr: any) {
+        console.error('PUT /tasks/:id task_status_history insert failed:', historyErr?.message || historyErr);
+      }
     }
 
     let assignedUser: any = null;
@@ -219,8 +223,14 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       LEFT JOIN users creator ON t.created_by = creator.id
       WHERE t.id = ${taskId}
     `;
-    res.json(updatedRows.rows[0]);
-  } catch (error) {
+    const updated = updatedRows?.rows?.[0];
+    if (!updated) {
+      console.error('PUT /tasks/:id failed to load updated task:', taskId);
+      return res.status(500).json({ error: 'Failed to load updated task' });
+    }
+    res.json(updated);
+  } catch (error: any) {
+    console.error('PUT /tasks/:id error:', error?.message || error);
     res.status(500).json({ error: 'Failed to update task' });
   }
 });
