@@ -2,7 +2,7 @@
   "installCommand": "cd backend && npm ci && cd ../frontend && npm ci",
   "buildCommand": "cd backend && npm run build && cd ../frontend && npm run build",
   "outputDirectory": "frontend/dist",
-  "rewrites": [{"source": "/api", "destination": "/api"}],
+  "rewrites": [{"source": "/api/(.*)", "destination": "/api?path=$1"}, {"source": "/api", "destination": "/api"}],
   "crons": [
     {"path": "/api/cron/daily-notifications", "schedule": "0 * * * *"},
     {"path": "/api/cron/push-scheduled", "schedule": "* * * * *"}
