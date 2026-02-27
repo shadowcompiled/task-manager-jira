@@ -72,6 +72,7 @@ interface TaskStore {
   tasks: Task[];
   currentTask: (Task & { checklists: any[]; comments: Comment[]; photos: Photo[] }) | null;
   loading: boolean;
+  lastTaskCreatedAt: number | null;
   fetchTasks: (filters?: { status?: string; assigned_to?: number }) => Promise<void>;
   fetchTask: (id: number) => Promise<void>;
   createTask: (task: Partial<Task>) => Promise<void>;
@@ -151,6 +152,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: [],
   currentTask: null,
   loading: false,
+  lastTaskCreatedAt: null,
 
   fetchTasks: async (filters?) => {
     set({ loading: true });
@@ -192,7 +194,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const res = await axios.post(`${API_BASE}/tasks`, task, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      set({ tasks: [...get().tasks, res.data] });
+      set({ tasks: [...get().tasks, res.data], lastTaskCreatedAt: Date.now() });
     } catch (error) {
       console.error('Failed to create task:', error);
       throw error;

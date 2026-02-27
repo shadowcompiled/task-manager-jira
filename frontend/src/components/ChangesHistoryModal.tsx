@@ -18,6 +18,16 @@ interface Response {
   changes: ChangeRow[];
 }
 
+const STATUS_TO_HEBREW: Record<string, string> = {
+  planned: 'מתוכנן',
+  assigned: 'הוקצה',
+  in_progress: 'בתהליך',
+  waiting: 'בהמתנה',
+  completed: 'הושלם',
+  verified: 'אומת',
+  overdue: 'באיחור',
+};
+
 function formatTime(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
@@ -29,6 +39,11 @@ function formatTime(iso: string): string {
   if (diffMins < 60) return `לפני ${diffMins} דקות`;
   if (diffHours < 24) return `לפני ${diffHours} שעות`;
   if (diffDays < 7) return `לפני ${diffDays} ימים`;
+  return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
   return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
@@ -50,7 +65,8 @@ export default function ChangesHistoryModal({ onClose }: { onClose: () => void }
       .finally(() => setLoading(false));
   }, []);
 
-  const statusLabel = (row: ChangeRow) => row.status_display_name || row.new_status;
+  const statusLabel = (row: ChangeRow) =>
+    row.status_display_name || STATUS_TO_HEBREW[row.new_status] || row.new_status;
 
   return (
     <motion.div
@@ -112,6 +128,9 @@ export default function ChangesHistoryModal({ onClose }: { onClose: () => void }
                     </div>
                     <p className="text-xs text-slate-400">
                       {formatTime(row.changed_at)}
+                    </p>
+                    <p className="text-xs text-slate-500" title={row.changed_at}>
+                      {formatDateTime(row.changed_at)}
                     </p>
                   </div>
                 </li>

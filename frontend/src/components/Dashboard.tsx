@@ -138,7 +138,7 @@ interface TagTask {
 
 export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any) => void } = {}) {
   const { user, token } = useAuthStore();
-  const { tasks, fetchTasks } = useTaskStore();
+  const { tasks, fetchTasks, lastTaskCreatedAt } = useTaskStore();
   const reducedMotion = useReducedMotion();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [staffPerformance, setStaffPerformance] = useState<StaffPerformance[]>([]);
@@ -233,7 +233,7 @@ export default function Dashboard({ onTaskSelect }: { onTaskSelect?: (task: any)
     };
 
     fetchData();
-  }, [user, token]);
+  }, [user, token, lastTaskCreatedAt]);
 
   // Fetch tasks by tag
   const fetchTagTasks = async (tag: TagStats) => {
