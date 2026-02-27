@@ -204,7 +204,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
   useLayoutEffect(() => {
     if (draggingTaskId == null) return;
     const SCROLL_THRESHOLD = 80;
-    const SCROLL_STEP = 10;
+    const SCROLL_STEP = 12;
     const onMove = (e: MouseEvent | TouchEvent) => {
       const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX;
       const clientY = 'touches' in e ? e.touches[0]?.clientY : e.clientY;
@@ -241,7 +241,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 sm:mb-6 gap-3 animate-slideDown">
         <h1 className="flex items-center gap-1.5 text-2xl sm:text-3xl md:text-4xl font-bold">
-          <span className="emoji-icon">🧱</span>
+          <span className="emoji-icon shrink-0 min-w-[1em]">🧱</span>
           <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">לוח פעולות</span>
         </h1>
         {user?.role === 'admin' && (
@@ -314,7 +314,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:min-w-[420px] md:w-[420px] rounded-2xl pt-2 px-2 pb-0 sm:pt-3 sm:px-3 sm:pb-0 transition-all duration-300 shadow-lg border-2 ${
+                    className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:min-w-[440px] md:w-[440px] rounded-2xl pt-2 px-2 pb-0 sm:pt-3 sm:px-3 sm:pb-0 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'

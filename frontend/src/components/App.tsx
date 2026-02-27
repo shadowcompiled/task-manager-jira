@@ -82,7 +82,10 @@ export default function App() {
       <header className="app-header fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-b border-teal-500/40 shadow-lg pt-[max(1rem,env(safe-area-inset-top))] pb-4 px-2 sm:px-3">
         <div className="max-w-7xl mx-auto h-14 sm:h-16 flex items-center justify-between gap-2 min-h-[52px]">
           <div className="flex items-center gap-1 md:gap-2 min-w-0">
-            <h1 className="text-xl md:text-2xl font-bold text-white truncate drop-shadow-lg">🍽️ מעקב משימות</h1>
+            <h1 className="flex items-center gap-1.5 text-xl md:text-2xl font-bold text-white truncate drop-shadow-lg min-w-0">
+              <span className="emoji-icon shrink-0 inline-flex items-center leading-none min-w-[1em]">🍽️</span>
+              <span>מעקב משימות</span>
+            </h1>
             <span className="text-xs md:text-sm text-teal-300/80 hidden sm:inline font-semibold">ניהול משימות במסעדה</span>
           </div>
 
@@ -399,7 +402,7 @@ export default function App() {
               )}
             </AnimatePresence>
             {/* Spacer so last content clears the fixed footer on mobile (minimal) */}
-            <div className="md:hidden shrink-0 w-full h-14" aria-hidden="true" />
+            <div className="md:hidden shrink-0 w-full h-12" aria-hidden="true" />
           </div>
         </main>
       </div>

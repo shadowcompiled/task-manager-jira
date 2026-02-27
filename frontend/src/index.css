@@ -41,6 +41,9 @@ body {
 /* Emoji icons - use font with emoji glyphs so they don't show as squares (Heebo has no emoji) */
 .emoji-icon {
   font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 /* Phone safe area */

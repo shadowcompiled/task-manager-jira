@@ -137,7 +137,7 @@ export default function KanbanDashboard() {
       requestAnimationFrame(() => ghost.remove());
     }
     const SCROLL_THRESHOLD = 80;
-    const SCROLL_STEP = 10;
+    const SCROLL_STEP = 12;
     const onDragOverScroll = (ev: DragEvent) => {
       ev.preventDefault();
       const main = document.querySelector<HTMLElement>('main.main-scroll');
@@ -271,7 +271,7 @@ export default function KanbanDashboard() {
       {/* Header */}
       <div className="mb-3 md:mb-4">
         <h1 className="flex items-center gap-1.5 text-3xl md:text-4xl font-bold mb-2">
-          <span className="emoji-icon">📊</span>
+          <span className="emoji-icon shrink-0 min-w-[1em]">📊</span>
           <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">לוח משימות</span>
         </h1>
         <p className="text-gray-600 dark:text-slate-300 font-semibold text-sm md:text-base">
