@@ -223,6 +223,12 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
             <KanbanColumnSkeleton key={i} />
           ))}
         </div>
+      ) : !loading && statuses.length === 0 ? (
+        <div className="rounded-2xl p-8 border-2 border-dashed border-slate-600 bg-slate-800/50 text-center">
+          <p className="emoji-icon text-4xl mb-3" aria-hidden="true">⚙️</p>
+          <p className="font-bold text-slate-200 text-lg mb-1">לא הוגדרו סטטוסים</p>
+          <p className="text-sm text-slate-400">אנא פנה למנהל כדי להגדיר סטטוסים ללוח.</p>
+        </div>
       ) : tasks.length === 0 && statuses.length > 0 ? (
         <div className="rounded-2xl p-8 border-2 border-dashed border-slate-600 bg-slate-800/50 text-center">
           <p className="emoji-icon text-4xl mb-3" aria-hidden="true">🧱</p>

@@ -64,6 +64,16 @@ router.post('/register', async (req: Request, res: Response) => {
       } else {
         const ins = await sql`INSERT INTO organizations (name, location) VALUES (${'Organization - ' + Date.now()}, 'Not specified') RETURNING id`;
         finalOrganizationId = (ins.rows[0] as any).id;
+        const defaultStatuses = [
+          { name: 'planned', displayName: 'מתוכנן', color: '#9ca3af', order: 0 },
+          { name: 'assigned', displayName: 'הוקצה', color: '#3b82f6', order: 1 },
+          { name: 'in_progress', displayName: 'בתהליך', color: '#8b5cf6', order: 2 },
+          { name: 'waiting', displayName: 'בהמתנה', color: '#f59e0b', order: 3 },
+          { name: 'completed', displayName: 'הושלם', color: '#10b981', order: 4 },
+        ];
+        for (const s of defaultStatuses) {
+          await sql`INSERT INTO statuses (organization_id, name, display_name, color, order_index, is_default) VALUES (${finalOrganizationId}, ${s.name}, ${s.displayName}, ${s.color}, ${s.order}, true)`;
+        }
       }
     }
 

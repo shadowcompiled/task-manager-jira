@@ -371,7 +371,7 @@ export default function App() {
       </div>
 
         {/* Main Content - scrollable; top/bottom padding so header and footer never hide content when fully scrolled (Kanban, Missions, all) */}
-        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pt-4 pb-[max(16rem,calc(14rem+env(safe-area-inset-bottom)))] md:pt-0 md:pb-0 px-3 sm:px-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <main className="flex-1 min-h-0 overflow-auto overflow-x-hidden main-scroll pt-4 pb-[max(20rem,calc(18rem+env(safe-area-inset-bottom)))] md:pt-0 md:pb-0 px-3 sm:px-4" style={{ WebkitOverflowScrolling: 'touch' }}>
           <AnimatePresence mode="wait">
             {currentView === 'daily' && (
               <motion.div key="daily" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={getTransition(reducedMotion, pageTransition)} className="h-full min-w-0 w-full">
