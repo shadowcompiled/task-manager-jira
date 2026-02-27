@@ -78,8 +78,9 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8"
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            👤 יצירת משתמש חדש
+          <h2 className="flex items-center gap-1.5 text-2xl font-bold">
+            <span className="emoji-icon">👤</span>
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">יצירת משתמש חדש</span>
           </h2>
           <button
             onClick={onClose}

@@ -203,11 +203,21 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
 
   useLayoutEffect(() => {
     if (draggingTaskId == null) return;
+    const SCROLL_THRESHOLD = 80;
+    const SCROLL_STEP = 10;
     const onMove = (e: MouseEvent | TouchEvent) => {
       const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX;
       const clientY = 'touches' in e ? e.touches[0]?.clientY : e.clientY;
       if (typeof clientX === 'number' && typeof clientY === 'number') {
         setPointerPosition({ x: clientX, y: clientY });
+        const main = document.querySelector<HTMLElement>('main.main-scroll');
+        if (main) {
+          if (clientY < SCROLL_THRESHOLD) {
+            main.scrollTop = Math.max(0, main.scrollTop - SCROLL_STEP);
+          } else if (clientY > window.innerHeight - SCROLL_THRESHOLD) {
+            main.scrollTop = Math.min(main.scrollHeight - main.clientHeight, main.scrollTop + SCROLL_STEP);
+          }
+        }
       }
     };
     document.addEventListener('mousemove', onMove, { passive: true });
@@ -230,7 +240,10 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
       `}</style>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 sm:mb-6 gap-3 animate-slideDown">
-        <h1 className="emoji-icon text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">🧱 לוח פעולות</h1>
+        <h1 className="flex items-center gap-1.5 text-2xl sm:text-3xl md:text-4xl font-bold">
+          <span className="emoji-icon">🧱</span>
+          <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">לוח פעולות</span>
+        </h1>
         {user?.role === 'admin' && (
           <div className="emoji-icon text-xs sm:text-sm text-slate-400 font-semibold bg-slate-800 border-r-4 border-teal-500 px-3 py-2 rounded-xl">💡 גרור משימות בין עמודות לעדכון הסטטוס</div>
         )}
@@ -301,7 +314,7 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:min-w-[380px] md:w-[380px] rounded-2xl pt-2 px-2 pb-0 sm:pt-3 sm:px-3 sm:pb-0 transition-all duration-300 shadow-lg border-2 ${
+                    className={`animate-slideDown min-w-0 w-full flex-shrink-0 md:min-w-[420px] md:w-[420px] rounded-2xl pt-2 px-2 pb-0 sm:pt-3 sm:px-3 sm:pb-0 transition-all duration-300 shadow-lg border-2 ${
                       snapshot.isDraggingOver 
                         ? 'bg-slate-700 border-teal-500 scale-[1.02]' 
                         : 'bg-slate-800 border-slate-600 hover:border-teal-500/50'

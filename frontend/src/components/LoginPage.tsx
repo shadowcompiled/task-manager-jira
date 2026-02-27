@@ -61,7 +61,10 @@ export default function LoginPage({ onShowRegister }: Props) {
           transition={getTransition(reducedMotion, quickTransition)}
           className="text-center mb-6 sm:mb-8"
         >
-          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent mb-2">🍽️ מעקב משימות</h1>
+          <h1 className="flex items-center justify-center gap-1.5 text-3xl sm:text-4xl font-bold mb-2">
+            <span className="emoji-icon">🍽️</span>
+            <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">מעקב משימות</span>
+          </h1>
           <p className="text-teal-300/80 text-base sm:text-lg">ניהול משימות במסעדה</p>
         </motion.div>
 

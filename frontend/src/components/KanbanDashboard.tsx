@@ -139,6 +139,7 @@ export default function KanbanDashboard() {
     const SCROLL_THRESHOLD = 80;
     const SCROLL_STEP = 10;
     const onDragOverScroll = (ev: DragEvent) => {
+      ev.preventDefault();
       const main = document.querySelector<HTMLElement>('main.main-scroll');
       if (!main) return;
       const y = ev.clientY;
@@ -269,8 +270,9 @@ export default function KanbanDashboard() {
 
       {/* Header */}
       <div className="mb-3 md:mb-4">
-        <h1 className="emoji-icon text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-          📊 לוח משימות
+        <h1 className="flex items-center gap-1.5 text-3xl md:text-4xl font-bold mb-2">
+          <span className="emoji-icon">📊</span>
+          <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">לוח משימות</span>
         </h1>
         <p className="text-gray-600 dark:text-slate-300 font-semibold text-sm md:text-base">
           גרור ושחרר משימות לשינוי סטטוס
@@ -419,7 +421,7 @@ export default function KanbanDashboard() {
       )}
 
       {/* Compact footer tip - soft styling, no large gap above app footer */}
-      <div className="mt-2 lg:hidden rounded-lg px-3 py-2.5 text-center bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-600/70 shadow-sm">
+      <div className="mt-1 lg:hidden rounded-lg px-3 py-2.5 text-center bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-600/70 shadow-sm">
         <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
           <span className="inline-block ml-1 opacity-90" aria-hidden>💡</span>
           גרור משימות לשינוי סטטוס. גלול לראות יותר עמודות — גרור כלפי הכותרת או התחתית כדי לגלול

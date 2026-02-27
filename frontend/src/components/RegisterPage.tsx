@@ -46,7 +46,10 @@ export default function RegisterPage({ onShowLogin, onRegistered }: Props) {
         className="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative z-10 border border-teal-500/30"
       >
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent mb-2">🍽️ מעקב משימות</h1>
+          <h1 className="flex items-center justify-center gap-1.5 text-3xl sm:text-4xl font-bold mb-2">
+            <span className="emoji-icon">🍽️</span>
+            <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">מעקב משימות</span>
+          </h1>
           <p className="text-teal-300/80 text-base sm:text-lg">הרשמה</p>
         </div>
 
