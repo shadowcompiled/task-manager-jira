@@ -207,8 +207,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const res = await axios.put(`${API_BASE}/tasks/${id}`, task, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      const updated = res.data;
       set({
-        tasks: get().tasks.map((t) => (t.id === id ? res.data : t)),
+        tasks: get().tasks.map((t) =>
+          t.id === id
+            ? { ...t, ...updated, status: updated?.status ?? (updated?.Status ?? t.status) }
+            : t
+        ),
       });
     } catch (error) {
       console.error('Failed to update task:', error);

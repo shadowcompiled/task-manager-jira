@@ -157,7 +157,8 @@ export default function KanbanBoard({ onTaskSelect, onEditTask, onCreateTask }: 
     if (!destination) return;
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
     const taskId = parseInt(result.draggableId, 10);
-    const newStatus = destination.droppableId;
+    const newStatus = destination.droppableId && String(destination.droppableId).trim();
+    if (!newStatus) return;
     try {
       setLoading(true);
       await updateTask(taskId, { status: newStatus });

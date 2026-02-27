@@ -82,10 +82,11 @@ router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (r
     const { title, description, assigned_to, priority, due_date, recurrence } = req.body;
     const organizationId = req.user?.organizationId;
     const createdBy = req.user?.id;
-    const status = assigned_to ? 'assigned' : 'planned';
+    const assigneeId = assigned_to != null && assigned_to !== '' ? Number(assigned_to) : null;
+    const status = assigneeId && !Number.isNaN(assigneeId) && assigneeId > 0 ? 'assigned' : 'planned';
 
-    if (assigned_to) {
-      const assigneeCheck = await sql`SELECT id FROM users WHERE id = ${assigned_to} AND organization_id = ${organizationId}`;
+    if (assigneeId && assigneeId > 0) {
+      const assigneeCheck = await sql`SELECT id FROM users WHERE id = ${assigneeId} AND organization_id = ${organizationId}`;
       if (assigneeCheck.rows.length === 0) {
         return res.status(403).json({ error: 'Assignee must belong to your organization' });
       }
@@ -93,14 +94,14 @@ router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (r
 
     const result = await sql`
       INSERT INTO tasks (title, description, assigned_to, organization_id, priority, status, due_date, recurrence, created_by)
-      VALUES (${title}, ${description ?? null}, ${assigned_to ?? null}, ${organizationId}, ${priority || 'medium'}, ${status}, ${due_date ?? null}, ${recurrence || 'once'}, ${createdBy})
+      VALUES (${title}, ${description ?? null}, ${assigneeId}, ${organizationId}, ${priority || 'medium'}, ${status}, ${due_date ?? null}, ${recurrence || 'once'}, ${createdBy})
       RETURNING *
     `;
     const task = result.rows[0] as any;
-    if (assigned_to) {
-      await sql`INSERT INTO task_assignments (task_id, user_id) VALUES (${task.id}, ${assigned_to}) ON CONFLICT (task_id, user_id) DO NOTHING`;
+    if (assigneeId && assigneeId > 0) {
+      await sql`INSERT INTO task_assignments (task_id, user_id) VALUES (${task.id}, ${assigneeId}) ON CONFLICT (task_id, user_id) DO NOTHING`;
       const [assigneeRows, orgRows, creatorRows] = await Promise.all([
-        sql`SELECT id, email, name FROM users WHERE id = ${assigned_to}`,
+        sql`SELECT id, email, name FROM users WHERE id = ${assigneeId}`,
         sql`SELECT name FROM organizations WHERE id = ${organizationId}`,
         sql`SELECT name FROM users WHERE id = ${createdBy}`
       ]);
@@ -110,7 +111,6 @@ router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (r
       if (assignee?.email) {
         sendAssignmentNotification(assignee.email, task.title, createdByName, organizationName).catch((err: any) => console.error('Failed to send email:', err));
       }
-      const assigneeId = Number(assigned_to);
       sendNotificationToUser(assigneeId, 'משימה חדשה', task.title, undefined, 'mission-assigned').then((r) => {
         if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${assigneeId}; enable notifications on the device to receive assignment alerts.`);
       }).catch((err: any) => console.error('Push assignment:', err));
@@ -137,7 +137,10 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       return res.status(403).json({ error: 'Not authorized to update this task' });
     }
 
-    const newStatus = status || task.status;
+    const newStatus =
+      (status != null && String(status).trim() !== '')
+        ? String(status).trim()
+        : task.status;
     const oldStatus = task.status;
     if (newStatus !== oldStatus) {
       try {

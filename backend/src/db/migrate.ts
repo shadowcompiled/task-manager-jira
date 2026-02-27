@@ -83,6 +83,27 @@ export async function runMigrationIfNeeded(): Promise<void> {
       `;
       if (hasOrganizations.rows.length > 0) {
         await sql`CREATE TABLE IF NOT EXISTS task_status_history (id SERIAL PRIMARY KEY, task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE, old_status TEXT, new_status TEXT NOT NULL, changed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, changed_by INTEGER REFERENCES users(id))`;
+        const defaultStatuses = [
+          { name: 'planned', displayName: 'מתוכנן', color: '#9ca3af', order: 0 },
+          { name: 'assigned', displayName: 'הוקצה', color: '#3b82f6', order: 1 },
+          { name: 'in_progress', displayName: 'בתהליך', color: '#8b5cf6', order: 2 },
+          { name: 'waiting', displayName: 'בהמתנה', color: '#f59e0b', order: 3 },
+          { name: 'completed', displayName: 'הושלם', color: '#10b981', order: 4 },
+        ];
+        const orgIds = await sql`SELECT id FROM organizations`;
+        for (const row of orgIds.rows as { id: number }[]) {
+          const count = await sql`SELECT COUNT(*)::int as n FROM statuses WHERE organization_id = ${row.id}`;
+          if ((count.rows[0] as any)?.n === 0) {
+            for (const s of defaultStatuses) {
+              await sql`
+                INSERT INTO statuses (organization_id, name, display_name, color, order_index, is_default)
+                VALUES (${row.id}, ${s.name}, ${s.displayName}, ${s.color}, ${s.order}, true)
+                ON CONFLICT (organization_id, name) DO NOTHING
+              `;
+            }
+            console.log('[migrate] Created default statuses for organization', row.id);
+          }
+        }
         return;
       }
 

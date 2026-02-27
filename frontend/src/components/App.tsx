@@ -222,8 +222,8 @@ export default function App() {
           </div>
         </div>
       </header>
-      {/* Spacer so when fully scrolled up no content is hidden under the sticky header (Kanban, Missions, all sections) */}
-      <div className="shrink-0 w-full h-[calc(7.5rem+env(safe-area-inset-top))] sm:h-[calc(8rem+env(safe-area-inset-top))]" aria-hidden="true" />
+      {/* Spacer so when fully scrolled up no content is hidden under the sticky header */}
+      <div className="shrink-0 w-full h-[calc(6rem+env(safe-area-inset-top))] sm:h-[calc(6.5rem+env(safe-area-inset-top))]" aria-hidden="true" />
 
       <div className="flex-1 overflow-hidden flex min-w-0">
         {/* Sidebar Navigation */}
@@ -398,8 +398,8 @@ export default function App() {
                 </motion.div>
               )}
             </AnimatePresence>
-            {/* Small spacer so last content clears the fixed footer on mobile */}
-            <div className="md:hidden shrink-0 w-full h-24" aria-hidden="true" />
+            {/* Spacer so last content clears the fixed footer on mobile (minimal) */}
+            <div className="md:hidden shrink-0 w-full h-20" aria-hidden="true" />
           </div>
         </main>
       </div>

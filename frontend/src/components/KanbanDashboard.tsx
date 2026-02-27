@@ -16,6 +16,14 @@ interface TaskWithAssignee {
   created_at: string;
 }
 
+interface StatusFromApi {
+  id: number;
+  name: string;
+  display_name: string;
+  color: string;
+  order_index: number;
+}
+
 interface StatusColumn {
   id: string;
   name: string;
@@ -26,25 +34,20 @@ interface StatusColumn {
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
+function getStatusName(s: StatusFromApi | { name?: string; Name?: string }): string {
+  return String((s as any)?.name ?? (s as any)?.Name ?? '').trim();
+}
+
 export default function KanbanDashboard() {
   const { user, token } = useAuthStore();
   const { updateTask } = useTaskStore();
+  const [statuses, setStatuses] = useState<StatusFromApi[]>([]);
   const [columns, setColumns] = useState<StatusColumn[]>([]);
   const [draggedTask, setDraggedTask] = useState<TaskWithAssignee | null>(null);
   const [loading, setLoading] = useState(false);
   const [showStatusManager, setShowStatusManager] = useState(false);
   const [newStatusName, setNewStatusName] = useState('');
   const [newStatusColor, setNewStatusColor] = useState('#3b82f6');
-
-  // Default statuses
-  const DEFAULT_STATUSES = [
-    { id: 'planned', name: 'planned', displayName: '📋 מתוכנן', color: '#94a3b8' },
-    { id: 'assigned', name: 'assigned', displayName: '👤 הוקצה', color: '#60a5fa' },
-    { id: 'in_progress', name: 'in_progress', displayName: '⚙️ בתהליך', color: '#8b5cf6' },
-    { id: 'waiting', name: 'waiting', displayName: '⏸️ מחכה', color: '#f59e0b' },
-    { id: 'completed', name: 'completed', displayName: '✓ הושלם', color: '#10b981' },
-    { id: 'overdue', name: 'overdue', displayName: '🔴 בפיגור', color: '#ef4444' },
-  ];
 
   // Unmount cleanup: ensure scroll lock is removed if user navigates away during drag
   useEffect(() => {
@@ -53,27 +56,38 @@ export default function KanbanDashboard() {
     };
   }, []);
 
-  // Load all tasks and organize by status
+  // Load statuses from API (same as Kanban) then tasks; build columns from org statuses
   const loadTasks = async () => {
+    const orgId = user?.organization_id ?? user?.restaurant_id;
+    if (!orgId || !token) return;
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE}/tasks`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const tasks: TaskWithAssignee[] = response.data;
-      
-      // Initialize columns (verified tasks shown in completed column)
-      const newColumns: StatusColumn[] = DEFAULT_STATUSES.map(status => ({
-        ...status,
-        tasks: tasks.filter(task =>
-          task.status === status.name || (status.name === 'completed' && task.status === 'verified')
-        ),
+      const [statusRes, tasksRes] = await Promise.all([
+        axios.get<StatusFromApi[]>(`${API_BASE}/statuses/restaurant/${orgId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get<TaskWithAssignee[]>(`${API_BASE}/tasks`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      const apiStatuses = statusRes.data ?? [];
+      setStatuses(apiStatuses);
+      const tasks: TaskWithAssignee[] = tasksRes.data ?? [];
+      const statusList = apiStatuses.filter((st) => getStatusName(st) !== 'verified');
+      const newColumns: StatusColumn[] = statusList.map((st) => ({
+        id: String(st.id),
+        name: getStatusName(st),
+        displayName: (st as any).display_name ?? st.name,
+        color: st.color ?? '#94a3b8',
+        tasks: tasks.filter((task) => {
+          const taskStatus = (task.status || '').trim();
+          const statusName = getStatusName(st);
+          return taskStatus === statusName || (statusName === 'completed' && taskStatus === 'verified');
+        }),
       }));
-
       setColumns(newColumns);
     } catch (error) {
-      console.error('Failed to load tasks:', error);
+      console.error('Failed to load tasks or statuses:', error);
     } finally {
       setLoading(false);
     }
@@ -129,17 +143,13 @@ export default function KanbanDashboard() {
     e.preventDefault();
   };
 
-  // Handle drop - update task status
+  // Handle drop - update task status (use API status names, same as Kanban)
   const handleDrop = async (statusName: string) => {
     if (!draggedTask) return;
-
-    const validStatuses = ['planned', 'assigned', 'in_progress', 'waiting', 'completed', 'overdue'];
-    const status = validStatuses.includes(statusName) 
-      ? (statusName as 'planned' | 'assigned' | 'in_progress' | 'waiting' | 'completed' | 'overdue')
-      : 'planned';
+    const status = statuses.some((s) => getStatusName(s) === statusName) ? statusName : (statuses[0] && getStatusName(statuses[0])) || 'planned';
 
     try {
-      await updateTask(draggedTask.id, { status });
+      await updateTask(draggedTask.id, { status: status as Task['status'] });
       
       // Update local state
       setColumns(prevColumns =>
@@ -350,24 +360,24 @@ export default function KanbanDashboard() {
                         <p className="text-xs text-gray-600 dark:text-slate-400 line-clamp-2 mb-2">{task.description}</p>
                       )}
 
-                      {/* Status shortcuts */}
+                      {/* Status shortcuts - same statuses as Kanban columns */}
                       <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-200 dark:border-slate-600" onClick={(e) => e.stopPropagation()}>
-                        {DEFAULT_STATUSES.filter((s) => s.name !== task.status).slice(0, 4).map((s) => (
+                        {columns.filter((col) => col.name !== task.status).slice(0, 4).map((col) => (
                           <button
-                            key={s.name}
+                            key={col.id}
                             type="button"
                             onClick={async () => {
                               try {
-                                await updateTask(task.id, { status: s.name as Task['status'] });
+                                await updateTask(task.id, { status: col.name as Task['status'] });
                                 await loadTasks();
                               } catch (err) {
                                 console.error('Failed to update status', err);
                               }
                             }}
                             className="px-2 py-0.5 rounded text-[10px] font-bold border bg-white/80 dark:bg-slate-700/80 text-gray-700 dark:text-slate-200 hover:opacity-90 transition-opacity"
-                            style={{ borderColor: s.color, color: s.color }}
+                            style={{ borderColor: col.color, color: col.color }}
                           >
-                            {s.displayName}
+                            {col.displayName}
                           </button>
                         ))}
                       </div>
