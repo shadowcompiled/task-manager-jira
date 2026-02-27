@@ -16,6 +16,10 @@ function forward(req, res) {
   } else {
     pathSeg = decodeURIComponent(pathSeg);
   }
+  // Fallback: if path not in query (e.g. POST with stripped query), try x-invoke-path or original url
+  if ((pathSeg == null || pathSeg === '') && req.headers['x-invoke-path']) {
+    pathSeg = req.headers['x-invoke-path'].replace(/^\/api\/?/, '');
+  }
   if (pathSeg != null && pathSeg !== '') {
     params.delete('path');
     const rest = params.toString();
