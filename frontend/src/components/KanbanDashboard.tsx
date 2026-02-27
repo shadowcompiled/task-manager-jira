@@ -24,7 +24,7 @@ interface StatusColumn {
   tasks: TaskWithAssignee[];
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
 export default function KanbanDashboard() {
   const { user, token } = useAuthStore();

@@ -4,7 +4,7 @@ import { useTagStore, useAuthStore } from '../store';
 import axios from 'axios';
 import { modalTransition, quickTransition, getTransition, useReducedMotion } from '../utils/motion';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
 export default function TagManagementModal({ onClose }: any) {
   const { user, token } = useAuthStore();

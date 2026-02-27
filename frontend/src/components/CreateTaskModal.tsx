@@ -5,7 +5,7 @@ import axios from 'axios';
 import { modalTransition, quickTransition, getTransition, useReducedMotion, useIsMobile } from '../utils/motion';
 import { useToast } from '../contexts/ToastContext';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export default function CreateTaskModal({ onClose, onTaskCreated }: any) {

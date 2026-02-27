@@ -1,6 +1,6 @@
-# Deployment – Single Vercel Project
+# Deployment – Single Vercel Project (no Railway)
 
-This app is deployed as **one Vercel project**: frontend (static) and backend (serverless API) in the same repo and the same deployment.
+Everything runs on **one Vercel project**: frontend (static) and backend (serverless API) in the same repo and the same deployment. Do not use Railway or any other backend host.
 
 ## Architecture
 
@@ -30,7 +30,7 @@ Set these in the Vercel project (**Settings → Environment Variables**):
 | `EMAIL_USER` / `EMAIL_PASSWORD` | Optional | For SMTP email (task assignment/expiry). App works without email. |
 | `SENDGRID_API_KEY` | Optional | Alternative to SMTP for sending email. |
 
-After moving from Railway (or any other host), remove env vars from the old host once the Vercel deployment is verified.
+Do **not** set `VITE_API_URL` in Vercel. The frontend uses `/api` (same origin) in production. If you previously had `VITE_API_URL` pointing at Railway (or another host), **remove it** from Vercel Environment Variables and redeploy.
 
 ## Crons
 
@@ -45,14 +45,6 @@ The cron routes in `backend/src/routes/cron.ts` require authentication: `Authori
 
 - **Vercel Postgres:** With the integration, `POSTGRES_URL` is injected automatically.
 - **Schema:** Backend runs `runMigrationIfNeeded()` on each request when on Vercel. For a brand-new database, run `backend/src/db/schema.sql` once (e.g. via Vercel Postgres SQL tab or `psql $POSTGRES_URL -f backend/src/db/schema.sql`).
-
-## Railway (or other host) cleanup
-
-After the Vercel deployment is working:
-
-- Stop or remove the backend service on Railway (or other host).
-- Remove env vars from the old host.
-- No Railway config files are in the repo; no code changes needed for removal.
 
 ## Summary
 

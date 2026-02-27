@@ -17,7 +17,7 @@ const SECTION_ORDER = [
   'staff',
 ] as const;
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
 const STATUS_LABELS: Record<string, string> = {
   planned: 'מתוכנן',
