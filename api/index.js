@@ -16,9 +16,13 @@ function forward(req, res) {
   } else {
     pathSeg = decodeURIComponent(pathSeg);
   }
-  // Fallback: if path not in query (e.g. POST with stripped query), try x-invoke-path or original url
-  if ((pathSeg == null || pathSeg === '') && req.headers['x-invoke-path']) {
-    pathSeg = req.headers['x-invoke-path'].replace(/^\/api\/?/, '');
+  // Fallback: if path not in query (e.g. POST), try headers Vercel or other runtimes may set
+  if (pathSeg == null || pathSeg === '') {
+    const h = req.headers;
+    pathSeg = (h['x-invoke-path'] || h['x-vercel-url'] || h['x-original-url'] || h['x-forwarded-path'] || '')
+      .replace(/^https?:\/\/[^/]+/, '')
+      .replace(/^\/api\/?/, '')
+      .trim() || null;
   }
   if (pathSeg != null && pathSeg !== '') {
     params.delete('path');
@@ -32,3 +36,9 @@ function forward(req, res) {
 
 // Single default handler (Node.js style) – supports all methods
 module.exports = forward;
+// Explicit method exports so Vercel routes POST/PUT/PATCH/DELETE to this function (avoids 405)
+module.exports.get = forward;
+module.exports.post = forward;
+module.exports.put = forward;
+module.exports.patch = forward;
+module.exports.delete = forward;
