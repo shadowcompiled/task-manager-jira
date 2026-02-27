@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { getTransition, useReducedMotion } from '../utils/motion';
+import { getTransition, useReducedMotion, quickTransition } from '../utils/motion';
 import { API_BASE } from '../store';
 
 type Props = {
@@ -42,7 +42,7 @@ export default function RegisterPage({ onShowLogin, onRegistered }: Props) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={getTransition(reducedMotion, { duration: 0.2 })}
+        transition={getTransition(reducedMotion, quickTransition)}
         className="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur rounded-2xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative z-10 border border-teal-500/30"
       >
         <div className="text-center mb-6 sm:mb-8">
