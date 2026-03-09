@@ -22,4 +22,8 @@ Set `EMAIL_USER` and `EMAIL_PASSWORD` in the Vercel project **Environment Variab
 
 ## Gmail
 
-If you use Gmail with two-factor authentication, create an App Password and use it as `EMAIL_PASSWORD`; the regular account password will not work.
+If you use Gmail with two-factor authentication (2-Step Verification), you **must** use an [App Password](https://support.google.com/accounts/answer/185833) as `EMAIL_PASSWORD`. Your normal Gmail password will not work and you will see:
+
+`Invalid login: 534-5.7.9 Application-specific password required`
+
+**Fix:** Google Account → Security → 2-Step Verification → App passwords → create one for "Mail" → use that 16-character password in Vercel as `EMAIL_PASSWORD`, then redeploy.
