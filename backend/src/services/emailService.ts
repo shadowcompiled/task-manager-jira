@@ -81,9 +81,9 @@ export async function sendAssignmentNotification(
   assignedByName: string,
   orgName: string
 ): Promise<boolean> {
-  if (!process.env.EMAIL_USER) {
-    console.log(
-      'Assignment email skipped: EMAIL_USER not set. Set EMAIL_USER and EMAIL_PASSWORD in Vercel env to enable.'
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    console.warn(
+      'Assignment email skipped: EMAIL_USER or EMAIL_PASSWORD not set. Set both in Vercel (or backend) env to enable. For Gmail use an App Password.'
     );
     return false;
   }
@@ -114,11 +114,11 @@ export async function sendAssignmentNotification(
       `,
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✉️  Assignment notification sent to ${recipientEmail}`);
+    await transporter.sendMail(mailOptions);
+    console.log(`✉️  Assignment email sent to ${recipientEmail}`);
     return true;
   } catch (error: any) {
-    console.error('Failed to send assignment notification:', error.message);
+    console.error('Failed to send assignment notification to', recipientEmail, ':', error.message, error.stack);
     return false;
   }
 }

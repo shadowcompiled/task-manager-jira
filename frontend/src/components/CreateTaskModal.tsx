@@ -115,6 +115,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
         recurrence: formData.recurrence as 'once' | 'daily' | 'weekly' | 'monthly',
         assigned_to_ids: formData.assigned_to_ids,
         estimated_time: formData.estimated_time ? parseInt(formData.estimated_time) : undefined,
+        due_date: formData.due_date?.trim() || undefined,
       });
       await fetchTasks();
       setSuccess(true);
@@ -265,7 +266,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-1">תאריך יעד</label>
+            <label className="block text-sm font-semibold text-slate-300 mb-1">תאריך יעד (אופציונלי)</label>
             <input
               type="datetime-local"
               name="due_date"

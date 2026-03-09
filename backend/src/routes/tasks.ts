@@ -118,9 +118,10 @@ router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (r
       }
     }
 
+    const dueDateValue = due_date && String(due_date).trim() !== '' ? due_date : null;
     const result = await sql`
       INSERT INTO tasks (title, description, assigned_to, organization_id, priority, status, due_date, recurrence, created_by)
-      VALUES (${title}, ${description ?? null}, ${firstAssigneeId}, ${organizationId}, ${priority || 'medium'}, ${status}, ${due_date ?? null}, ${recurrence || 'once'}, ${createdBy})
+      VALUES (${title}, ${description ?? null}, ${firstAssigneeId}, ${organizationId}, ${priority || 'medium'}, ${status}, ${dueDateValue}, ${recurrence || 'once'}, ${createdBy})
       RETURNING *
     `;
     const task = result.rows[0] as any;
@@ -134,16 +135,26 @@ router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (r
       ]);
       const organizationName = (orgRows.rows[0] as any)?.name || 'Organization';
       const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
+      const emailAndPushPromises: Promise<void>[] = [];
       for (const uid of assigneeIds) {
         const u = await sql`SELECT id, email, name FROM users WHERE id = ${uid} AND organization_id = ${organizationId}`;
         const assignee = (u.rows[0] as any) || null;
         if (assignee?.email) {
-          sendAssignmentNotification(assignee.email, task.title, createdByName, organizationName).catch((err: any) => console.error('Assignment email failed:', err?.message, err?.stack));
+          emailAndPushPromises.push(
+            sendAssignmentNotification(assignee.email, task.title, createdByName, organizationName)
+              .then((ok) => { if (!ok) console.warn(`Assignment email skipped for ${assignee.email} (check EMAIL_USER/EMAIL_PASSWORD).`); })
+              .catch((err: any) => console.error('Assignment email failed:', assignee.email, err?.message, err?.stack))
+          );
+        } else {
+          console.warn(`Assignment email skipped: user ${uid} has no email in database.`);
         }
-        sendNotificationToUser(Number(uid), 'משימה חדשה', task.title, undefined, 'mission-assigned').then((r) => {
-          if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${uid}; enable notifications on the device to receive assignment alerts.`);
-        }).catch((err: any) => console.error('Push assignment:', err));
+        emailAndPushPromises.push(
+          sendNotificationToUser(Number(uid), 'משימה חדשה', task.title, undefined, 'mission-assigned')
+            .then((r) => { if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${uid}.`); })
+            .catch((err: any) => console.error('Push assignment:', err))
+        );
       }
+      await Promise.allSettled(emailAndPushPromises);
     }
     const assigneesRes = await sql`SELECT u.id, u.name FROM users u INNER JOIN task_assignments ta ON u.id = ta.user_id WHERE ta.task_id = ${task.id}`;
     const assignees = (assigneesRes.rows as any[]).map((r: any) => ({ id: r.id, name: r.name }));
@@ -231,16 +242,26 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
         const organizationName = (orgRows.rows[0] as any)?.name || 'Organization';
         const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
         const taskTitle = title || task.title;
+        const emailAndPushPromises: Promise<void>[] = [];
         for (const uid of newAssigneeIds) {
           const u = await sql`SELECT id, email, name FROM users WHERE id = ${uid} AND organization_id = ${organizationId}`;
           const assignee = (u.rows[0] as any) || null;
           if (assignee?.email) {
-            sendAssignmentNotification(assignee.email, taskTitle, createdByName, organizationName).catch((err: any) => console.error('Assignment email failed:', err?.message, err?.stack));
+            emailAndPushPromises.push(
+              sendAssignmentNotification(assignee.email, taskTitle, createdByName, organizationName)
+                .then((ok) => { if (!ok) console.warn(`Assignment email skipped for ${assignee.email} (check EMAIL_USER/EMAIL_PASSWORD).`); })
+                .catch((err: any) => console.error('Assignment email failed:', assignee.email, err?.message, err?.stack))
+            );
+          } else {
+            console.warn(`Assignment email skipped: user ${uid} has no email in database.`);
           }
-          sendNotificationToUser(Number(uid), 'משימה חדשה', taskTitle, undefined, 'mission-assigned').then((r) => {
-            if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${uid}; enable notifications on the device to receive assignment alerts.`);
-          }).catch((err: any) => console.error('Push assignment:', err));
+          emailAndPushPromises.push(
+            sendNotificationToUser(Number(uid), 'משימה חדשה', taskTitle, undefined, 'mission-assigned')
+              .then((r) => { if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${uid}.`); })
+              .catch((err: any) => console.error('Push assignment:', err))
+          );
         }
+        await Promise.allSettled(emailAndPushPromises);
       }
     }
 
