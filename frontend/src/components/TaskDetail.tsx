@@ -317,7 +317,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
                           setEditData({
                             ...editData,
                             assigned_to_ids: ids.includes(member.id)
-                              ? ids.filter((id) => id !== member.id)
+                              ? ids.filter((id: number) => id !== member.id)
                               : [...ids, member.id],
                           });
                         }}

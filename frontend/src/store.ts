@@ -28,6 +28,8 @@ export interface Task {
   assigned_to?: number;
   assigned_to_name?: string;
   assignees?: { id: number; name: string }[];
+  /** Used when creating/updating; API accepts array of assignee user ids */
+  assigned_to_ids?: number[];
   priority: 'low' | 'medium' | 'high' | 'critical';
   status: 'planned' | 'assigned' | 'in_progress' | 'waiting' | 'completed' | 'verified' | 'overdue';
   due_date?: string;
