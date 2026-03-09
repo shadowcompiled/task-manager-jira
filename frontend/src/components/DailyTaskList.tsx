@@ -27,8 +27,11 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
     fetchTasks();
   }, [fetchTasks]);
 
+  const taskAssignedToUser = (task: any, uid: number | undefined) =>
+    !!uid && (task.assignees?.some((a: { id: number }) => a.id === uid) || task.assigned_to === uid);
+
   let filteredTasks = user?.role === 'worker'
-    ? tasks.filter((task) => task.assigned_to === user.id)
+    ? tasks.filter((task) => taskAssignedToUser(task, user?.id))
     : tasks;
 
   const now = new Date();
@@ -36,7 +39,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
   const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
   if (quickFilter === 'my') {
-    filteredTasks = filteredTasks.filter((t) => t.assigned_to === user?.id);
+    filteredTasks = filteredTasks.filter((t) => taskAssignedToUser(t, user?.id));
   } else if (quickFilter === 'overdue') {
     filteredTasks = filteredTasks.filter((t) => t.due_date && new Date(t.due_date) < now && !['completed', 'verified'].includes(t.status));
   } else if (quickFilter === 'due_today') {
@@ -54,7 +57,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
   const pendingTasks = filteredTasks.filter((t) => !['completed', 'verified'].includes(t.status));
   const completedTasks = filteredTasks.filter((t) => ['completed', 'verified'].includes(t.status));
 
-  const allPending = (user?.role === 'worker' ? tasks.filter((t) => t.assigned_to === user.id) : tasks).filter((t) => !['completed', 'verified'].includes(t.status));
+  const allPending = (user?.role === 'worker' ? tasks.filter((t) => taskAssignedToUser(t, user?.id)) : tasks).filter((t) => !['completed', 'verified'].includes(t.status));
   const dueTodayCount = allPending.filter((t) => t.due_date && new Date(t.due_date) >= todayStart && new Date(t.due_date) < todayEnd).length;
   const overdueCount = allPending.filter((t) => t.due_date && new Date(t.due_date) < now).length;
 
@@ -194,7 +197,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
                 onClick={() => onTaskSelect(task)}
                 showEditButton={user?.role !== 'worker'}
                 onEdit={() => onEditTask ? onEditTask(task) : onTaskSelect(task)}
-                isAssignedToMe={task.assigned_to === user?.id}
+                isAssignedToMe={taskAssignedToUser(task, user?.id)}
                 showDeleteButton={user?.role === 'admin' || user?.role === 'maintainer'}
                 onDelete={user?.role === 'admin' || user?.role === 'maintainer' ? () => {
                   if (window.confirm('למחוק את המשימה?')) {
@@ -229,7 +232,7 @@ export default function DailyTaskList({ onTaskSelect, onEditTask, onCreateTask }
                   key={task.id}
                   task={task}
                   onClick={() => onTaskSelect(task)}
-                  isAssignedToMe={task.assigned_to === user?.id}
+                  isAssignedToMe={taskAssignedToUser(task, user?.id)}
                   showDeleteButton={user?.role === 'admin' || user?.role === 'maintainer'}
                   onDelete={user?.role === 'admin' || user?.role === 'maintainer' ? () => {
                     if (window.confirm('למחוק את המשימה?')) {

@@ -36,7 +36,7 @@ npm run dev
 
 1. Connect the repo to Vercel. Add **Vercel Postgres** from the Storage tab and link it to the project.
 2. Run the DB schema once (Vercel Postgres SQL tab or `psql $POSTGRES_URL -f backend/src/db/schema.sql`).
-3. Set environment variables: `POSTGRES_URL`, `JWT_SECRET`, `CRON_SECRET`, and optionally `SENDGRID_API_KEY`, `EMAIL_FROM`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`.
+3. Set environment variables: `POSTGRES_URL`, `JWT_SECRET`, `CRON_SECRET`, and optionally `EMAIL_USER`, `EMAIL_PASSWORD`, `EMAIL_FROM`, `SENDGRID_API_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`. For assignment emails see [EMAIL_SETUP.md](EMAIL_SETUP.md).
 4. Deploy. The `vercel.json` build runs backend + frontend; `/api/*` is served by the serverless API. Cron jobs hit `/api/cron/daily-notifications` (hourly) and `/api/cron/push-scheduled` (every minute; Pro plan).
 
 ## Cron & auto-cleanup

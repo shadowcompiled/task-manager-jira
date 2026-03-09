@@ -104,21 +104,18 @@ export async function sendNotificationToAll(title: string, body: string, icon?: 
   return { successCount, failCount };
 }
 
-// Scheduled notification sender
-let morningNotificationSent = false;
-let noonNotificationSent = false;
-let eveningNotificationSent = false;
-let lastCheckedDate = '';
-
 // Get Israel time (UTC+2 or UTC+3 depending on DST)
 const getIsraelTime = () => {
   const now = new Date();
-  // Israel timezone offset
   const israelTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+  const y = israelTime.getFullYear();
+  const m = String(israelTime.getMonth() + 1).padStart(2, '0');
+  const d = String(israelTime.getDate()).padStart(2, '0');
+  const sentDate = `${y}-${m}-${d}`;
   return {
     hours: israelTime.getHours(),
     minutes: israelTime.getMinutes(),
-    dateStr: israelTime.toDateString()
+    sentDate,
   };
 };
 
@@ -158,51 +155,82 @@ export const checkAndSendTaskDueNowNotifications = async () => {
   }
 };
 
+async function wasSlotSentToday(slot: string, sentDate: string): Promise<boolean> {
+  const { rows } = await sql`
+    SELECT 1 FROM push_sent_log WHERE slot = ${slot} AND sent_date = ${sentDate}::date LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
+async function markSlotSent(slot: string, sentDate: string): Promise<void> {
+  await sql`
+    INSERT INTO push_sent_log (slot, sent_date) VALUES (${slot}, ${sentDate}::date)
+    ON CONFLICT (slot, sent_date) DO NOTHING
+  `;
+}
+
+let pushSentLogTableEnsured = false;
+async function ensurePushSentLogTable(): Promise<void> {
+  if (pushSentLogTableEnsured) return;
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS push_sent_log (
+        id SERIAL PRIMARY KEY,
+        slot TEXT NOT NULL CHECK (slot IN ('morning', 'noon', 'evening')),
+        sent_date DATE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(slot, sent_date)
+      )
+    `;
+    await sql`CREATE INDEX IF NOT EXISTS idx_push_sent_log_slot_date ON push_sent_log(slot, sent_date)`;
+    pushSentLogTableEnsured = true;
+  } catch (e) {
+    console.error('[pushService] ensurePushSentLogTable:', e);
+  }
+}
+
 export const checkAndSendScheduledNotifications = async () => {
   await checkAndSendTaskDueNowNotifications();
+  await ensurePushSentLogTable();
+  const { hours, minutes, sentDate } = getIsraelTime();
 
-  const { hours, minutes, dateStr } = getIsraelTime();
-  
-  // Reset flags at midnight Israel time (new day)
-  if (lastCheckedDate !== dateStr) {
-    console.log(`📅 New day in Israel: ${dateStr}`);
-    morningNotificationSent = false;
-    noonNotificationSent = false;
-    eveningNotificationSent = false;
-    lastCheckedDate = dateStr;
+  // Morning notification at 9:00 Israel time (window 9:00–9:04)
+  if (hours === 9 && minutes < 5) {
+    if (!(await wasSlotSentToday('morning', sentDate))) {
+      console.log(`📲 Sending morning notification... (Israel date: ${sentDate})`);
+      const result = await sendNotificationToAll(
+        '☀️ בוקר טוב!',
+        'לא לשכוח לבצע את המשימות!'
+      );
+      console.log(`📲 Morning notification result:`, result);
+      await markSlotSent('morning', sentDate);
+    }
   }
 
-  // Morning notification at 9:00 Israel time
-  if (hours === 9 && minutes < 5 && !morningNotificationSent) {
-    console.log(`📲 Sending morning notification... (Israel time: ${hours}:${minutes})`);
-    const result = await sendNotificationToAll(
-      '☀️ בוקר טוב!',
-      'לא לשכוח לבצע את המשימות!'
-    );
-    console.log(`📲 Morning notification result:`, result);
-    morningNotificationSent = true;
+  // Noon notification at 12:30 Israel time (window 12:30–12:34)
+  if (hours === 12 && minutes >= 30 && minutes < 35) {
+    if (!(await wasSlotSentToday('noon', sentDate))) {
+      console.log(`📲 Sending noon notification... (Israel date: ${sentDate})`);
+      const result = await sendNotificationToAll(
+        '🍽️ שתיהיה משמרת מוצלחת!',
+        'הסתכלת על המשימות שלך?'
+      );
+      console.log(`📲 Noon notification result:`, result);
+      await markSlotSent('noon', sentDate);
+    }
   }
 
-  // Noon notification at 12:30 Israel time
-  if (hours === 12 && minutes >= 30 && minutes < 35 && !noonNotificationSent) {
-    console.log(`📲 Sending noon notification... (Israel time: ${hours}:${minutes})`);
-    const result = await sendNotificationToAll(
-      '🍽️ שתיהיה משמרת מוצלחת!',
-      'הסתכלת על המשימות שלך?'
-    );
-    console.log(`📲 Noon notification result:`, result);
-    noonNotificationSent = true;
-  }
-
-  // Evening notification at 22:00 Israel time
-  if (hours === 22 && minutes < 5 && !eveningNotificationSent) {
-    console.log(`📲 Sending evening notification... (Israel time: ${hours}:${minutes})`);
-    const result = await sendNotificationToAll(
-      '🌙 לילה טוב!',
-      'לא לשכוח לתקף משימות שביצעת!'
-    );
-    console.log(`📲 Evening notification result:`, result);
-    eveningNotificationSent = true;
+  // Evening notification at 22:00 Israel time (window 22:00–22:04)
+  if (hours === 22 && minutes < 5) {
+    if (!(await wasSlotSentToday('evening', sentDate))) {
+      console.log(`📲 Sending evening notification... (Israel date: ${sentDate})`);
+      const result = await sendNotificationToAll(
+        '🌙 לילה טוב!',
+        'לא לשכוח לתקף משימות שביצעת!'
+      );
+      console.log(`📲 Evening notification result:`, result);
+      await markSlotSent('evening', sentDate);
+    }
   }
 };
 

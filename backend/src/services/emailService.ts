@@ -83,7 +83,7 @@ export async function sendAssignmentNotification(
 ): Promise<boolean> {
   if (!process.env.EMAIL_USER) {
     console.log(
-      '⚠️  Email notifications disabled - EMAIL_USER not configured'
+      'Assignment email skipped: EMAIL_USER not set. Set EMAIL_USER and EMAIL_PASSWORD in Vercel env to enable.'
     );
     return false;
   }

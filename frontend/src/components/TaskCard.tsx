@@ -126,7 +126,7 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, showDe
         </div>
       </div>
 
-      {(task.due_date || task.estimated_time || task.assigned_to_name) && (
+      {(task.due_date || task.estimated_time || task.assignees?.length || task.assigned_to_name) && (
         <div className="mt-2 pt-2 border-t border-slate-300 dark:border-slate-600 text-xs space-y-1 text-slate-600 dark:text-slate-400">
           {task.due_date && (
             <div className="flex items-center gap-2 font-semibold">
@@ -146,10 +146,12 @@ export default function TaskCard({ task, onClick, showEditButton, onEdit, showDe
               </span>
             </div>
           )}
-          {task.assigned_to_name && (
+          {(task.assignees?.length ? task.assignees.map((a: { name: string }) => a.name).join(', ') : task.assigned_to_name) && (
             <div className="flex items-center gap-2 font-semibold">
               <span className="emoji-icon">👤</span>
-              <span className="text-xs truncate">{task.assigned_to_name}</span>
+              <span className="text-xs truncate">
+                {task.assignees?.length ? task.assignees.map((a: { name: string }) => a.name).join(', ') : task.assigned_to_name}
+              </span>
             </div>
           )}
         </div>

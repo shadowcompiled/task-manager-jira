@@ -130,6 +130,16 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Daily push sent log (serverless: at most once per slot per day)
+CREATE TABLE IF NOT EXISTS push_sent_log (
+  id SERIAL PRIMARY KEY,
+  slot TEXT NOT NULL CHECK (slot IN ('morning', 'noon', 'evening')),
+  sent_date DATE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(slot, sent_date)
+);
+CREATE INDEX IF NOT EXISTS idx_push_sent_log_slot_date ON push_sent_log(slot, sent_date);
+
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_tasks_organization_id ON tasks(organization_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);

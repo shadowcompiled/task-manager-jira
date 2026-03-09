@@ -20,7 +20,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assigned_to: '',
+    assigned_to_ids: [] as number[],
     priority: 'medium',
     due_date: '',
     estimated_time: '',
@@ -94,6 +94,15 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
     }));
   };
 
+  const handleAssigneeToggle = (userId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      assigned_to_ids: prev.assigned_to_ids.includes(userId)
+        ? prev.assigned_to_ids.filter((id) => id !== userId)
+        : [...prev.assigned_to_ids, userId],
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -104,7 +113,7 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
         ...formData,
         priority: formData.priority as 'low' | 'medium' | 'high' | 'critical',
         recurrence: formData.recurrence as 'once' | 'daily' | 'weekly' | 'monthly',
-        assigned_to: formData.assigned_to ? parseInt(formData.assigned_to) : undefined,
+        assigned_to_ids: formData.assigned_to_ids,
         estimated_time: formData.estimated_time ? parseInt(formData.estimated_time) : undefined,
       });
       await fetchTasks();
@@ -187,24 +196,28 @@ export default function CreateTaskModal({ onClose, onTaskCreated }: any) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-1">הקצה אל</label>
-                <select
-                  name="assigned_to"
-                  value={formData.assigned_to}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-slate-600 rounded-xl bg-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 min-h-[44px]"
-                >
-                  <option value="">בחר עובד...</option>
-                {teamMembers.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name} ({member.role})
-                  </option>
-                ))}
-              </select>
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">הקצה אל (ניתן לבחור כמה)</label>
+              <div className="flex flex-wrap gap-2 p-3 border border-slate-600 rounded-xl bg-slate-700/50 max-h-32 overflow-y-auto">
+                {teamMembers.length === 0 ? (
+                  <p className="text-slate-400 text-sm">אין חברי צוות</p>
+                ) : (
+                  teamMembers.map((m) => (
+                    <label key={m.id} className="flex items-center gap-2 cursor-pointer text-sm text-white shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={formData.assigned_to_ids.includes(m.id)}
+                        onChange={() => handleAssigneeToggle(m.id)}
+                        className="rounded border-slate-500 text-teal-500 focus:ring-teal-500"
+                      />
+                      <span>{m.name}{m.role ? ` (${m.role})` : ''}</span>
+                    </label>
+                  ))
+                )}
+              </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-300 mb-1">עדיפות</label>
               <select

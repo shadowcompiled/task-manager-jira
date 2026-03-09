@@ -27,6 +27,18 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
     }
   }, [taskId]);
 
+  const taskAssigneeIds = (): number[] => {
+    if (!currentTask) return [];
+    if (currentTask.assignees?.length) return currentTask.assignees.map((a: { id: number }) => a.id);
+    if (currentTask.assigned_to != null) return [currentTask.assigned_to];
+    return [];
+  };
+  const isAssignedToMe = (): boolean => {
+    if (!user?.id || !currentTask) return false;
+    if (currentTask.assignees?.some((a: { id: number }) => a.id === user.id)) return true;
+    return currentTask.assigned_to === user.id;
+  };
+
   useEffect(() => {
     if (currentTask && startInEditMode) {
       setIsEditing(true);
@@ -36,7 +48,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
         priority: currentTask.priority,
         status: currentTask.status,
         due_date: currentTask.due_date ?? '',
-        assigned_to: currentTask.assigned_to ?? undefined,
+        assigned_to_ids: taskAssigneeIds(),
       });
     }
   }, [currentTask, startInEditMode]);
@@ -294,18 +306,33 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
             <div>
               <label className="font-semibold text-slate-300 block mb-2">הוקצה ל:</label>
               {isEditing ? (
-                <select
-                  value={editData.assigned_to || ''}
-                  onChange={(e) => setEditData({ ...editData, assigned_to: e.target.value ? parseInt(e.target.value) : null })}
-                  className="w-full px-3 py-2.5 border border-slate-600 rounded-xl bg-slate-700 text-white min-h-[44px]"
-                >
-                  <option value="">לא הוקצה</option>
+                <div className="flex flex-wrap gap-2 p-2 border border-slate-600 rounded-xl bg-slate-700 max-h-28 overflow-y-auto">
                   {teamMembers.map((member) => (
-                    <option key={member.id} value={member.id}>{member.name}</option>
+                    <label key={member.id} className="flex items-center gap-2 cursor-pointer text-white shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={(editData.assigned_to_ids ?? []).includes(member.id)}
+                        onChange={() => {
+                          const ids = editData.assigned_to_ids ?? [];
+                          setEditData({
+                            ...editData,
+                            assigned_to_ids: ids.includes(member.id)
+                              ? ids.filter((id) => id !== member.id)
+                              : [...ids, member.id],
+                          });
+                        }}
+                        className="rounded border-slate-500 text-teal-500 focus:ring-teal-500"
+                      />
+                      <span>{member.name}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               ) : (
-                <p className="text-slate-400">{currentTask.assigned_to_name || 'לא הוקצה'}</p>
+                <p className="text-slate-400">
+                  {currentTask.assignees?.length
+                    ? currentTask.assignees.map((a: { name: string }) => a.name).join(', ')
+                    : currentTask.assigned_to_name || 'לא הוקצה'}
+                </p>
               )}
             </div>
             <div>
@@ -400,7 +427,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
             </>
           ) : (
             <>
-              {(user?.role !== 'staff' || user?.id === currentTask.assigned_to) && (
+              {(user?.role !== 'staff' || isAssignedToMe()) && (
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.98 }}
@@ -411,7 +438,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
                       description: currentTask.description,
                       status: currentTask.status,
                       priority: currentTask.priority,
-                      assigned_to: currentTask.assigned_to,
+                      assigned_to_ids: taskAssigneeIds(),
                       due_date: currentTask.due_date
                     });
                   }}
@@ -420,7 +447,7 @@ export default function TaskDetail({ taskId, onClose, onTaskUpdate, startInEditM
                   עריכה
                 </motion.button>
               )}
-              {user?.id === currentTask.assigned_to && currentTask.status === 'assigned' && (
+              {isAssignedToMe() && currentTask.status === 'assigned' && (
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.98 }}

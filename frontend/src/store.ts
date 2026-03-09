@@ -27,6 +27,7 @@ export interface Task {
   description?: string;
   assigned_to?: number;
   assigned_to_name?: string;
+  assignees?: { id: number; name: string }[];
   priority: 'low' | 'medium' | 'high' | 'critical';
   status: 'planned' | 'assigned' | 'in_progress' | 'waiting' | 'completed' | 'verified' | 'overdue';
   due_date?: string;

@@ -39,8 +39,24 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       ORDER BY t.due_date ASC NULLS LAST
     `;
     let tasks = rows as any[];
+    if (tasks.length > 0) {
+      const { rows: assigneeRows } = await sql`
+        SELECT ta.task_id, u.id, u.name FROM task_assignments ta
+        JOIN users u ON u.id = ta.user_id
+        JOIN tasks t ON t.id = ta.task_id AND t.organization_id = ${organizationId}
+      `;
+      const assigneesByTask: Record<number, { id: number; name: string }[]> = {};
+      for (const r of assigneeRows as any[]) {
+        if (!assigneesByTask[r.task_id]) assigneesByTask[r.task_id] = [];
+        assigneesByTask[r.task_id].push({ id: r.id, name: r.name });
+      }
+      tasks = tasks.map((t: any) => ({ ...t, assignees: assigneesByTask[t.id] || [] }));
+    }
     if (status) tasks = tasks.filter((t: any) => t.status === status);
-    if (assigned) tasks = tasks.filter((t: any) => t.assigned_to === parseInt(assigned));
+    if (assigned) {
+      const aid = parseInt(assigned);
+      tasks = tasks.filter((t: any) => t.assigned_to === aid || (t.assignees && t.assignees.some((a: any) => a.id === aid)));
+    }
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch tasks' });
@@ -61,13 +77,16 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
     const task = taskRows.rows[0] as any;
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
-    const [checklistsRes, commentsRes, photosRes] = await Promise.all([
+    const [checklistsRes, commentsRes, photosRes, assigneesRes] = await Promise.all([
       sql`SELECT * FROM task_checklists WHERE task_id = ${task.id}`,
       sql`SELECT c.*, u.name as user_name FROM comments c JOIN users u ON c.user_id = u.id WHERE c.task_id = ${task.id} ORDER BY c.created_at DESC`,
-      sql`SELECT * FROM photos WHERE task_id = ${task.id} ORDER BY uploaded_at DESC`
+      sql`SELECT * FROM photos WHERE task_id = ${task.id} ORDER BY uploaded_at DESC`,
+      sql`SELECT u.id, u.name FROM users u INNER JOIN task_assignments ta ON u.id = ta.user_id WHERE ta.task_id = ${task.id}`
     ]);
+    const assignees = (assigneesRes.rows as any[]).map((r: any) => ({ id: r.id, name: r.name }));
     res.json({
       ...task,
+      assignees,
       checklists: checklistsRes.rows,
       comments: commentsRes.rows,
       photos: photosRes.rows
@@ -79,43 +98,56 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 
 router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, assigned_to, priority, due_date, recurrence } = req.body;
+    const { title, description, assigned_to, assigned_to_ids, priority, due_date, recurrence } = req.body;
     const organizationId = req.user?.organizationId;
     const createdBy = req.user?.id;
-    const assigneeId = assigned_to != null && assigned_to !== '' ? Number(assigned_to) : null;
-    const status = assigneeId && !Number.isNaN(assigneeId) && assigneeId > 0 ? 'assigned' : 'planned';
+    const assigneeIds: number[] = Array.isArray(assigned_to_ids)
+      ? assigned_to_ids.filter((id: any) => Number.isInteger(Number(id))).map((id: any) => Number(id))
+      : assigned_to != null && assigned_to !== ''
+        ? [Number(assigned_to)]
+        : [];
+    const status = assigneeIds.length > 0 ? 'assigned' : 'planned';
+    const firstAssigneeId = assigneeIds.length > 0 ? assigneeIds[0] : null;
 
-    if (assigneeId && assigneeId > 0) {
-      const assigneeCheck = await sql`SELECT id FROM users WHERE id = ${assigneeId} AND organization_id = ${organizationId}`;
-      if (assigneeCheck.rows.length === 0) {
-        return res.status(403).json({ error: 'Assignee must belong to your organization' });
+    if (assigneeIds.length > 0) {
+      for (const uid of assigneeIds) {
+        const assigneeCheck = await sql`SELECT id FROM users WHERE id = ${uid} AND organization_id = ${organizationId}`;
+        if (assigneeCheck.rows.length === 0) {
+          return res.status(403).json({ error: 'Assignee must belong to your organization' });
+        }
       }
     }
 
     const result = await sql`
       INSERT INTO tasks (title, description, assigned_to, organization_id, priority, status, due_date, recurrence, created_by)
-      VALUES (${title}, ${description ?? null}, ${assigneeId}, ${organizationId}, ${priority || 'medium'}, ${status}, ${due_date ?? null}, ${recurrence || 'once'}, ${createdBy})
+      VALUES (${title}, ${description ?? null}, ${firstAssigneeId}, ${organizationId}, ${priority || 'medium'}, ${status}, ${due_date ?? null}, ${recurrence || 'once'}, ${createdBy})
       RETURNING *
     `;
     const task = result.rows[0] as any;
-    if (assigneeId && assigneeId > 0) {
-      await sql`INSERT INTO task_assignments (task_id, user_id) VALUES (${task.id}, ${assigneeId}) ON CONFLICT (task_id, user_id) DO NOTHING`;
-      const [assigneeRows, orgRows, creatorRows] = await Promise.all([
-        sql`SELECT id, email, name FROM users WHERE id = ${assigneeId}`,
+    if (assigneeIds.length > 0) {
+      for (const uid of assigneeIds) {
+        await sql`INSERT INTO task_assignments (task_id, user_id) VALUES (${task.id}, ${uid}) ON CONFLICT (task_id, user_id) DO NOTHING`;
+      }
+      const [orgRows, creatorRows] = await Promise.all([
         sql`SELECT name FROM organizations WHERE id = ${organizationId}`,
         sql`SELECT name FROM users WHERE id = ${createdBy}`
       ]);
-      const assignee = (assigneeRows.rows[0] as any) || null;
       const organizationName = (orgRows.rows[0] as any)?.name || 'Organization';
       const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
-      if (assignee?.email) {
-        sendAssignmentNotification(assignee.email, task.title, createdByName, organizationName).catch((err: any) => console.error('Failed to send email:', err));
+      for (const uid of assigneeIds) {
+        const u = await sql`SELECT id, email, name FROM users WHERE id = ${uid} AND organization_id = ${organizationId}`;
+        const assignee = (u.rows[0] as any) || null;
+        if (assignee?.email) {
+          sendAssignmentNotification(assignee.email, task.title, createdByName, organizationName).catch((err: any) => console.error('Assignment email failed:', err?.message, err?.stack));
+        }
+        sendNotificationToUser(Number(uid), 'משימה חדשה', task.title, undefined, 'mission-assigned').then((r) => {
+          if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${uid}; enable notifications on the device to receive assignment alerts.`);
+        }).catch((err: any) => console.error('Push assignment:', err));
       }
-      sendNotificationToUser(assigneeId, 'משימה חדשה', task.title, undefined, 'mission-assigned').then((r) => {
-        if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${assigneeId}; enable notifications on the device to receive assignment alerts.`);
-      }).catch((err: any) => console.error('Push assignment:', err));
     }
-    res.status(201).json(task);
+    const assigneesRes = await sql`SELECT u.id, u.name FROM users u INNER JOIN task_assignments ta ON u.id = ta.user_id WHERE ta.task_id = ${task.id}`;
+    const assignees = (assigneesRes.rows as any[]).map((r: any) => ({ id: r.id, name: r.name }));
+    res.status(201).json({ ...task, assignees });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create task' });
   }
@@ -124,15 +156,17 @@ router.post('/', authenticateToken, authorize(['admin', 'maintainer']), async (r
 router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const taskId = req.params.id;
-    const { title, description, assigned_to, priority, status, due_date, estimated_time, tags } = req.body;
+    const { title, description, assigned_to, assigned_to_ids, priority, status, due_date, estimated_time, tags } = req.body;
     const organizationId = req.user?.organizationId;
 
     const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND organization_id = ${organizationId}`;
     const task = taskRows.rows[0] as any;
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
+    const assigneeIdsRows = await sql`SELECT user_id FROM task_assignments WHERE task_id = ${taskId}`;
+    const currentAssigneeIds = (assigneeIdsRows.rows as any[]).map((r: any) => r.user_id);
     const isManager = ['admin', 'maintainer'].includes(req.user?.role || '');
-    const isAssignedToTask = task.assigned_to === req.user?.id;
+    const isAssignedToTask = task.assigned_to === req.user?.id || currentAssigneeIds.includes(req.user?.id);
     if (!isManager && !isAssignedToTask) {
       return res.status(403).json({ error: 'Not authorized to update this task' });
     }
@@ -153,24 +187,21 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       }
     }
 
-    let assignedUser: any = null;
-    if (assigned_to !== undefined && assigned_to !== task.assigned_to) {
-      if (assigned_to != null) {
-        const assigneeCheck = await sql`SELECT id FROM users WHERE id = ${assigned_to} AND organization_id = ${organizationId}`;
-        if (assigneeCheck.rows.length === 0) {
-          return res.status(403).json({ error: 'Assignee must belong to your organization' });
-        }
-      }
-      const u = await sql`SELECT id, email, name FROM users WHERE id = ${assigned_to}`;
-      assignedUser = u.rows[0] as any;
-    }
+    const assigneesChanged = assigned_to_ids !== undefined || assigned_to !== undefined;
+    const newAssigneeIds: number[] =
+      assigned_to_ids !== undefined
+        ? (Array.isArray(assigned_to_ids) ? assigned_to_ids : []).filter((id: any) => Number.isInteger(Number(id))).map((id: any) => Number(id))
+        : assigned_to !== undefined
+          ? (assigned_to != null && assigned_to !== '' ? [Number(assigned_to)] : [])
+          : currentAssigneeIds;
+    const firstAssigneeId = assigneesChanged ? (newAssigneeIds.length > 0 ? newAssigneeIds[0] : null) : task.assigned_to;
 
     const newDueDate = due_date !== undefined ? due_date : task.due_date;
     const dueDateChanged = newDueDate !== task.due_date;
     await sql`
       UPDATE tasks
       SET title = ${title ?? task.title}, description = ${description !== undefined ? description : task.description},
-          assigned_to = ${assigned_to !== undefined ? assigned_to : task.assigned_to},
+          assigned_to = ${firstAssigneeId},
           priority = ${priority || task.priority}, status = ${newStatus},
           due_date = ${newDueDate},
           estimated_time = ${estimated_time !== undefined ? estimated_time : task.estimated_time},
@@ -181,35 +212,36 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       await sql`UPDATE tasks SET push_reminder_sent_at = NULL WHERE id = ${taskId}`;
     }
 
-    // When moving to last status, set completed_at/verified_at so 3-day auto-cleanup can delete them after 3 days
     if (newStatus === 'completed' && !task.completed_at) {
       await sql`UPDATE tasks SET completed_at = CURRENT_TIMESTAMP WHERE id = ${taskId}`;
     } else if (newStatus === 'verified' && !task.verified_at) {
       await sql`UPDATE tasks SET verified_at = CURRENT_TIMESTAMP, verified_by = ${req.user?.id} WHERE id = ${taskId}`;
     }
 
-    if (assigned_to !== undefined) {
+    if (assigneesChanged) {
       await sql`DELETE FROM task_assignments WHERE task_id = ${taskId}`;
-      if (assigned_to) {
-        await sql`INSERT INTO task_assignments (task_id, user_id) VALUES (${taskId}, ${assigned_to}) ON CONFLICT (task_id, user_id) DO NOTHING`;
+      for (const uid of newAssigneeIds) {
+        await sql`INSERT INTO task_assignments (task_id, user_id) VALUES (${taskId}, ${uid}) ON CONFLICT (task_id, user_id) DO NOTHING`;
       }
-    }
-
-    if (assignedUser) {
-      const taskTitle = title || task.title;
-      const assigneeId = Number(assignedUser.id);
-      if (assignedUser.email) {
+      if (newAssigneeIds.length > 0) {
         const [orgRows, creatorRows] = await Promise.all([
           sql`SELECT name FROM organizations WHERE id = ${organizationId}`,
           sql`SELECT name FROM users WHERE id = ${req.user?.id}`
         ]);
         const organizationName = (orgRows.rows[0] as any)?.name || 'Organization';
         const createdByName = (creatorRows.rows[0] as any)?.name || 'Unknown';
-        sendAssignmentNotification(assignedUser.email, taskTitle, createdByName, organizationName).catch((err: any) => console.error('Failed to send email:', err));
+        const taskTitle = title || task.title;
+        for (const uid of newAssigneeIds) {
+          const u = await sql`SELECT id, email, name FROM users WHERE id = ${uid} AND organization_id = ${organizationId}`;
+          const assignee = (u.rows[0] as any) || null;
+          if (assignee?.email) {
+            sendAssignmentNotification(assignee.email, taskTitle, createdByName, organizationName).catch((err: any) => console.error('Assignment email failed:', err?.message, err?.stack));
+          }
+          sendNotificationToUser(Number(uid), 'משימה חדשה', taskTitle, undefined, 'mission-assigned').then((r) => {
+            if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${uid}; enable notifications on the device to receive assignment alerts.`);
+          }).catch((err: any) => console.error('Push assignment:', err));
+        }
       }
-      sendNotificationToUser(assigneeId, 'משימה חדשה', taskTitle, undefined, 'mission-assigned').then((r) => {
-        if (r.successCount === 0 && r.failCount === 0) console.warn(`📲 No push subscription for user ${assigneeId}; enable notifications on the device to receive assignment alerts.`);
-      }).catch((err: any) => console.error('Push assignment:', err));
     }
 
     if (tags && Array.isArray(tags)) {
@@ -226,12 +258,14 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       LEFT JOIN users creator ON t.created_by = creator.id
       WHERE t.id = ${taskId}
     `;
-    const updated = updatedRows?.rows?.[0];
+    const updated = updatedRows?.rows?.[0] as any;
     if (!updated) {
       console.error('PUT /tasks/:id failed to load updated task:', taskId);
       return res.status(500).json({ error: 'Failed to load updated task' });
     }
-    res.json(updated);
+    const assigneesRes = await sql`SELECT u.id, u.name FROM users u INNER JOIN task_assignments ta ON u.id = ta.user_id WHERE ta.task_id = ${taskId}`;
+    const assignees = (assigneesRes.rows as any[]).map((r: any) => ({ id: r.id, name: r.name }));
+    res.json({ ...updated, assignees });
   } catch (error: any) {
     console.error('PUT /tasks/:id error:', error?.message || error);
     res.status(500).json({ error: 'Failed to update task' });
@@ -242,9 +276,11 @@ router.put('/:id/complete', authenticateToken, async (req: AuthRequest, res: Res
   try {
     const taskId = req.params.id;
     const userId = req.user?.id;
-    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId} AND assigned_to = ${userId}`;
-    const task = taskRows.rows[0];
+    const taskRows = await sql`SELECT * FROM tasks WHERE id = ${taskId}`;
+    const task = taskRows.rows[0] as any;
     if (!task) return res.status(404).json({ error: 'Task not found' });
+    const inAssignments = await sql`SELECT 1 FROM task_assignments WHERE task_id = ${taskId} AND user_id = ${userId}`;
+    if (task.assigned_to !== userId && (inAssignments.rows?.length || 0) === 0) return res.status(404).json({ error: 'Task not found' });
 
     await sql`UPDATE tasks SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = ${taskId}`;
     const updatedRows = await sql`SELECT * FROM tasks WHERE id = ${taskId}`;
