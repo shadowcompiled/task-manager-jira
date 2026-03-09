@@ -1,11 +1,23 @@
 import nodemailer from 'nodemailer';
 
-// Configure your email service here
-// For development, use a service like Mailtrap or Gmail
+// Create transporter from current env (important for serverless: env is set per request, module may be cached)
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT || '587'),
+    secure: process.env.EMAIL_SECURE === 'true',
+    auth: {
+      user: process.env.EMAIL_USER || '',
+      pass: process.env.EMAIL_PASSWORD || '',
+    },
+  });
+}
+
+// Legacy: used by other functions that don't yet use getTransporter
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
+  secure: process.env.EMAIL_SECURE === 'true',
   auth: {
     user: process.env.EMAIL_USER || '',
     pass: process.env.EMAIL_PASSWORD || '',
@@ -75,25 +87,29 @@ export async function sendExpirationNotification(
   }
 }
 
+export function isEmailConfigured(): boolean {
+  return !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
+}
+
 export async function sendAssignmentNotification(
   recipientEmail: string,
   taskTitle: string,
   assignedByName: string,
   orgName: string
 ): Promise<boolean> {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+  if (!isEmailConfigured()) {
     console.warn(
-      'Assignment email skipped: EMAIL_USER or EMAIL_PASSWORD not set. Set both in Vercel (or backend) env to enable. For Gmail use an App Password.'
+      'Assignment email skipped: EMAIL_USER or EMAIL_PASSWORD not set. Set both in Vercel env. For Gmail use an App Password.'
     );
     return false;
   }
 
-  try {
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-      to: recipientEmail,
-      subject: `📋 נוספה לך משימה חדשה: ${taskTitle}`,
-      html: `
+  const transport = getTransporter();
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    to: recipientEmail,
+    subject: `📋 נוספה לך משימה חדשה: ${taskTitle}`,
+    html: `
         <h2>נוספה לך משימה חדשה</h2>
         <p>שלום,</p>
         <p>${assignedByName} הקציא לך משימה חדשה:</p>
@@ -108,17 +124,23 @@ export async function sendAssignmentNotification(
         
         <p>בברכה,<br/>מערכת ניהול המשימות</p>
       `,
-      text: `
+    text: `
 משימה חדשה נוספה לך: ${taskTitle}
 הוקצתה על ידי: ${assignedByName}
       `,
-    };
+  };
 
-    await transporter.sendMail(mailOptions);
+  try {
+    console.log(`✉️  Sending assignment email to ${recipientEmail} for task: ${taskTitle}`);
+    await transport.sendMail(mailOptions);
     console.log(`✉️  Assignment email sent to ${recipientEmail}`);
     return true;
   } catch (error: any) {
-    console.error('Failed to send assignment notification to', recipientEmail, ':', error.message, error.stack);
+    console.error('Assignment email failed to', recipientEmail, ':', error.message, error.stack);
+    const msg = (error.message || '').toLowerCase();
+    if (msg.includes('invalid login') || msg.includes('authentication') || msg.includes('credentials') || msg.includes('username and password')) {
+      console.warn('Tip: For Gmail, use an App Password (https://support.google.com/accounts/answer/185833), not your normal password.');
+    }
     return false;
   }
 }

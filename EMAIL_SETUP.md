@@ -16,8 +16,9 @@ Assignment emails (when a task is assigned to a user) require SMTP environment v
 
 ## Vercel
 
-Set `EMAIL_USER` and `EMAIL_PASSWORD` in the Vercel project **Environment Variables**. If they are not set, assignment emails are skipped and a log message is written:  
-`Assignment email skipped: EMAIL_USER not set. Set EMAIL_USER and EMAIL_PASSWORD in Vercel env to enable.`
+Set `EMAIL_USER` and `EMAIL_PASSWORD` in the Vercel project **Environment Variables**, then redeploy. If they are not set, assignment emails are skipped.
+
+**Verify:** While logged in, open `GET /api/tasks/email-config` (e.g. in browser or Postman). It returns `{ "emailConfigured": true }` when both env vars are set, or `false` otherwise.
 
 ## Gmail
 

@@ -1,7 +1,7 @@
 import express, { Response } from 'express';
 import { sql } from '../database';
 import { AuthRequest, authenticateToken, authorize } from '../middleware';
-import { sendAssignmentNotification } from '../services/emailService';
+import { sendAssignmentNotification, isEmailConfigured } from '../services/emailService';
 import { sendNotificationToUser } from '../services/pushService';
 
 const router = express.Router();
@@ -14,6 +14,11 @@ router.get('/team/members', authenticateToken, async (req: AuthRequest, res: Res
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch team members' });
   }
+});
+
+/** Check if assignment email is configured (EMAIL_USER + EMAIL_PASSWORD set). Use to verify Vercel env. */
+router.get('/email-config', authenticateToken, (req: AuthRequest, res: Response) => {
+  res.json({ emailConfigured: isEmailConfigured() });
 });
 
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
