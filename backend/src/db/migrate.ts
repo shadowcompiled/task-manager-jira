@@ -21,6 +21,7 @@ async function runInitialSchema(): Promise<void> {
   await sql`CREATE TABLE IF NOT EXISTS task_tags (id SERIAL PRIMARY KEY, task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE, tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE, UNIQUE(task_id, tag_id))`;
   await sql`CREATE TABLE IF NOT EXISTS task_status_history (id SERIAL PRIMARY KEY, task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE, old_status TEXT, new_status TEXT NOT NULL, changed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, changed_by INTEGER REFERENCES users(id))`;
   await sql`CREATE TABLE IF NOT EXISTS push_subscriptions (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, endpoint TEXT NOT NULL UNIQUE, p256dh TEXT NOT NULL, auth TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP)`;
+  await sql`CREATE TABLE IF NOT EXISTS scheduled_push_log (id SERIAL PRIMARY KEY, slot TEXT NOT NULL, sent_date DATE NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE(slot, sent_date))`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_organization_id ON tasks(organization_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date)`;
@@ -104,6 +105,7 @@ export async function runMigrationIfNeeded(): Promise<void> {
             console.log('[migrate] Created default statuses for organization', row.id);
           }
         }
+        await sql`CREATE TABLE IF NOT EXISTS scheduled_push_log (id SERIAL PRIMARY KEY, slot TEXT NOT NULL, sent_date DATE NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE(slot, sent_date))`;
         return;
       }
 

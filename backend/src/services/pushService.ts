@@ -104,20 +104,35 @@ export async function sendNotificationToAll(title: string, body: string, icon?: 
   return { successCount, failCount };
 }
 
-// Get Israel time (UTC+2 or UTC+3 depending on DST)
-const getIsraelTime = () => {
-  const now = new Date();
-  const israelTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
-  const y = israelTime.getFullYear();
-  const m = String(israelTime.getMonth() + 1).padStart(2, '0');
-  const d = String(israelTime.getDate()).padStart(2, '0');
-  const sentDate = `${y}-${m}-${d}`;
-  return {
-    hours: israelTime.getHours(),
-    minutes: israelTime.getMinutes(),
-    sentDate,
-  };
-};
+const TZ_ISRAEL = 'Asia/Jerusalem';
+
+/** Get current time and date in Israel using Intl (reliable on serverless/UTC). */
+function getIsraelTime(now: Date = new Date()): { hours: number; minutes: number; dateStr: string; sentDate: string } {
+  const hourFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ_ISRAEL, hour: 'numeric', hour12: false });
+  const minuteFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ_ISRAEL, minute: 'numeric' });
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: TZ_ISRAEL, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const get = (k: string) => parts.find((p) => p.type === k)?.value ?? '';
+  const sentDate = `${get('year')}-${get('month')}-${get('day')}`; // YYYY-MM-DD for DB
+  const hours = parseInt(hourFmt.format(now), 10);
+  const minutes = parseInt(minuteFmt.format(now), 10);
+  return { hours, minutes, dateStr: sentDate, sentDate };
+}
+
+/** Return true if this slot was already sent for the given Israel date (YYYY-MM-DD). */
+async function wasScheduledPushSent(slot: string, sentDate: string): Promise<boolean> {
+  const { rows } = await sql`
+    SELECT 1 FROM scheduled_push_log WHERE slot = ${slot} AND sent_date = ${sentDate} LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
+/** Record that we sent the scheduled push for this slot and date (YYYY-MM-DD). */
+async function recordScheduledPushSent(slot: string, sentDate: string): Promise<void> {
+  await sql`
+    INSERT INTO scheduled_push_log (slot, sent_date) VALUES (${slot}, ${sentDate})
+    ON CONFLICT (slot, sent_date) DO NOTHING
+  `;
+}
 
 /** Send push to assignees for tasks whose due_date is due right now (within last 2 min). Runs when cron hits every minute. */
 export const checkAndSendTaskDueNowNotifications = async () => {
@@ -155,81 +170,38 @@ export const checkAndSendTaskDueNowNotifications = async () => {
   }
 };
 
-async function wasSlotSentToday(slot: string, sentDate: string): Promise<boolean> {
-  const { rows } = await sql`
-    SELECT 1 FROM push_sent_log WHERE slot = ${slot} AND sent_date = ${sentDate}::date LIMIT 1
-  `;
-  return rows.length > 0;
-}
-
-async function markSlotSent(slot: string, sentDate: string): Promise<void> {
-  await sql`
-    INSERT INTO push_sent_log (slot, sent_date) VALUES (${slot}, ${sentDate}::date)
-    ON CONFLICT (slot, sent_date) DO NOTHING
-  `;
-}
-
-let pushSentLogTableEnsured = false;
-async function ensurePushSentLogTable(): Promise<void> {
-  if (pushSentLogTableEnsured) return;
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS push_sent_log (
-        id SERIAL PRIMARY KEY,
-        slot TEXT NOT NULL CHECK (slot IN ('morning', 'noon', 'evening')),
-        sent_date DATE NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(slot, sent_date)
-      )
-    `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_push_sent_log_slot_date ON push_sent_log(slot, sent_date)`;
-    pushSentLogTableEnsured = true;
-  } catch (e) {
-    console.error('[pushService] ensurePushSentLogTable:', e);
-  }
-}
-
 export const checkAndSendScheduledNotifications = async () => {
   await checkAndSendTaskDueNowNotifications();
-  await ensurePushSentLogTable();
+
   const { hours, minutes, sentDate } = getIsraelTime();
 
-  // Morning notification at 9:00 Israel time (window 9:00–9:04)
+  // Morning notification at 9:00 Israel time (window: 9:00–9:04)
   if (hours === 9 && minutes < 5) {
-    if (!(await wasSlotSentToday('morning', sentDate))) {
+    const alreadySent = await wasScheduledPushSent('morning', sentDate);
+    if (!alreadySent) {
       console.log(`📲 Sending morning notification... (Israel date: ${sentDate})`);
-      const result = await sendNotificationToAll(
-        '☀️ בוקר טוב!',
-        'לא לשכוח לבצע את המשימות!'
-      );
-      console.log(`📲 Morning notification result:`, result);
-      await markSlotSent('morning', sentDate);
+      await sendNotificationToAll('☀️ בוקר טוב!', 'לא לשכוח לבצע את המשימות!');
+      await recordScheduledPushSent('morning', sentDate);
     }
   }
 
-  // Noon notification at 12:30 Israel time (window 12:30–12:34)
+  // Noon notification at 12:30 Israel time (window: 12:30–12:34)
   if (hours === 12 && minutes >= 30 && minutes < 35) {
-    if (!(await wasSlotSentToday('noon', sentDate))) {
+    const alreadySent = await wasScheduledPushSent('noon', sentDate);
+    if (!alreadySent) {
       console.log(`📲 Sending noon notification... (Israel date: ${sentDate})`);
-      const result = await sendNotificationToAll(
-        '🍽️ שתיהיה משמרת מוצלחת!',
-        'הסתכלת על המשימות שלך?'
-      );
-      console.log(`📲 Noon notification result:`, result);
-      await markSlotSent('noon', sentDate);
+      await sendNotificationToAll('🍽️ שתיהיה משמרת מוצלחת!', 'הסתכלת על המשימות שלך?');
+      await recordScheduledPushSent('noon', sentDate);
     }
   }
 
-  // Evening notification at 22:00 Israel time (window 22:00–22:04)
+  // Evening notification at 22:00 Israel time (window: 22:00–22:04)
   if (hours === 22 && minutes < 5) {
-    if (!(await wasSlotSentToday('evening', sentDate))) {
+    const alreadySent = await wasScheduledPushSent('evening', sentDate);
+    if (!alreadySent) {
       console.log(`📲 Sending evening notification... (Israel date: ${sentDate})`);
-      const result = await sendNotificationToAll(
-        '🌙 לילה טוב!',
-        'לא לשכוח לתקף משימות שביצעת!'
-      );
-      console.log(`📲 Evening notification result:`, result);
-      await markSlotSent('evening', sentDate);
+      await sendNotificationToAll('🌙 לילה טוב!', 'לא לשכוח לתקף משימות שביצעת!');
+      await recordScheduledPushSent('evening', sentDate);
     }
   }
 };

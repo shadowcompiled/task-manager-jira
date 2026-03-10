@@ -1,6 +1,6 @@
 import express, { Response } from 'express';
 import { AuthRequest, authenticateToken } from '../middleware';
-import { getVapidPublicKey, saveSubscription, removeSubscription, sendNotificationToAll } from '../services/pushService';
+import { getVapidPublicKey, saveSubscription, removeSubscription, sendNotificationToAll, checkAndSendScheduledNotifications } from '../services/pushService';
 import { sql } from '../database';
 
 const router = express.Router();
@@ -35,6 +35,18 @@ router.post('/test', authenticateToken, async (req: AuthRequest, res: Response) 
     res.json({ message: 'Test notification sent', ...result });
   } catch (error) {
     res.status(500).json({ error: 'Failed to send test notification' });
+  }
+});
+
+/** Admin-only: run scheduled notifications check once (current Israel time). Use to verify daily reminders and DB persistence. */
+router.post('/test-scheduled', authenticateToken, async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+  try {
+    await checkAndSendScheduledNotifications();
+    res.json({ ok: true, message: 'Scheduled notifications check run (morning/noon/evening by Israel time)' });
+  } catch (error: any) {
+    console.error('test-scheduled error:', error);
+    res.status(500).json({ error: error?.message || 'Failed to run scheduled check' });
   }
 });
 

@@ -28,15 +28,19 @@ No need to override these in the dashboard if `vercel.json` is in effect (repo r
 
 ---
 
-## Notifications at the exact minute (Hobby plan)
+## Push scheduled: must run every minute (Hobby plan)
 
-Vercel Hobby allows only **one cron run per day**. To send push notifications **at the same minute** a task’s due date is set (e.g. “remind me at 15:00”), use a **free external cron** that calls your API every minute.
+The `push-scheduled` cron in `vercel.json` is set to `0 1 * * *` (once per day at 01:00 UTC). That is **not enough** for:
+
+- **Daily reminders** at 9:00, 12:30, and 22:00 Israel time (those times are never hit with a single daily run).
+- **“Due now”** pushes for tasks whose due date/time just passed (the handler checks the last 2 minutes).
+
+For both to work, **call `/api/cron/push-scheduled` every minute** (e.g. with a free external cron). Vercel Hobby allows only one cron run per day per job, so use an external service.
 
 ### How it works
 
-- When a task has a **due date/time**, the app sends a push to assignees when that time is reached.
-- The backend endpoint `/api/cron/push-scheduled` checks for tasks due in the last 2 minutes and sends “משימה בשל” (task due now) pushes. It must be **called every minute** for that to work.
-- On Hobby, Vercel cron runs that endpoint only once per day, so use an external service to call it every minute.
+- **Due-now pushes:** The handler checks for tasks whose `due_date` is in the last 2 minutes and sends “משימה בשל” to assignees. Requires a run every minute.
+- **Daily reminders (Israel time):** 9:00–9:04 (“בוקר טוב”), 12:30–12:34 (“משמרת מוצלחת”), 22:00–22:04 (“לילה טוב”). Sent at most once per day per slot (state is stored in the `scheduled_push_log` table).
 
 ### Setup with cron-job.org (free)
 
@@ -51,4 +55,11 @@ Vercel Hobby allows only **one cron run per day**. To send push notifications **
    - Use the same value as the `CRON_SECRET` env var in Vercel.
 3. Save and enable the job.
 
-Your backend will then be triggered every minute, send “due now” pushes for tasks whose due date/time just passed, and still run the fixed-time notifications (9:00, 12:30, 22:00 Israel time) when the minute falls on those times.
+Your backend will then be triggered every minute, send “due now” pushes when a task’s due time has just passed, and send the daily reminders at 9:00, 12:30, and 22:00 Israel time (once per day each).
+
+### Testing scheduled reminders
+
+To verify daily reminders without waiting for the clock:
+
+1. **Manual trigger:** Call `GET https://YOUR_VERCEL_DOMAIN/api/cron/push-scheduled` with header `Authorization: Bearer YOUR_CRON_SECRET` when Israel time is 9:00–9:04, 12:30–12:34, or 22:00–22:04. Subscribed users should receive the corresponding push; the same slot will not be sent again that day (see “Admin test” below to force a run).
+2. **Admin test endpoint:** As an admin, call `POST /api/push/test-scheduled` with your auth token. This runs the scheduled-notifications logic once (current Israel time). Useful to confirm DB persistence: calling it twice in the same Israel day for the same slot does not send duplicates.
