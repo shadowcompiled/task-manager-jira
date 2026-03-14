@@ -175,8 +175,8 @@ export const checkAndSendScheduledNotifications = async () => {
 
   const { hours, minutes, sentDate } = getIsraelTime();
 
-  // Morning notification at 9:00 Israel time (window: 9:00–9:04)
-  if (hours === 9 && minutes < 5) {
+  // Morning notification at 10:00 Israel time (full hour window — dedup via scheduled_push_log)
+  if (hours === 10) {
     const alreadySent = await wasScheduledPushSent('morning', sentDate);
     if (!alreadySent) {
       console.log(`📲 Sending morning notification... (Israel date: ${sentDate})`);
@@ -185,8 +185,8 @@ export const checkAndSendScheduledNotifications = async () => {
     }
   }
 
-  // Noon notification at 12:30 Israel time (window: 12:30–12:34)
-  if (hours === 12 && minutes >= 30 && minutes < 35) {
+  // Noon notification at 13:00 Israel time (full hour window — dedup via scheduled_push_log)
+  if (hours === 13) {
     const alreadySent = await wasScheduledPushSent('noon', sentDate);
     if (!alreadySent) {
       console.log(`📲 Sending noon notification... (Israel date: ${sentDate})`);
@@ -195,8 +195,8 @@ export const checkAndSendScheduledNotifications = async () => {
     }
   }
 
-  // Evening notification at 22:00 Israel time (window: 22:00–22:04)
-  if (hours === 22 && minutes < 5) {
+  // Evening notification at 20:00 Israel time (full hour window — dedup via scheduled_push_log)
+  if (hours === 20) {
     const alreadySent = await wasScheduledPushSent('evening', sentDate);
     if (!alreadySent) {
       console.log(`📲 Sending evening notification... (Israel date: ${sentDate})`);
@@ -210,9 +210,9 @@ export const checkAndSendScheduledNotifications = async () => {
 export const startPushScheduler = () => {
   const { hours, minutes } = getIsraelTime();
   console.log(`📲 Push notification scheduler started (Israel time: ${hours}:${String(minutes).padStart(2, '0')})`);
-  console.log(`📲 Morning notification scheduled for 9:00 Israel time`);
-  console.log(`📲 Noon notification scheduled for 12:30 Israel time`);
-  console.log(`📲 Evening notification scheduled for 22:00 Israel time`);
+  console.log(`📲 Morning notification scheduled for 10:00 Israel time`);
+  console.log(`📲 Noon notification scheduled for 13:00 Israel time`);
+  console.log(`📲 Evening notification scheduled for 20:00 Israel time`);
   
   // Check immediately
   checkAndSendScheduledNotifications();

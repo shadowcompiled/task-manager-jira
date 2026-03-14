@@ -13,6 +13,7 @@ import cronRoutes from './routes/cron';
 import organizationsRoutes from './routes/organizations';
 import { verifyEmailConfig } from './services/emailService';
 import { startNotificationService } from './services/notificationService';
+import { startPushScheduler } from './services/pushService';
 
 dotenv.config();
 
@@ -90,6 +91,7 @@ if (!isVercel) {
     await initializeDatabase();
     verifyEmailConfig();
     startNotificationService();
+    startPushScheduler();
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });

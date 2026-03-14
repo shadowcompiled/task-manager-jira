@@ -19,9 +19,5 @@
         { "key": "X-XSS-Protection", "value": "1; mode=block" }
       ]
     }
-  ],
-  "crons": [
-    { "path": "/api/cron/daily-notifications", "schedule": "0 0 * * *" },
-    { "path": "/api/cron/push-scheduled", "schedule": "0 1 * * *" }
   ]
 }
