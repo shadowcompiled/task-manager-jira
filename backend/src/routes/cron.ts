@@ -29,8 +29,17 @@ router.get('/daily-notifications', requireCronSecret, async (_req, res) => {
 
 router.get('/push-scheduled', requireCronSecret, async (_req, res) => {
   try {
-    await checkAndSendScheduledNotifications();
-    res.json({ ok: true, message: 'Push scheduled check run' });
+    const result = await checkAndSendScheduledNotifications();
+    res.json({
+      ok: true,
+      message: 'Push scheduled check run',
+      ...result,
+      _hint: result.subscriptionCount === 0
+        ? 'No push subscriptions in DB. Open the app on the device, enable notifications, and accept the browser prompt.'
+        : (result.pushFailCount && result.pushFailCount > 0)
+          ? 'Some pushes failed (expired/invalid subscription). Users may need to re-enable notifications in the app.'
+          : 'Slot = Israel hour 10/13/20. On phone: use the app (PWA) and allow notifications for that device.'
+    });
   } catch (error: any) {
     console.error('Cron push-scheduled error:', error);
     res.status(500).json({ error: error.message });
