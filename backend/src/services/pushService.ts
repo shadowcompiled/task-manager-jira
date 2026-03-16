@@ -170,10 +170,11 @@ export const checkAndSendTaskDueNowNotifications = async () => {
   }
 };
 
-export const checkAndSendScheduledNotifications = async () => {
+export const checkAndSendScheduledNotifications = async (): Promise<{ slot?: string; sent: boolean; israelHour: number; israelDate: string }> => {
   await checkAndSendTaskDueNowNotifications();
 
   const { hours, minutes, sentDate } = getIsraelTime();
+  const israelHour = hours;
 
   // Morning notification at 10:00 Israel time (full hour window — dedup via scheduled_push_log)
   if (hours === 10) {
@@ -182,7 +183,9 @@ export const checkAndSendScheduledNotifications = async () => {
       console.log(`📲 Sending morning notification... (Israel date: ${sentDate})`);
       await sendNotificationToAll('☀️ בוקר טוב!', 'לא לשכוח לבצע את המשימות!');
       await recordScheduledPushSent('morning', sentDate);
+      return { slot: 'morning', sent: true, israelHour, israelDate: sentDate };
     }
+    return { slot: 'morning', sent: false, israelHour, israelDate: sentDate };
   }
 
   // Noon notification at 13:00 Israel time (full hour window — dedup via scheduled_push_log)
@@ -192,7 +195,9 @@ export const checkAndSendScheduledNotifications = async () => {
       console.log(`📲 Sending noon notification... (Israel date: ${sentDate})`);
       await sendNotificationToAll('🍽️ שתיהיה משמרת מוצלחת!', 'הסתכלת על המשימות שלך?');
       await recordScheduledPushSent('noon', sentDate);
+      return { slot: 'noon', sent: true, israelHour, israelDate: sentDate };
     }
+    return { slot: 'noon', sent: false, israelHour, israelDate: sentDate };
   }
 
   // Evening notification at 20:00 Israel time (full hour window — dedup via scheduled_push_log)
@@ -202,8 +207,12 @@ export const checkAndSendScheduledNotifications = async () => {
       console.log(`📲 Sending evening notification... (Israel date: ${sentDate})`);
       await sendNotificationToAll('🌙 לילה טוב!', 'לא לשכוח לתקף משימות שביצעת!');
       await recordScheduledPushSent('evening', sentDate);
+      return { slot: 'evening', sent: true, israelHour, israelDate: sentDate };
     }
+    return { slot: 'evening', sent: false, israelHour, israelDate: sentDate };
   }
+
+  return { sent: false, israelHour, israelDate: sentDate };
 };
 
 // Start scheduler (runs every minute)

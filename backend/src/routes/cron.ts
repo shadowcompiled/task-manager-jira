@@ -29,8 +29,13 @@ router.get('/daily-notifications', requireCronSecret, async (_req, res) => {
 
 router.get('/push-scheduled', requireCronSecret, async (_req, res) => {
   try {
-    await checkAndSendScheduledNotifications();
-    res.json({ ok: true, message: 'Push scheduled check run' });
+    const result = await checkAndSendScheduledNotifications();
+    res.json({
+      ok: true,
+      message: 'Push scheduled check run',
+      ...result,
+      _hint: 'Slot (morning/noon/evening) only set when Israel hour is 10, 13 or 20. Use UTC 8:00, 11:00, 18:00 (winter) or 7:00, 10:00, 17:00 (summer).'
+    });
   } catch (error: any) {
     console.error('Cron push-scheduled error:', error);
     res.status(500).json({ error: error.message });
