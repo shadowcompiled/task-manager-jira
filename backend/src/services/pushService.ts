@@ -170,22 +170,44 @@ export const checkAndSendTaskDueNowNotifications = async () => {
   }
 };
 
-export const checkAndSendScheduledNotifications = async (): Promise<{ slot?: string; sent: boolean; israelHour: number; israelDate: string }> => {
+export const checkAndSendScheduledNotifications = async (): Promise<{
+  slot?: string;
+  sent: boolean;
+  israelHour: number;
+  israelDate: string;
+  pushSuccessCount?: number;
+  pushFailCount?: number;
+  subscriptionCount?: number;
+}> => {
   await checkAndSendTaskDueNowNotifications();
 
   const { hours, minutes, sentDate } = getIsraelTime();
   const israelHour = hours;
+
+  const getSubscriptionCount = async (): Promise<number> => {
+    const { rows } = await sql`SELECT COUNT(*)::int as c FROM push_subscriptions`;
+    const c = (rows[0] as any)?.c;
+    return typeof c === 'number' ? c : Number(c) || 0;
+  };
 
   // Morning notification at 10:00 Israel time (full hour window — dedup via scheduled_push_log)
   if (hours === 10) {
     const alreadySent = await wasScheduledPushSent('morning', sentDate);
     if (!alreadySent) {
       console.log(`📲 Sending morning notification... (Israel date: ${sentDate})`);
-      await sendNotificationToAll('☀️ בוקר טוב!', 'לא לשכוח לבצע את המשימות!');
+      const pushResult = await sendNotificationToAll('☀️ בוקר טוב!', 'לא לשכוח לבצע את המשימות!');
       await recordScheduledPushSent('morning', sentDate);
-      return { slot: 'morning', sent: true, israelHour, israelDate: sentDate };
+      return {
+        slot: 'morning',
+        sent: true,
+        israelHour,
+        israelDate: sentDate,
+        pushSuccessCount: pushResult.successCount,
+        pushFailCount: pushResult.failCount,
+        subscriptionCount: pushResult.successCount + pushResult.failCount
+      };
     }
-    return { slot: 'morning', sent: false, israelHour, israelDate: sentDate };
+    return { slot: 'morning', sent: false, israelHour, israelDate: sentDate, subscriptionCount: await getSubscriptionCount() };
   }
 
   // Noon notification at 13:00 Israel time (full hour window — dedup via scheduled_push_log)
@@ -193,11 +215,19 @@ export const checkAndSendScheduledNotifications = async (): Promise<{ slot?: str
     const alreadySent = await wasScheduledPushSent('noon', sentDate);
     if (!alreadySent) {
       console.log(`📲 Sending noon notification... (Israel date: ${sentDate})`);
-      await sendNotificationToAll('🍽️ שתיהיה משמרת מוצלחת!', 'הסתכלת על המשימות שלך?');
+      const pushResult = await sendNotificationToAll('🍽️ שתיהיה משמרת מוצלחת!', 'הסתכלת על המשימות שלך?');
       await recordScheduledPushSent('noon', sentDate);
-      return { slot: 'noon', sent: true, israelHour, israelDate: sentDate };
+      return {
+        slot: 'noon',
+        sent: true,
+        israelHour,
+        israelDate: sentDate,
+        pushSuccessCount: pushResult.successCount,
+        pushFailCount: pushResult.failCount,
+        subscriptionCount: pushResult.successCount + pushResult.failCount
+      };
     }
-    return { slot: 'noon', sent: false, israelHour, israelDate: sentDate };
+    return { slot: 'noon', sent: false, israelHour, israelDate: sentDate, subscriptionCount: await getSubscriptionCount() };
   }
 
   // Evening notification at 20:00 Israel time (full hour window — dedup via scheduled_push_log)
@@ -205,14 +235,22 @@ export const checkAndSendScheduledNotifications = async (): Promise<{ slot?: str
     const alreadySent = await wasScheduledPushSent('evening', sentDate);
     if (!alreadySent) {
       console.log(`📲 Sending evening notification... (Israel date: ${sentDate})`);
-      await sendNotificationToAll('🌙 לילה טוב!', 'לא לשכוח לתקף משימות שביצעת!');
+      const pushResult = await sendNotificationToAll('🌙 לילה טוב!', 'לא לשכוח לתקף משימות שביצעת!');
       await recordScheduledPushSent('evening', sentDate);
-      return { slot: 'evening', sent: true, israelHour, israelDate: sentDate };
+      return {
+        slot: 'evening',
+        sent: true,
+        israelHour,
+        israelDate: sentDate,
+        pushSuccessCount: pushResult.successCount,
+        pushFailCount: pushResult.failCount,
+        subscriptionCount: pushResult.successCount + pushResult.failCount
+      };
     }
-    return { slot: 'evening', sent: false, israelHour, israelDate: sentDate };
+    return { slot: 'evening', sent: false, israelHour, israelDate: sentDate, subscriptionCount: await getSubscriptionCount() };
   }
 
-  return { sent: false, israelHour, israelDate: sentDate };
+  return { sent: false, israelHour, israelDate: sentDate, subscriptionCount: await getSubscriptionCount() };
 };
 
 // Start scheduler (runs every minute)

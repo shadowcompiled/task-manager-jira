@@ -34,7 +34,11 @@ router.get('/push-scheduled', requireCronSecret, async (_req, res) => {
       ok: true,
       message: 'Push scheduled check run',
       ...result,
-      _hint: 'Slot (morning/noon/evening) only set when Israel hour is 10, 13 or 20. Use UTC 8:00, 11:00, 18:00 (winter) or 7:00, 10:00, 17:00 (summer).'
+      _hint: result.subscriptionCount === 0
+        ? 'No push subscriptions in DB. Open the app on the device, enable notifications, and accept the browser prompt.'
+        : (result.pushFailCount && result.pushFailCount > 0)
+          ? 'Some pushes failed (expired/invalid subscription). Users may need to re-enable notifications in the app.'
+          : 'Slot = Israel hour 10/13/20. On phone: use the app (PWA) and allow notifications for that device.'
     });
   } catch (error: any) {
     console.error('Cron push-scheduled error:', error);
