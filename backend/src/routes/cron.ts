@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { checkForExpiringTasks, processRecurringTasks, cleanupOldCompletedTasks } from '../services/notificationService';
-import { checkAndSendScheduledNotifications } from '../services/pushService';
+import { checkAndSendScheduledNotifications, sendScheduledSlot } from '../services/pushService';
 
 const router = express.Router();
 const CRON_SECRET = process.env.CRON_SECRET || '';
@@ -27,18 +27,27 @@ router.get('/daily-notifications', requireCronSecret, async (_req, res) => {
   }
 });
 
-router.get('/push-scheduled', requireCronSecret, async (_req, res) => {
+router.get('/push-scheduled', requireCronSecret, async (req: Request, res) => {
   try {
-    const result = await checkAndSendScheduledNotifications();
+    const slot = (req.query.slot as string)?.toLowerCase();
+    const validSlots = ['morning', 'noon', 'evening'];
+    const result = validSlots.includes(slot)
+      ? await sendScheduledSlot(slot as 'morning' | 'noon' | 'evening')
+      : await checkAndSendScheduledNotifications();
+
+    const hint = result.subscriptionCount === 0
+      ? 'No push subscriptions in DB. Open the app on the device, enable notifications, and accept the browser prompt.'
+      : (result.pushFailCount && result.pushFailCount > 0)
+        ? 'Some pushes failed (expired/invalid subscription). Users may need to re-enable notifications in the app.'
+        : result.slot
+          ? (result.sent ? 'Reminder sent.' : 'Slot already sent today (once per day per slot).')
+          : 'Use ?slot=morning|noon|evening so cron jobs do not depend on exact time or DST. No time filter when slot is set.';
     res.json({
       ok: true,
       message: 'Push scheduled check run',
       ...result,
-      _hint: result.subscriptionCount === 0
-        ? 'No push subscriptions in DB. Open the app on the device, enable notifications, and accept the browser prompt.'
-        : (result.pushFailCount && result.pushFailCount > 0)
-          ? 'Some pushes failed (expired/invalid subscription). Users may need to re-enable notifications in the app.'
-          : 'Slot = Israel hour 10/13/20. On phone: use the app (PWA) and allow notifications for that device.'
+      _hint: hint,
+      _usage: 'GET /api/cron/push-scheduled?slot=morning | ?slot=noon | ?slot=evening — set 3 cron-job.org jobs at your desired UTC times (e.g. 8, 11, 18) with the same URL and different ?slot=; each slot sent at most once per Israel day.'
     });
   } catch (error: any) {
     console.error('Cron push-scheduled error:', error);

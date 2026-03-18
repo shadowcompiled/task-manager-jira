@@ -134,6 +134,48 @@ async function recordScheduledPushSent(slot: string, sentDate: string): Promise<
   `;
 }
 
+const SLOT_MESSAGES: Record<string, { title: string; body: string }> = {
+  morning: { title: '☀️ בוקר טוב!', body: 'לא לשכוח לבצע את המשימות!' },
+  noon: { title: '🍽️ שתיהיה משמרת מוצלחת!', body: 'הסתכלת על המשימות שלך?' },
+  evening: { title: '🌙 לילה טוב!', body: 'לא לשכוח לתקף משימות שביצעת!' },
+};
+
+export type ScheduledSlotResult = {
+  slot: string;
+  sent: boolean;
+  israelDate: string;
+  pushSuccessCount?: number;
+  pushFailCount?: number;
+  subscriptionCount?: number;
+};
+
+/** Send a specific reminder slot if not already sent today (Israel date). No time-of-day filter — caller decides which slot (e.g. cron-job.org calls with ?slot=morning at 08:00 UTC). */
+export async function sendScheduledSlot(slot: 'morning' | 'noon' | 'evening'): Promise<ScheduledSlotResult> {
+  const { sentDate } = getIsraelTime();
+  const getSubscriptionCount = async (): Promise<number> => {
+    const { rows } = await sql`SELECT COUNT(*)::int as c FROM push_subscriptions`;
+    const c = (rows[0] as any)?.c;
+    return typeof c === 'number' ? c : Number(c) || 0;
+  };
+  const alreadySent = await wasScheduledPushSent(slot, sentDate);
+  if (alreadySent) {
+    return { slot, sent: false, israelDate: sentDate, subscriptionCount: await getSubscriptionCount() };
+  }
+  const msg = SLOT_MESSAGES[slot];
+  if (!msg) return { slot, sent: false, israelDate: sentDate, subscriptionCount: await getSubscriptionCount() };
+  console.log(`📲 Sending ${slot} notification... (Israel date: ${sentDate})`);
+  const pushResult = await sendNotificationToAll(msg.title, msg.body);
+  await recordScheduledPushSent(slot, sentDate);
+  return {
+    slot,
+    sent: true,
+    israelDate: sentDate,
+    pushSuccessCount: pushResult.successCount,
+    pushFailCount: pushResult.failCount,
+    subscriptionCount: pushResult.successCount + pushResult.failCount
+  };
+}
+
 /** Send push to assignees for tasks whose due_date is due right now (within last 2 min). Runs when cron hits every minute. */
 export const checkAndSendTaskDueNowNotifications = async () => {
   const now = new Date();
